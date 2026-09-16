@@ -14,15 +14,18 @@ export function Footer() {
       <div className="container relative z-10 mx-auto px-4 md:px-6">
         <div className="mb-16 grid gap-12 md:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <Link to="/" onClick={scrollToTop} className="mb-6 inline-flex items-center gap-3 group">
-              <img
-                src="/logo.png"
-                alt="CS Cinemas logo"
-                className="h-12 w-12 rounded-xl object-cover shadow-[0_10px_24px_rgba(214,168,79,0.22)]"
-              />
+            <Link to="/" onClick={scrollToTop} className="mb-8 inline-flex items-center gap-3.5 group">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-md transition-all duration-300 group-hover:bg-primary/30 group-hover:blur-lg" />
+                <img
+                  src="/logo.png"
+                  alt="CS Cinemas logo"
+                  className="relative z-10 h-12 w-12 rounded-full border border-primary/20 object-cover shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:border-primary/40"
+                />
+              </div>
               <div>
-                <div className="text-xl font-semibold tracking-[0.18em] text-white">CS</div>
-                <div className="-mt-1 text-[10px] uppercase tracking-[0.32em] text-text-muted">Cinemas</div>
+                <div className="bg-gradient-to-br from-white to-white/70 bg-clip-text text-2xl font-bold tracking-[0.15em] text-transparent">CS</div>
+                <div className="-mt-0.5 text-[11px] font-semibold uppercase tracking-[0.35em] text-primary/90">Cinemas</div>
               </div>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-text-muted">

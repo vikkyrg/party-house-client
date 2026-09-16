@@ -101,8 +101,8 @@ export function HomePage() {
   const [searchParams, setSearchParams] = useState({ city: '', date: '' });
 
   const { data: bannersRes } = useQuery({
-    queryKey: ['banners', 'hero'],
-    queryFn: () => contentService.getBanners('hero'),
+    queryKey: ['banners', 'homepage-hero'],
+    queryFn: () => contentService.getBanners('homepage-hero'),
   });
   const banners = bannersRes?.data || [];
 
