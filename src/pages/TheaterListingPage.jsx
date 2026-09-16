@@ -20,7 +20,7 @@ export function TheaterListingPage() {
 
   const { data: citiesResponse } = useQuery({
     queryKey: ['cities'],
-    queryFn: () => cityService.getAllCities(),
+    queryFn: () => cityService.getCities(),
   });
 
   const theaters = theatersResponse?.data || [];

@@ -14,7 +14,7 @@ export function HeroBookingWidget() {
 
   const { data: citiesResponse } = useQuery({
     queryKey: ['cities'],
-    queryFn: () => cityService.getAllCities(),
+    queryFn: () => cityService.getCities(),
   });
   const cities = citiesResponse?.data || [];
 
