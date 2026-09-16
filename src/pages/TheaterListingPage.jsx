@@ -35,7 +35,7 @@ export function TheaterListingPage() {
   const { data: locationsRes } = useQuery({
     queryKey: ['locations', city],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:5000/api/v1/locations${city ? `?city=${city}` : ''}`);
+      const res = await fetch(`https://party-house-server.onrender.com/api/v1/locations${city ? `?city=${city}` : ''}`);
       return res.json();
     },
     enabled: !!city,
