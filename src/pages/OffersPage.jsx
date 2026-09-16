@@ -12,7 +12,7 @@ export function OffersPage() {
           </p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="mt-12 rounded-[32px] border border-primary/20 bg-[radial-gradient(circle_at_top,rgba(214,168,79,0.16),transparent_60%),#151518] p-8 text-center md:p-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="mt-12 rounded-[32px] border border-primary/20 bg-[radial-gradient(circle_at_top,rgba(0,229,255,0.16),transparent_60%),#151518] p-8 text-center md:p-12">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/12 text-primary">
             <span className="text-2xl font-bold">%</span>
           </div>

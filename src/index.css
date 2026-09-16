@@ -1,35 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090b;
-  --color-surface: #151518;
-  --color-surface-strong: #1b1b20;
-  --color-surface-hover: #202024;
-  --color-primary: #d6a84f;
-  --color-primary-hover: #b7862d;
-  --color-primary-soft: #f3d28a;
-  --color-text: #f7f5ef;
-  --color-text-muted: #b5b1aa;
-  --color-success: #3fa77a;
-  --color-warning: #d99a3d;
-  --color-error: #c95c5c;
-  --color-pending: #d99a3d;
-  --color-cancelled: #7b7a76;
+  --color-background: #1A0B2E;
+  --color-surface: #2A114A;
+  --color-surface-strong: #200D3A;
+  --color-surface-hover: #36175C;
+  --color-primary: #FFD700;
+  --color-primary-hover: #E5C100;
+  --color-accent: #FF6B6B;
+  --color-text: #FFFFFF;
+  --color-text-muted: #B3A1C9;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-pending: #f59e0b;
+  --color-cancelled: #64748b;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-heading: 'Playfair Display', Georgia, serif;
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
-  --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.26);
-  --shadow-lg: 0 18px 38px rgba(0, 0, 0, 0.32);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
 
   --z-index-dropdown: 1000;
   --z-index-sticky: 1020;
@@ -39,27 +39,23 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   body {
-    background:
-      radial-gradient(circle at top, rgba(214, 168, 79, 0.12), transparent 30%),
-      #09090b;
+    background: #1A0B2E;
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    letter-spacing: -0.02em;
-    line-height: 0.95;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
   }
 
   img {
@@ -72,59 +68,45 @@
   }
 
   ::selection {
-    background: rgba(214, 168, 79, 0.28);
-    color: var(--color-text);
+    background: rgba(255, 215, 0, 0.25);
+    color: #FFD700;
   }
 
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #09090b;
+    background: #1A0B2E;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #27272c;
-    border-radius: 9999px;
+    background: #2A114A;
+    border-radius: 0;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #313136;
+    background: #36175C;
   }
 }
 
 @layer utilities {
-  .glass {
-    background: rgba(21, 21, 24, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  .glass-card {
-    background: linear-gradient(180deg, rgba(32, 32, 36, 0.9), rgba(21, 21, 24, 0.88));
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
-  }
-
   .surface-panel {
-    background: #151518;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    background: #1B1B1B;
+    border: 1px solid rgba(169, 163, 154, 0.1);
   }
 
   .eyebrow {
-    @apply inline-flex items-center rounded-full border border-primary/30 bg-primary/8 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary;
+    @apply inline-flex items-center gap-2 uppercase tracking-[0.2em] text-[10px] font-semibold text-text-muted;
   }
 
   .section-title {
-    @apply text-4xl md:text-5xl font-bold text-white;
+    @apply text-4xl md:text-5xl font-heading text-white;
   }
 
   .chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-3 py-1.5 text-sm text-text-muted;
+    @apply inline-flex items-center gap-2 border border-white/10 bg-transparent px-4 py-1.5 text-sm text-text-muted transition-colors hover:border-white/30 hover:text-white;
   }
 
   .text-balance {

@@ -10,7 +10,6 @@ import { Button } from '../components/common/Button';
 import { LoadingState } from '../components/common/LoadingState';
 import { BookingStepper } from '../components/booking/BookingStepper';
 import { handleApiError } from '../lib/apiClient';
-import { env } from '../config/env';
 import { Check, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 
@@ -157,10 +156,10 @@ export function BookingPage() {
           const { orderId, amount, currency, key } = orderRes.data;
           
           const options = {
-            key: key || env.VITE_RAZORPAY_KEY_ID,
+            key: key || import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: amount,
             currency: currency,
-            name: env.APP_NAME,
+            name: 'CS Cinemas',
             description: `Booking for ${theater?.name}`,
             order_id: orderId,
             handler: async function (response) {

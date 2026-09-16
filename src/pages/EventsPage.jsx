@@ -1,121 +1,154 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, PartyPopper } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Image as ImageIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { contentService } from '../services/contentService';
+import { getImageUrl } from '../utils/imageUtils';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 
 export function EventsPage() {
-  const { data: eventTypesRes, isLoading, error } = useQuery({
+  const { data: response, isLoading, error, refetch } = useQuery({
     queryKey: ['eventTypes'],
     queryFn: () => contentService.getEventTypes(),
   });
 
-  const eventTypes = eventTypesRes?.data || [];
+  const occasions = response?.data || [];
+
+  if (isLoading) return <LoadingState message="Curating occasions..." />;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-28 relative overflow-hidden">
-      <SEO title="Celebrations & Occasions | CS Cinemas" description="Discover the perfect event type for your next gathering at our premium private theaters." />
-      
-      {/* Subtle ambient background glow */}
-      <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
+    <div className="min-h-screen bg-background pt-32 pb-24 overflow-hidden">
+      <SEO title="Celebrations & Events | CS Cinemas" />
 
-      <div className="container mx-auto px-4 md:px-6 relative z-10">
+      <div className="container mx-auto px-6 md:px-12">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="text-center mb-16 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="max-w-3xl mb-20"
         >
-          <span className="inline-block text-primary/70 font-semibold tracking-[0.3em] uppercase text-xs mb-4">Occasions</span>
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 font-heading tracking-tight">Celebrate Your <span className="text-primary">Way</span></h1>
-          <p className="text-text-muted text-lg leading-relaxed">Whether it's a romantic date, a surprise birthday, or a group screening, we have the perfect setup for you.</p>
+          <span className="text-[10px] font-sans font-semibold tracking-[0.3em] uppercase text-primary mb-4 block">Occasions</span>
+          <h1 className="text-4xl md:text-6xl font-heading text-white mb-6">Every occasion deserves a screen.</h1>
+          <p className="text-lg font-sans text-text-muted leading-relaxed">
+            From intimate date nights to grand birthday celebrations, our private theaters provide the perfect canvas for your most memorable moments.
+          </p>
         </motion.div>
-        
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-80 rounded-3xl border border-white/5 bg-white/[0.02] overflow-hidden animate-pulse">
-                <div className="w-full h-48 bg-white/5" />
-                <div className="p-6">
-                  <div className="h-6 bg-white/5 rounded w-3/4 mb-4" />
-                  <div className="h-4 bg-white/5 rounded w-1/2" />
-                </div>
-              </div>
-            ))}
+
+        {occasions.length === 0 ? (
+          <div className="bg-surface border border-white/5 p-16 text-center">
+            <h3 className="text-2xl font-heading text-white mb-4">More experiences coming soon</h3>
+            <p className="text-text-muted font-sans">We are currently curating new celebration packages.</p>
           </div>
-        ) : error ? (
-          <div className="p-8 text-center text-error bg-error/5 rounded-2xl border border-error/10 glass max-w-2xl mx-auto">
-            <p className="font-medium">Failed to load events. Please try again later.</p>
-          </div>
-        ) : eventTypes.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20 px-4 glass-card rounded-3xl border border-white/10 max-w-2xl mx-auto">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <PartyPopper className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-3 font-heading">No events found</h3>
-            <p className="text-text-muted text-lg">We are currently updating our celebration packages. Check back soon!</p>
-          </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <AnimatePresence>
-              {eventTypes.map((event, i) => (
-                <motion.div
-                  key={event._id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.4 }}
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid md:grid-cols-12 gap-6 md:gap-8 auto-rows-[300px]"
+          >
+            {occasions.map((occasion, index) => {
+              // Algorithmic grid placement
+              let colSpan = 'md:col-span-4';
+              let rowSpan = 'row-span-1';
+              
+              if (index % 5 === 0) {
+                // Large item
+                colSpan = 'md:col-span-8';
+                rowSpan = 'row-span-2';
+              } else if (index % 5 === 1) {
+                // Tall item
+                colSpan = 'md:col-span-4';
+                rowSpan = 'row-span-2';
+              } else if (index % 5 === 2) {
+                // Wide item
+                colSpan = 'md:col-span-8';
+              }
+
+              return (
+                <motion.div 
+                  key={occasion._id}
+                  variants={itemVariants}
+                  className={`${colSpan} ${rowSpan} group relative overflow-hidden bg-surface`}
                 >
-                  <Link 
-                    to={`/theaters?eventType=${event._id}`}
-                    className="group block h-full rounded-3xl overflow-hidden border border-white/5 bg-surface hover:border-primary/40 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 flex flex-col"
-                  >
-                    <div className="h-56 relative bg-background overflow-hidden w-full">
-                      {event.image?.url || event.image ? (
-                        <img 
-                          src={event.image?.url || event.image} 
-                          alt={event.name} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/5">
-                          <Calendar className="h-12 w-12 text-white/20" />
-                        </div>
-                      )}
-                      
-                      {/* Dark gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-300" />
-                      
-                      {event.price > 0 && (
-                        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-primary border border-white/10 shadow-lg">
-                          +₹{event.price}
-                        </div>
-                      )}
+                  {getImageUrl(occasion.image) ? (
+                    <img 
+                      src={getImageUrl(occasion.image)} 
+                      alt={occasion.name} 
+                      className="w-full h-full object-cover opacity-70 group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-white/10 group-hover:scale-105 transition-transform duration-[1.5s] ease-out bg-surface-strong">
+                      <ImageIcon className="w-16 h-16 mb-4" />
                     </div>
+                  )}
+                  
+                  {/* Subtle vignette overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent group-hover:from-background/80 transition-colors duration-700" />
+                  
+                  <div className="absolute bottom-0 left-0 p-8 w-full flex flex-col justify-end h-full">
+                    <h3 className="text-2xl md:text-3xl font-heading text-white mb-3 group-hover:text-primary transition-colors duration-500">{occasion.name}</h3>
                     
-                    {/* Content */}
-                    <div className="p-8 flex flex-col flex-1 relative bg-surface">
-                      <div className="absolute -top-12 inset-x-8">
-                        <h3 className="text-2xl font-bold text-white font-heading tracking-wide drop-shadow-md group-hover:text-primary transition-colors">{event.name}</h3>
-                      </div>
-                      
-                      <p className="text-text-muted text-sm leading-relaxed mb-6 mt-2 flex-1">
-                        Curated experiences tailored specifically for {event.name.toLowerCase()} celebrations. Includes specialized decorations and arrangements.
+                    {occasion.description && (
+                      <p className="text-text-muted font-sans text-sm max-w-sm hidden md:block opacity-80 group-hover:opacity-100 transition-opacity duration-500">
+                        {occasion.description}
                       </p>
-                      
-                      <div className="mt-auto">
-                        <span className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary-hover transition-colors">
-                          Find Venues
-                          <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
+                    )}
+                    
+                    <Link 
+                      to="/theaters" 
+                      className="mt-6 inline-flex items-center gap-2 text-sm font-sans font-medium text-white hover:text-primary transition-all w-fit opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 duration-500"
+                    >
+                      Plan this event <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+              );
+            })}
+          </motion.div>
         )}
+
+        {/* Customization section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="mt-32 pt-20 border-t border-white/5"
+        >
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-heading text-white mb-6">Make it entirely yours.</h2>
+              <p className="text-text-muted font-sans leading-relaxed mb-8">
+                Our in-house hospitality team provides end-to-end event customization. Add gourmet catering, professional photography, bespoke floral arrangements, and personalized on-screen messaging.
+              </p>
+              <Link to="/theaters" className="inline-flex items-center justify-center px-8 h-12 bg-primary text-background font-sans font-medium hover:bg-primary-hover transition-colors shadow-[0_4px_20px_rgba(229,192,123,0.3)] hover:shadow-[0_8px_30px_rgba(229,192,123,0.5)]">
+                Book a Screening
+              </Link>
+            </div>
+            <div className="bg-surface p-12 text-center border border-white/5 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+              <p className="font-heading text-xl text-white italic mb-4 relative z-10">"The perfect blend of luxury hospitality and cinematic magic."</p>
+              <span className="text-xs font-sans text-primary uppercase tracking-widest relative z-10">— Lifestyle Magazine</span>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

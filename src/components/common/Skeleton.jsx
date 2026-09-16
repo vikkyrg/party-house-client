@@ -1,15 +1,11 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../../lib/utils';
 
 export function Skeleton({ className, ...props }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-surface-hover", className)}
+      className={cn("shimmer rounded-xl bg-surface-strong/70 border border-white/5", className)}
       {...props}
     />
   );
 }
+

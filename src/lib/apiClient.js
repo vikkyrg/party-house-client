@@ -1,13 +1,15 @@
 import axios from 'axios';
-import { env } from '../config/env';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://party-house-server.onrender.com/api/v1';
 
 export const apiClient = axios.create({
-  baseURL: env.API_BASE_URL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
 
 let isRefreshing = false;
 let failedQueue = [];

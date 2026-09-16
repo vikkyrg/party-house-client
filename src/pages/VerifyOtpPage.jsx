@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Film, Loader2 } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '../components/common/Button';
-import { Input } from '../components/common/Input';
 import { authService } from '../services/authService';
 import { handleApiError } from '../lib/apiClient';
+import { SEO } from '../components/common/SEO';
 
 const otpSchema = z.object({
   otp: z.string().length(6, 'OTP must be exactly 6 digits'),
@@ -41,42 +40,45 @@ export function VerifyOtpPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md rounded-[30px] border border-white/10 bg-[#151518] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.35)]">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-            <Film className="h-7 w-7" />
-          </div>
-          <h1 className="text-3xl font-black text-white">Verify OTP</h1>
-          <p className="mt-2 text-sm text-text-muted">
-            {phone ? `Enter the code sent to ${phone}` : 'Enter your 6-digit OTP code'}
+    <div className="min-h-screen bg-[#080808] flex items-center justify-center p-6">
+      <SEO title="Verify OTP | CS Cinemas" />
+      
+      <div className="w-full max-w-md bg-[#151515] border border-white/5 p-10">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-heading text-white mb-2">Verification</h1>
+          <p className="text-sm font-sans text-text-muted">
+            {phone ? `Enter the 6-digit code sent to ${phone}` : 'Enter your 6-digit OTP code'}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-2xl border border-error/20 bg-error/10 p-4 text-sm text-error">
+          <div className="mb-8 p-4 bg-[#1B1B1B] border-l-2 border-error text-white text-sm font-sans">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           <div>
-            <label className="mb-2 block text-sm font-medium text-text-muted">OTP Code</label>
-            <Input
+            <input
               type="text"
               maxLength={6}
-              placeholder="123456"
-              className="h-12 rounded-2xl border border-white/10 bg-[#101014] text-center text-lg tracking-[0.45em] font-mono text-white"
+              className="w-full h-16 bg-transparent border-b border-white/20 text-center text-3xl tracking-[0.3em] font-sans text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/10"
+              placeholder="000000"
               {...register('otp')}
             />
-            {errors.otp && <p className="mt-2 text-center text-sm text-error">{errors.otp.message}</p>}
+            {errors.otp && <p className="mt-2 text-center text-xs font-sans text-error">{errors.otp.message}</p>}
           </div>
 
-          <Button type="submit" className="h-12 w-full text-base font-semibold" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isSubmitting ? 'Verifying...' : 'Verify OTP'}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Verifying...' : 'Verify Code'}
           </Button>
         </form>
+
+        <div className="mt-10 text-center">
+          <Link to="/login" className="text-sm font-sans text-text-muted hover:text-white transition-colors">
+            Back to login
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../store/authStore';
@@ -13,12 +12,13 @@ import { motion } from 'framer-motion';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore(state => state.setAuth);
+  const location = useLocation();
+  const { setAuth } = useAuthStore();
   const [error, setError] = useState(null);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -28,10 +28,15 @@ export function LoginPage() {
   const onSubmit = async (data) => {
     setError(null);
     try {
-      const response = await authService.login({ email: data.email, password: data.password });
+      const response = await authService.login(data);
       if (response.success) {
         setAuth(response.data.user, response.data.accessToken);
-        navigate('/');
+        const returnTo = location.state?.returnTo || '/account/profile';
+        if (location.state?.bookingState) {
+          navigate(returnTo, { state: location.state.bookingState, replace: true });
+        } else {
+          navigate(returnTo, { replace: true });
+        }
       }
     } catch (err) {
       setError(handleApiError(err));
@@ -39,80 +44,88 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
-      <SEO title="Sign In | CS Cinemas" />
-      
-      {/* Background elements */}
-      <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-[#080808] py-12">
+      <SEO title="Member Login | CS Cinemas" />
       
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md relative z-10"
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="container mx-auto px-6 max-w-6xl"
       >
-        <div className="glass-card p-10 rounded-3xl border border-white/10 shadow-2xl">
-          <div className="flex flex-col items-center mb-10 text-center">
-            <Link to="/" className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-background shadow-lg shadow-primary/20 mb-6 group hover:scale-105 transition-transform">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                <rect x="2" y="2" width="20" height="20" rx="2.5" />
-                <path d="M2 12h20" />
-                <path d="M12 2v20" />
-                <path d="M7 2v20" />
-                <path d="M17 2v20" />
-              </svg>
-            </Link>
-            <h1 className="text-3xl font-black text-white font-heading tracking-tight mb-2">Welcome Back</h1>
-            <p className="text-text-muted">Sign in to book your premium celebrations</p>
+        <div className="grid md:grid-cols-2 bg-surface shadow-2xl border border-white/5 overflow-hidden min-h-[600px]">
+          {/* LEFT: Form Panel */}
+          <div className="w-full flex items-center justify-center p-6 md:p-16">
+            <div className="w-full max-w-md">
+              <Link to="/" className="inline-block mb-12">
+                <div className="text-xl font-heading text-white tracking-widest uppercase">
+                  CS Cinemas
+                </div>
+              </Link>
+              
+              <div className="mb-10">
+                <h1 className="text-3xl font-heading text-white mb-2">Welcome back.</h1>
+                <p className="text-sm font-sans text-text-muted">Sign in to manage your private screenings.</p>
+              </div>
+
+              {error && (
+                <div className="mb-8 p-4 bg-[#1B1B1B] border-l-2 border-error text-white text-sm font-sans">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-sans text-text-muted mb-2">Email Address</label>
+                  <input 
+                    type="email" 
+                    className="w-full h-12 bg-transparent border-b border-white/20 px-0 text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/20"
+                    placeholder="Enter your email"
+                    {...register('email')}
+                  />
+                  {errors.email && <p className="mt-2 text-xs text-error font-sans">{errors.email.message}</p>}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-sans text-text-muted">Password</label>
+                    <Link to="/forgot-password" className="text-xs font-sans text-text-muted hover:text-white transition-colors">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <input 
+                    type="password" 
+                    className="w-full h-12 bg-transparent border-b border-white/20 px-0 text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/20"
+                    placeholder="Enter your password"
+                    {...register('password')}
+                  />
+                  {errors.password && <p className="mt-2 text-xs text-error font-sans">{errors.password.message}</p>}
+                </div>
+
+                <Button type="submit" className="w-full mt-8" disabled={isSubmitting}>
+                  {isSubmitting ? 'Signing in...' : 'Sign In'}
+                </Button>
+              </form>
+
+              <div className="mt-12 text-center">
+                <p className="text-sm font-sans text-text-muted">
+                  Don't have an account?{' '}
+                  <Link to="/register" className="text-white hover:underline underline-offset-4 transition-colors">
+                    Create one
+                  </Link>
+                </p>
+              </div>
+            </div>
           </div>
 
-          {error && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-6">
-              <div className="p-4 rounded-xl bg-error/10 border border-error/20 text-error text-sm text-center">
-                {error}
-              </div>
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-white/90 mb-2">Email Address</label>
-              <input 
-                type="email" 
-                placeholder="hello@example.com"
-                className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-white/20"
-                {...register('email')}
-              />
-              {errors.email && <p className="mt-1.5 text-xs font-medium text-error flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-error" />{errors.email.message}</p>}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-white/90">Password</label>
-                <Link to="/forgot-password" className="text-xs font-medium text-primary hover:text-primary-hover transition-colors">
-                  Forgot password?
-                </Link>
-              </div>
-              <input 
-                type="password" 
-                placeholder="••••••••"
-                className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-white/20"
-                {...register('password')}
-              />
-              {errors.password && <p className="mt-1.5 text-xs font-medium text-error flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-error" />{errors.password.message}</p>}
-            </div>
-
-            <Button type="submit" className="w-full h-12 text-base font-bold rounded-xl mt-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-
-          <div className="mt-8 text-center text-sm text-text-muted">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-white hover:text-primary font-semibold transition-colors">
-              Create one
-            </Link>
+          {/* RIGHT: Cinematic Image */}
+          <div className="hidden lg:block relative bg-[#151515]">
+            <img 
+              src="https://images.unsplash.com/photo-1595769816263-9b910be24d5f?q=80&w=2079&auto=format&fit=crop" 
+              alt="Private Cinema" 
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#080808] to-transparent opacity-80" />
           </div>
         </div>
       </motion.div>

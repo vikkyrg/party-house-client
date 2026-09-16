@@ -1,147 +1,111 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { bookingService } from '../services/bookingService';
-import { useAuthStore } from '../store/authStore';
 import { LoadingState } from '../components/common/LoadingState';
-import { handleApiError } from '../lib/apiClient';
+import { ErrorState } from '../components/common/ErrorState';
 import { Button } from '../components/common/Button';
-import { Calendar, Clock, MapPin, IndianRupee, FileText, Ticket } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Clock, MapPin, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { SEO } from '../components/common/SEO';
 
 export function MyBookingsPage() {
-  const { isAuthenticated } = useAuthStore();
-  const navigate = useNavigate();
-  
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: response, isLoading, error, refetch } = useQuery({
+    queryKey: ['myBookings'],
+    queryFn: () => bookingService.getMyBookings(),
+  });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
+  const bookings = response?.data || [];
+
+  if (isLoading) return <LoadingState message="Retrieving your experiences..." />;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'CONFIRMED': return 'text-success bg-success/10 border-success/20';
+      case 'PENDING': return 'text-pending bg-pending/10 border-pending/20';
+      case 'CANCELLED': return 'text-cancelled bg-cancelled/10 border-cancelled/20';
+      case 'COMPLETED': return 'text-primary bg-primary/10 border-primary/20';
+      default: return 'text-text-muted bg-white/5 border-white/10';
     }
-
-    const fetchBookings = async () => {
-      try {
-        const response = await bookingService.getMyBookings();
-        if (response.success) {
-          setBookings(response.data);
-        }
-      } catch (err) {
-        setError(handleApiError(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBookings();
-  }, [isAuthenticated, navigate]);
-
-  const getStatusBadge = (status) => {
-    const styles = {
-      pending: 'bg-primary/20 text-primary border-primary/30',
-      confirmed: 'bg-green-500/20 text-green-400 border-green-500/30',
-      completed: 'bg-white/10 text-white/70 border-white/20',
-      cancelled: 'bg-error/20 text-error border-error/30'
-    };
-    
-    return (
-      <span className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest border ${styles[status] || styles.pending}`}>
-        {status}
-      </span>
-    );
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 pt-28 relative overflow-hidden">
-      <SEO title="My Bookings | CS Cinemas" />
+    <div className="min-h-screen bg-background pt-32 pb-24">
+      <SEO title="My Cinema Experiences | CS Cinemas" />
 
-      <div className="absolute -left-24 top-1/4 h-[500px] w-[500px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
-
-      <div className="container relative z-10 mx-auto max-w-5xl px-4">
-        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-          <span className="eyebrow mb-4">Bookings</span>
-          <h1 className="text-3xl md:text-5xl font-black text-white font-heading tracking-tight">My Reservations</h1>
-          <p className="mt-3 text-lg text-text-muted">Track every celebration and upcoming private theater booking.</p>
-        </motion.div>
-
-        {loading ? (
-          <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-[28px] border border-white/10 bg-white/[0.03]" />
-            ))}
+      <div className="container mx-auto px-6 md:px-12 max-w-5xl">
+        <div className="mb-12 md:flex justify-between items-end border-b border-white/10 pb-8">
+          <div>
+            <span className="text-[10px] font-sans font-semibold tracking-[0.3em] uppercase text-primary mb-4 block">Reservations</span>
+            <h1 className="text-4xl md:text-5xl font-heading text-white">My Experiences</h1>
           </div>
-        ) : error ? (
-          <div className="rounded-[28px] border border-error/20 bg-error/10 p-8 text-error glass-card">{error}</div>
-        ) : bookings.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-2xl rounded-[30px] border border-white/10 bg-[#141519] p-12 text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/12 text-primary">
-              <Ticket className="h-8 w-8" />
-            </div>
-            <h3 className="mb-3 text-3xl font-bold text-white font-heading">No bookings yet</h3>
-            <p className="mb-8 text-lg text-text-muted">You haven’t planned a premium celebration with us yet.</p>
-            <Button asChild size="lg" className="px-10 font-bold shadow-[0_14px_36px_rgba(214,168,79,0.2)]">
-              <Link to="/theaters">Book a theater</Link>
+          <Button asChild variant="outline" className="mt-6 md:mt-0 border-white/10 hover:border-primary/50 text-white hover:text-primary">
+            <Link to="/theaters">Book Another Screening</Link>
+          </Button>
+        </div>
+
+        {bookings.length === 0 ? (
+          <div className="bg-surface border border-white/5 p-16 text-center">
+            <h3 className="text-2xl font-heading text-white mb-4">No reservations yet.</h3>
+            <p className="text-text-muted font-sans mb-8">Your private cinematic experiences will appear here.</p>
+            <Button asChild className="bg-primary text-background hover:bg-primary-hover">
+              <Link to="/theaters">Explore Theaters</Link>
             </Button>
-          </motion.div>
+          </div>
         ) : (
-          <div className="space-y-6">
-            <AnimatePresence>
-              {bookings.map((booking, i) => (
-                <motion.div
-                  key={booking._id}
-                  initial={{ opacity: 0, y: 22 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="rounded-[30px] border border-white/10 bg-[#141519] p-6 transition-colors hover:border-primary/30 md:p-7"
-                >
-                  <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <div className="mb-3 flex items-center gap-3">
-                        <h3 className="text-2xl font-bold text-white font-heading">{booking.theater?.name || 'Unknown Theater'}</h3>
-                        {getStatusBadge(booking.status)}
-                      </div>
-                      <p className="font-mono text-xs text-text-muted">ID: {booking._id}</p>
+          <div className="grid gap-6">
+            {bookings.map((booking) => (
+              <Link 
+                key={booking._id} 
+                to={`/account/bookings/${booking._id}`}
+                className="group block bg-surface border border-white/5 hover:border-primary/30 transition-colors p-6 md:p-8"
+              >
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className={`px-3 py-1 text-[10px] font-sans font-bold uppercase tracking-widest border ${getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                      <span className="text-xs font-sans text-text-muted">ID: {booking.bookingId}</span>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
-                      <Link to={`/account/bookings/${booking._id}`} className="flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-black shadow-[0_12px_30px_rgba(214,168,79,0.2)] transition hover:-translate-y-0.5">
-                        View details
-                      </Link>
-                      {booking.status === 'confirmed' && (
-                        <a href={`/api/v1/bookings/${booking._id}/invoice`} target="_blank" rel="noreferrer" className="flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-5 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-                          <FileText className="mr-2 h-4 w-4 text-primary" /> Invoice
-                        </a>
-                      )}
+                    <h2 className="text-2xl font-heading text-white mb-4 group-hover:text-primary transition-colors">
+                      {booking.theater?.name || 'Private Theater'}
+                    </h2>
+                    
+                    <div className="flex flex-wrap items-center gap-6 text-sm font-sans text-text-muted">
+                      <span className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        {booking.date ? format(new Date(booking.date), 'MMMM d, yyyy') : 'TBD'}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {booking.timeSlot}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        {booking.theater?.city?.name || booking.theater?.city || 'Bengaluru'}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="mt-6 grid gap-4 border-t border-white/10 pt-5 md:grid-cols-4">
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Date</p>
-                      <p className="flex items-center gap-2 text-white"><Calendar className="h-4 w-4 text-primary" /> {new Date(booking.date).toLocaleDateString()}</p>
+                  <div className="flex items-center justify-between md:flex-col md:items-end md:justify-center border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-8">
+                    <div className="text-left md:text-right">
+                      <p className="text-[10px] font-sans uppercase tracking-[0.2em] text-text-muted mb-1">Total</p>
+                      <p className="text-2xl font-heading text-white">₹{booking.totalPrice}</p>
                     </div>
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Time</p>
-                      <p className="flex items-center gap-2 text-white"><Clock className="h-4 w-4 text-primary" /> {booking.timeSlot}</p>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Location</p>
-                      <p className="flex items-center gap-2 text-white"><MapPin className="h-4 w-4 text-primary" /> {booking.theater?.city?.name || booking.theater?.city || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Amount</p>
-                      <p className="flex items-center gap-2 text-white"><IndianRupee className="h-4 w-4 text-primary" /> {booking.totalAmount}</p>
+                    <div className="hidden md:flex items-center gap-2 mt-4 text-xs font-sans text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      View Details <ArrowRight className="w-4 h-4" />
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </div>
     </div>
   );
 }
-

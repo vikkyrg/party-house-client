@@ -1,67 +1,79 @@
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { SEO } from '../components/common/SEO';
+import { Mail, Phone, MapPin, Instagram, MessageCircle } from 'lucide-react';
 import { Button } from '../components/common/Button';
 
 export function ContactPage() {
   return (
-    <div className="min-h-screen bg-background pb-24 pt-28">
-      <div className="container mx-auto max-w-5xl px-4 md:px-6">
-        <div className="mb-12 text-center">
-          <span className="eyebrow mb-4">Contact</span>
-          <h1 className="text-4xl text-white md:text-5xl">Let’s plan your next premiere.</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-text-muted">
-            We’re here to help with bookings, custom requests, and event planning for your private theater experience.
+    <div className="min-h-screen bg-[#080808] pt-32 pb-24">
+      <SEO title="Contact Us | CS Cinemas" />
+
+      <div className="container mx-auto px-6 md:px-12 max-w-6xl">
+        <div className="max-w-2xl mb-16">
+          <span className="text-[10px] font-sans font-semibold tracking-[0.3em] uppercase text-text-muted mb-4 block">Get in Touch</span>
+          <h1 className="text-4xl md:text-6xl font-heading text-white mb-6">We're here for you.</h1>
+          <p className="text-lg font-sans text-text-muted leading-relaxed">
+            Whether you have questions about booking a private screening, customizing your event, or partnership opportunities, our hospitality team is ready to assist.
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <div className="space-y-5">
-            <div className="glass-card rounded-[28px] p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                <Mail className="h-5 w-5" />
+        <div className="grid lg:grid-cols-2 gap-16 items-start border-t border-white/5 pt-16">
+          <div className="space-y-12">
+            <div>
+              <h3 className="text-2xl font-heading text-white mb-6">Contact Information</h3>
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <Mail className="w-6 h-6 text-primary mt-1" />
+                  <div>
+                    <p className="text-xs font-sans font-bold uppercase tracking-widest text-text-muted mb-1">Email</p>
+                    <a href="mailto:riopartyhouse@gmail.com" className="text-lg font-sans text-white hover:text-primary transition-colors">riopartyhouse@gmail.com</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <Phone className="w-6 h-6 text-primary mt-1" />
+                  <div>
+                    <p className="text-xs font-sans font-bold uppercase tracking-widest text-text-muted mb-1">Phone</p>
+                    <a href="tel:+918147897771" className="text-lg font-sans text-white hover:text-primary transition-colors">+91 8147 897771</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <MapPin className="w-6 h-6 text-primary mt-1" />
+                  <div>
+                    <p className="text-xs font-sans font-bold uppercase tracking-widest text-text-muted mb-1">Office</p>
+                    <p className="text-lg font-sans text-white">3rd Floor, Prestige Towers<br />Bengaluru, Karnataka</p>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-2xl text-white">Email us</h3>
-              <p className="mt-2 text-text-muted">Our team is here for bookings, support, and custom ideas.</p>
-              <a href="mailto:support@cscinemas.com" className="mt-4 inline-block text-primary font-semibold">support@cscinemas.com</a>
             </div>
 
-            <div className="glass-card rounded-[28px] p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                <Phone className="h-5 w-5" />
+            <div>
+              <h3 className="text-2xl font-heading text-white mb-6">Social</h3>
+              <div className="flex gap-4">
+                <a href="#" className="w-12 h-12 border border-white/10 bg-[#151515] flex items-center justify-center text-white hover:border-primary hover:text-primary transition-colors">
+                  <Instagram className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-12 h-12 border border-white/10 bg-[#151515] flex items-center justify-center text-white hover:border-primary hover:text-primary transition-colors">
+                  <MessageCircle className="w-5 h-5" />
+                </a>
               </div>
-              <h3 className="text-2xl text-white">Call us</h3>
-              <p className="mt-2 text-text-muted">Mon–Sat, 10:00 AM to 7:00 PM</p>
-              <a href="tel:+919876543210" className="mt-4 inline-block text-primary font-semibold">+91 8147 897771</a>
-            </div>
-
-            <div className="glass-card rounded-[28px] p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                <MapPin className="h-5 w-5" />
-              </div>
-              <h3 className="text-2xl text-white">Visit</h3>
-              <p className="mt-2 text-text-muted">
-                123 Cinema Road, Koramangala<br />
-                Bengaluru, Karnataka 560034
-              </p>
             </div>
           </div>
 
-          <div className="glass-card rounded-[30px] p-7 md:p-8">
-            <h3 className="text-3xl text-white">Send a message</h3>
-            <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <div className="bg-[#151515] p-8 md:p-12 border border-white/5">
+            <h3 className="text-2xl font-heading text-white mb-8">Send a message</h3>
+            <form className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm font-medium text-text-muted">Name</label>
-                <input type="text" className="h-12 w-full rounded-2xl border border-white/10 bg-[#101014] px-4 text-white outline-none transition focus:border-primary/50" placeholder="Your name" />
+                <label className="block text-sm font-sans text-text-muted mb-2">Name</label>
+                <input type="text" className="w-full h-12 bg-[#1B1B1B] border border-white/10 px-4 text-white focus:outline-none focus:border-[#F5F1E8]" />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-text-muted">Email</label>
-                <input type="email" className="h-12 w-full rounded-2xl border border-white/10 bg-[#101014] px-4 text-white outline-none transition focus:border-primary/50" placeholder="you@example.com" />
+                <label className="block text-sm font-sans text-text-muted mb-2">Email</label>
+                <input type="email" className="w-full h-12 bg-[#1B1B1B] border border-white/10 px-4 text-white focus:outline-none focus:border-[#F5F1E8]" />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-text-muted">Message</label>
-                <textarea className="h-36 w-full resize-none rounded-2xl border border-white/10 bg-[#101014] p-4 text-white outline-none transition focus:border-primary/50" placeholder="How can we help?" />
+                <label className="block text-sm font-sans text-text-muted mb-2">Message</label>
+                <textarea className="w-full h-32 bg-[#1B1B1B] border border-white/10 p-4 text-white focus:outline-none focus:border-[#F5F1E8] resize-none" />
               </div>
-              <Button type="submit" className="h-12 w-full text-base font-semibold">Send message</Button>
+              <Button type="button" className="w-full">Send Message</Button>
             </form>
           </div>
         </div>
