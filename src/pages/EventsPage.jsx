@@ -115,7 +115,7 @@ export function EventsPage() {
                     <img 
                       src={getImageUrl(occasion.image)} 
                       alt={occasion.name} 
-                      className="w-full h-full object-cover opacity-70 group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+                      className="w-full h-full object-cover opacity-100 group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-white/10 group-hover:scale-105 transition-transform duration-[1.5s] ease-out bg-surface-strong">
@@ -123,21 +123,21 @@ export function EventsPage() {
                     </div>
                   )}
                   
-                  {/* Subtle vignette overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/80 transition-colors duration-700" />
+                  {/* Bottom shadow overlay for text legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors duration-700" />
                   
                   <div className="absolute bottom-0 left-0 p-8 w-full flex flex-col justify-end h-full">
                     <h3 className="text-2xl md:text-3xl font-heading text-white mb-3 group-hover:text-primary transition-colors duration-500">{occasion.name}</h3>
                     
                     {occasion.description && (
-                      <p className="text-text-muted font-sans text-sm max-w-sm hidden md:block opacity-80 group-hover:opacity-100 transition-opacity duration-500">
+                      <p className="text-white/80 font-sans text-sm max-w-sm hidden md:block opacity-90 group-hover:opacity-100 transition-opacity duration-500">
                         {occasion.description}
                       </p>
                     )}
                     
                     <Link 
                       to="/theaters" 
-                      className="mt-6 inline-flex items-center gap-2 text-sm font-sans font-medium text-white hover:text-primary transition-all w-fit opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 duration-500"
+                      className="mt-6 inline-flex items-center gap-2 text-sm font-sans font-bold text-white hover:text-white/80 transition-all w-fit opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 duration-500"
                     >
                       Plan this event <ArrowRight className="w-4 h-4" />
                     </Link>

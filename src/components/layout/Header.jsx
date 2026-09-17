@@ -67,11 +67,8 @@ export function Header() {
             <Link to="/" onClick={handleBrandClick} className="flex items-center gap-2 shrink-0">
               <img src="/logo.png" alt="CS Cinemas" className="h-8 w-auto object-contain" />
               <div className="flex flex-col">
-                <span className="text-[12px] leading-[16px] tracking-[0.04em] font-semibold text-primary uppercase">CS Cinemas</span>
-                <span className="flex items-center gap-1 text-on-surface-variant text-[11px] leading-[14px] tracking-[0.06em] font-bold text-left">
-                  <MapPin className="h-3 w-3 text-primary" />
-                  <span>Bengaluru</span>
-                </span>
+                <span className="text-[16px] font-heading font-black tracking-[0.1em] uppercase leading-[1.2] text-[#1a1c21]">Party House</span>
+                <span className="text-[9px] font-sans text-[#a86523] tracking-[0.35em] uppercase mt-0.5 font-bold">CS Cinemas</span>
               </div>
             </Link>
           </div>
