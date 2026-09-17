@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, ChevronDown, PhoneCall, Sparkles } from 'lucide-react';
+import { Calendar, ChevronDown, PhoneCall, Sparkles, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../../services/theaterService';
 import { cityService } from '../../services/cityService';
@@ -38,101 +38,79 @@ export function HeroBookingWidget() {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.8 }}
-      className="w-full max-w-4xl mx-auto mt-12 bg-surface/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-6 relative text-left"
-    >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* City Select */}
-        <div className="relative group">
-          <label className="block text-[10px] font-sans font-bold tracking-[0.2em] uppercase text-text-muted mb-2 px-1">City</label>
-          <div className="relative">
-            <select 
-              value={selectedCity}
-              onChange={(e) => {
-                setSelectedCity(e.target.value);
-                setSelectedLocation('');
-              }}
-              className="w-full appearance-none bg-[#151515] border border-white/10 rounded-xl py-3.5 pl-4 pr-10 text-sm font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer group-hover:border-white/20"
-            >
-              <option value="" className="bg-[#151515]">Select from {cities.length || 9} options</option>
-              {cities.map(city => (
-                <option key={city._id} value={city._id} className="bg-[#151515]">{city.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-hover:text-white transition-colors" />
-          </div>
-        </div>
-
-        {/* Location Select */}
-        <div className="relative group">
-          <label className="block text-[10px] font-sans font-bold tracking-[0.2em] uppercase text-text-muted mb-2 px-1">Location</label>
-          <div className="relative">
-            <select 
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full appearance-none bg-[#151515] border border-white/10 rounded-xl py-3.5 pl-4 pr-10 text-sm font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer group-hover:border-white/20"
-            >
-              <option value="" className="bg-[#151515]">Choose a location</option>
-              {availableLocations.map(theater => (
-                <option key={theater._id} value={theater._id} className="bg-[#151515]">{theater.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-hover:text-white transition-colors" />
-          </div>
-        </div>
-
-        {/* Date Select */}
-        <div className="relative group">
-          <label className="block text-[10px] font-sans font-bold tracking-[0.2em] uppercase text-text-muted mb-2 px-1">Date</label>
-          <div className="relative">
-            <input 
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full appearance-none bg-[#151515] border border-white/10 rounded-xl py-3 pl-4 pr-10 text-sm font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer group-hover:border-white/20 [color-scheme:dark]"
-            />
-            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none group-hover:text-white transition-colors" />
-          </div>
-        </div>
+    <div className="w-full max-w-2xl mt-8">
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <button className="bg-surface-container-lowest text-on-surface font-bold text-sm px-6 py-3 rounded-t-2xl flex items-center gap-2 shadow-sm">
+          <Calendar className="w-4 h-4 text-primary" /> Book a Theater
+        </button>
+        <button className="bg-surface-container/50 text-on-surface-variant font-semibold text-sm px-6 py-3 rounded-t-2xl flex items-center gap-2 hover:bg-surface-container transition-colors">
+          <Sparkles className="w-4 h-4 text-on-surface-variant" /> Plan an Event
+        </button>
+        <button className="bg-surface-container/50 text-on-surface-variant font-semibold text-sm px-6 py-3 rounded-t-2xl flex items-center gap-2 hover:bg-surface-container transition-colors hidden sm:flex">
+          <Users className="w-4 h-4 text-on-surface-variant" /> For Businesses
+        </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+        className="bg-surface-container-lowest rounded-tr-3xl rounded-b-3xl shadow-lg p-3 relative text-left w-full flex flex-col md:flex-row gap-2 border border-surface-container"
+      >
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {/* City Select */}
+          <div className="relative group bg-surface-container-low rounded-2xl p-2 px-3 border border-transparent hover:border-surface-variant transition-colors cursor-pointer">
+            <label className="block font-label-sm text-[10px] font-bold tracking-widest uppercase text-on-surface-variant mb-1">City</label>
+            <div className="relative">
+              <select 
+                value={selectedCity}
+                onChange={(e) => {
+                  setSelectedCity(e.target.value);
+                  setSelectedLocation('');
+                }}
+                className="w-full appearance-none bg-transparent text-sm font-bold text-on-surface focus:outline-none cursor-pointer"
+              >
+                <option value="" className="bg-surface-container-lowest text-on-surface">Bengaluru</option>
+                {cities.map(city => (
+                  <option key={city._id} value={city._id} className="bg-surface-container-lowest">{city.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Date Select */}
+          <div className="relative group bg-surface-container-low rounded-2xl p-2 px-3 border border-transparent hover:border-surface-variant transition-colors cursor-pointer">
+            <label className="block font-label-sm text-[10px] font-bold tracking-widest uppercase text-on-surface-variant mb-1">Date</label>
+            <div className="relative">
+              <input 
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full appearance-none bg-transparent text-sm font-bold text-on-surface focus:outline-none cursor-pointer placeholder:text-on-surface-variant"
+                placeholder="Select date"
+              />
+            </div>
+          </div>
+
+          {/* People Select (Mock) */}
+          <div className="relative group bg-surface-container-low rounded-2xl p-2 px-3 border border-transparent hover:border-surface-variant transition-colors cursor-pointer">
+            <label className="block font-label-sm text-[10px] font-bold tracking-widest uppercase text-on-surface-variant mb-1">People</label>
+            <div className="relative flex items-center justify-between">
+              <span className="text-sm font-bold text-on-surface">2 - 10</span>
+              <ChevronDown className="w-4 h-4 text-primary pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
         <button 
           onClick={handleBookNow}
-          className="flex-1 bg-primary text-background font-sans font-semibold py-4 rounded-xl hover:bg-primary-hover transition-colors shadow-[0_0_15px_rgba(255,215,0,0.15)] hover:shadow-[0_0_25px_rgba(255,215,0,0.3)]"
+          className="bg-primary text-on-primary font-bold text-sm px-8 py-3 rounded-2xl hover:bg-primary-hover transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap mt-2 md:mt-0"
         >
-          Book Now
+          Find Theaters <span className="text-lg leading-none">→</span>
         </button>
-        <button 
-          onClick={() => window.location.href = 'tel:+919876543210'}
-          className="flex-1 bg-transparent border border-white/20 text-white font-sans font-semibold py-4 rounded-xl hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
-        >
-          <PhoneCall className="w-4 h-4" /> Book On Call
-        </button>
-      </div>
-
-      <div className="bg-[#231505] border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-        
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/30 shadow-[0_0_10px_rgba(255,215,0,0.2)]">
-            <Sparkles className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-white font-sans font-bold text-lg leading-tight">218,267</p>
-            <p className="text-white/80 text-xs font-sans font-medium tracking-wide">bookings completed</p>
-          </div>
-        </div>
-        
-        <div className="sm:ml-auto text-left sm:text-right relative z-10">
-          <p className="text-primary text-sm font-sans font-semibold italic drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]">72 People searching right now!</p>
-        </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

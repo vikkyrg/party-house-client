@@ -34,26 +34,50 @@ export function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-32 pb-24 overflow-hidden">
+    <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 relative overflow-hidden font-sans">
       <SEO title="Celebrations & Events | CS Cinemas" />
 
-      <div className="container mx-auto px-6 md:px-12">
+      {/* Background Film Strip SVG (Top Right) */}
+      <div className="absolute top-0 right-0 pointer-events-none overflow-hidden w-[600px] h-[600px] z-0 opacity-40">
+        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+          <g transform="translate(600, 0)">
+            <circle cx="0" cy="0" r="550" fill="none" stroke="#eaddd0" strokeWidth="50" />
+            <circle cx="0" cy="0" r="535" fill="none" stroke="#FAF4ED" strokeWidth="12" strokeDasharray="15 15" />
+            <circle cx="0" cy="0" r="565" fill="none" stroke="#FAF4ED" strokeWidth="12" strokeDasharray="15 15" />
+          </g>
+        </svg>
+      </div>
+
+      {/* Background Film Strip SVG (Bottom Left) */}
+      <div className="absolute bottom-10 -left-20 pointer-events-none overflow-hidden w-[600px] h-[600px] z-0 opacity-40">
+        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+          <g transform="translate(0, 600)">
+            <circle cx="0" cy="0" r="550" fill="none" stroke="#eaddd0" strokeWidth="50" />
+            <circle cx="0" cy="0" r="535" fill="none" stroke="#FAF4ED" strokeWidth="12" strokeDasharray="15 15" />
+            <circle cx="0" cy="0" r="565" fill="none" stroke="#FAF4ED" strokeWidth="12" strokeDasharray="15 15" />
+          </g>
+        </svg>
+      </div>
+
+      <div className="container mx-auto px-6 md:px-12 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-3xl mb-20"
         >
-          <span className="text-[10px] font-sans font-semibold tracking-[0.3em] uppercase text-primary mb-4 block">Occasions</span>
-          <h1 className="text-4xl md:text-6xl font-heading text-white mb-6">Every occasion deserves a screen.</h1>
-          <p className="text-lg font-sans text-text-muted leading-relaxed">
+          <span className="font-sans text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-4 block">OCCASIONS</span>
+          <h1 className="text-[40px] md:text-[56px] font-heading text-[#1a1c21] font-extrabold leading-[1.1] mb-4">
+            Every occasion deserves a <span className="bg-gradient-to-r from-[#d18428] to-[#991c4d] bg-clip-text text-transparent">screen.</span>
+          </h1>
+          <p className="text-[14px] md:text-[15px] font-medium text-[#6b5c52] leading-[1.6]">
             From intimate date nights to grand birthday celebrations, our private theaters provide the perfect canvas for your most memorable moments.
           </p>
         </motion.div>
 
         {occasions.length === 0 ? (
           <div className="bg-surface border border-white/5 p-16 text-center">
-            <h3 className="text-2xl font-heading text-white mb-4">More experiences coming soon</h3>
+            <h3 className="text-2xl font-heading text-[#1a1c21] mb-4">More experiences coming soon</h3>
             <p className="text-text-muted font-sans">We are currently curating new celebration packages.</p>
           </div>
         ) : (
@@ -100,7 +124,7 @@ export function EventsPage() {
                   )}
                   
                   {/* Subtle vignette overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent group-hover:from-background/80 transition-colors duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/80 transition-colors duration-700" />
                   
                   <div className="absolute bottom-0 left-0 p-8 w-full flex flex-col justify-end h-full">
                     <h3 className="text-2xl md:text-3xl font-heading text-white mb-3 group-hover:text-primary transition-colors duration-500">{occasion.name}</h3>
@@ -134,18 +158,17 @@ export function EventsPage() {
         >
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-heading text-white mb-6">Make it entirely yours.</h2>
-              <p className="text-text-muted font-sans leading-relaxed mb-8">
+              <h2 className="text-[32px] md:text-[40px] font-heading text-[#1a1c21] font-bold mb-4">Make it entirely yours.</h2>
+              <p className="text-[14px] md:text-[15px] font-medium text-[#6b5c52] leading-[1.6] mb-8">
                 Our in-house hospitality team provides end-to-end event customization. Add gourmet catering, professional photography, bespoke floral arrangements, and personalized on-screen messaging.
               </p>
-              <Link to="/theaters" className="inline-flex items-center justify-center px-8 h-12 bg-primary text-background font-sans font-medium hover:bg-primary-hover transition-colors shadow-[0_4px_20px_rgba(229,192,123,0.3)] hover:shadow-[0_8px_30px_rgba(229,192,123,0.5)]">
+              <Link to="/theaters" className="inline-flex items-center justify-center px-8 h-12 bg-[#9e6223] text-white font-sans font-medium hover:bg-[#7a4b1b] transition-colors">
                 Book a Screening
               </Link>
             </div>
-            <div className="bg-surface p-12 text-center border border-white/5 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-              <p className="font-heading text-xl text-white italic mb-4 relative z-10">"The perfect blend of luxury hospitality and cinematic magic."</p>
-              <span className="text-xs font-sans text-primary uppercase tracking-widest relative z-10">— Lifestyle Magazine</span>
+            <div className="bg-white p-12 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[24px]">
+              <p className="font-medium text-[16px] text-[#1a1c21] italic mb-6">"The perfect blend of luxury hospitality and cinematic magic."</p>
+              <span className="font-sans text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211]">— LIFESTYLE MAGAZINE</span>
             </div>
           </div>
         </motion.div>

@@ -11,15 +11,15 @@ const Button = React.forwardRef(
 
     const variants = {
       default:
-        'bg-[#F5F1E8] text-[#080808] shadow-sm hover:bg-[#E8DECC] active:scale-[0.98]',
+        'bg-primary text-on-primary shadow-glow hover:bg-primary-container active:scale-[0.98] rounded-full',
       outline:
-        'border border-[#F5F1E8]/20 bg-transparent text-[#F5F1E8] hover:border-[#F5F1E8] hover:bg-[#F5F1E8]/5',
+        'border border-outline bg-transparent text-on-surface hover:bg-surface-container hover:text-primary rounded-full',
       secondary:
-        'bg-[#1B1B1B] text-[#F5F1E8] border border-transparent hover:border-[#F5F1E8]/20',
+        'bg-secondary/10 border border-secondary text-secondary hover:bg-secondary/20 rounded-full',
       ghost:
-        'text-[#A9A39A] hover:text-[#F5F1E8]',
+        'text-on-surface hover:bg-surface-container hover:text-primary rounded-full',
       link:
-        'text-[#F5F1E8] underline-offset-4 hover:underline p-0 h-auto font-medium',
+        'text-primary underline-offset-4 hover:underline p-0 h-auto font-medium',
     };
 
     const sizes = {

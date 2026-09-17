@@ -3,11 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../components/common/Button';
 import { authService } from '../services/authService';
 import { handleApiError } from '../lib/apiClient';
 import { SEO } from '../components/common/SEO';
 import { motion } from 'framer-motion';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -19,6 +19,7 @@ const registerSchema = z.object({
 export function RegisterPage() {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(registerSchema),
@@ -37,100 +38,119 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#080808]">
+    <div className="min-h-screen flex items-center justify-center bg-[#FCF5EB] py-12 font-sans relative overflow-hidden">
       <SEO title="Create Account | CS Cinemas" />
+      
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-[0_4px_15px_rgb(0,0,0,0.05)] text-[#8c5211] hover:bg-[#8c5211] hover:text-white transition-all z-50 group"
+      >
+        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+      </Link>
       
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="container mx-auto px-6 max-w-6xl"
+        className="container mx-auto px-6 max-w-6xl relative z-10"
       >
-        <div className="grid md:grid-cols-2 bg-surface shadow-2xl border border-white/5 overflow-hidden min-h-[600px]">
+        <div className="grid md:grid-cols-2 bg-white rounded-[32px] shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-[#f0e6dd] overflow-hidden min-h-[650px]">
           {/* LEFT: Cinematic Image */}
-          <div className="hidden lg:block relative bg-[#151515]">
+          <div className="hidden md:block relative">
             <img 
-              src="https://images.unsplash.com/photo-1517260739337-6799d239ce83?q=80&w=2070&auto=format&fit=crop" 
+              src="/event_friends.jpg" 
               alt="Private Cinema Experience" 
-              className="absolute inset-0 w-full h-full object-cover opacity-60"
+              className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#080808] to-transparent opacity-80" />
           </div>
 
           {/* RIGHT: Form Panel */}
-          <div className="w-full flex items-center justify-center p-6 md:p-16">
+          <div className="w-full flex items-center justify-center p-8 md:p-16">
             <div className="w-full max-w-md">
-              <Link to="/" className="inline-block mb-12 lg:hidden">
-                <div className="text-xl font-heading text-white tracking-widest uppercase">
+              <Link to="/" className="inline-block mb-10 md:hidden">
+                <div className="text-[12px] font-sans font-bold text-[#8c5211] tracking-[0.2em] uppercase">
                   CS Cinemas
                 </div>
               </Link>
               
               <div className="mb-10">
-                <h1 className="text-3xl font-heading text-white mb-2">Join the premiere.</h1>
-                <p className="text-sm font-sans text-text-muted">Create an account to book your private screenings.</p>
+                <h1 className="text-[32px] md:text-[40px] font-heading text-[#1a1c21] font-extrabold mb-2 leading-tight">Join the premiere.</h1>
+                <p className="text-[15px] font-medium text-[#6b5c52]">Create an account to book your private screenings.</p>
               </div>
 
               {error && (
-                <div className="mb-8 p-4 bg-[#1B1B1B] border-l-2 border-error text-white text-sm font-sans">
+                <div className="mb-8 p-4 bg-[#fff1f2] border-l-4 border-[#e11d48] text-[#be123c] rounded-r-xl text-[14px] font-medium">
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-sans text-text-muted mb-2">Full Name</label>
+                  <label className="block text-[13px] font-bold text-[#1a1c21] mb-2 uppercase tracking-wide">Full Name</label>
                   <input 
                     type="text" 
-                    className="w-full h-12 bg-transparent border-b border-white/20 px-0 text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/20"
+                    className="w-full h-12 bg-[#F9F6F0] border border-[#eaddd0] px-4 text-[#1a1c21] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8c5211]/20 focus:border-[#8c5211] transition-all placeholder:text-[#a6998f] text-[15px] font-medium"
                     placeholder="John Doe"
                     {...register('name')}
                   />
-                  {errors.name && <p className="mt-2 text-xs text-error font-sans">{errors.name.message}</p>}
+                  {errors.name && <p className="mt-2 text-xs text-[#e11d48] font-medium">{errors.name.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-sans text-text-muted mb-2">Email Address</label>
+                  <label className="block text-[13px] font-bold text-[#1a1c21] mb-2 uppercase tracking-wide">Email Address</label>
                   <input 
                     type="email" 
-                    className="w-full h-12 bg-transparent border-b border-white/20 px-0 text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/20"
+                    className="w-full h-12 bg-[#F9F6F0] border border-[#eaddd0] px-4 text-[#1a1c21] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8c5211]/20 focus:border-[#8c5211] transition-all placeholder:text-[#a6998f] text-[15px] font-medium"
                     placeholder="john@example.com"
                     {...register('email')}
                   />
-                  {errors.email && <p className="mt-2 text-xs text-error font-sans">{errors.email.message}</p>}
+                  {errors.email && <p className="mt-2 text-xs text-[#e11d48] font-medium">{errors.email.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-sans text-text-muted mb-2">Phone Number</label>
+                  <label className="block text-[13px] font-bold text-[#1a1c21] mb-2 uppercase tracking-wide">Phone Number</label>
                   <input 
                     type="tel" 
-                    className="w-full h-12 bg-transparent border-b border-white/20 px-0 text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/20"
+                    className="w-full h-12 bg-[#F9F6F0] border border-[#eaddd0] px-4 text-[#1a1c21] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8c5211]/20 focus:border-[#8c5211] transition-all placeholder:text-[#a6998f] text-[15px] font-medium"
                     placeholder="10-digit mobile number"
                     {...register('phone')}
                   />
-                  {errors.phone && <p className="mt-2 text-xs text-error font-sans">{errors.phone.message}</p>}
+                  {errors.phone && <p className="mt-2 text-xs text-[#e11d48] font-medium">{errors.phone.message}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-sans text-text-muted mb-2">Password</label>
-                  <input 
-                    type="password" 
-                    className="w-full h-12 bg-transparent border-b border-white/20 px-0 text-white focus:outline-none focus:border-[#F5F1E8] transition-colors rounded-none placeholder:text-white/20"
-                    placeholder="Create a password"
-                    {...register('password')}
-                  />
-                  {errors.password && <p className="mt-2 text-xs text-error font-sans">{errors.password.message}</p>}
+                  <label className="block text-[13px] font-bold text-[#1a1c21] mb-2 uppercase tracking-wide">Password</label>
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? 'text' : 'password'}
+                      className="w-full h-12 bg-[#F9F6F0] border border-[#eaddd0] px-4 pr-12 text-[#1a1c21] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8c5211]/20 focus:border-[#8c5211] transition-all placeholder:text-[#a6998f] text-[15px] font-medium"
+                      placeholder="Create a password"
+                      {...register('password')}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#a6998f] hover:text-[#8c5211] transition-colors focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="mt-2 text-xs text-[#e11d48] font-medium">{errors.password.message}</p>}
                 </div>
 
-                <Button type="submit" className="w-full mt-8" disabled={isSubmitting}>
+                <button 
+                  type="submit" 
+                  className="w-full h-12 mt-8 bg-[#9e6223] text-white font-bold text-[15px] rounded-xl hover:bg-[#7a4b1b] transition-colors shadow-[0_4px_15px_rgb(158,98,35,0.25)] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed" 
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? 'Creating account...' : 'Create Account'}
-                </Button>
+                </button>
               </form>
 
-              <div className="mt-12 text-center">
-                <p className="text-sm font-sans text-text-muted">
+              <div className="mt-8 text-center">
+                <p className="text-[14px] font-medium text-[#6b5c52]">
                   Already have an account?{' '}
-                  <Link to="/login" className="text-white hover:underline underline-offset-4 transition-colors">
+                  <Link to="/login" className="text-[#8c5211] font-bold hover:underline underline-offset-4 transition-colors">
                     Sign in
                   </Link>
                 </p>

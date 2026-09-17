@@ -54,26 +54,30 @@ export function Header() {
       }}
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-500 border-b ${
+      className={`fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top,0px)] transition-colors duration-500 ${
         isScrolled 
-          ? 'bg-background/90 backdrop-blur-md border-white/5 shadow-lg py-4' 
-          : 'bg-transparent border-transparent py-6'
+          ? 'bg-surface/85 backdrop-blur-xl shadow-[0_1px_12px_rgba(217,119,6,0.06)]' 
+          : 'bg-surface/50 backdrop-blur-sm'
       }`}
     >
-      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8">
-        <div className="flex items-center justify-between">
+      <div className="h-16 w-full max-w-[1440px] mx-auto px-5 md:px-8 flex items-center justify-between gap-2">
           
           {/* BRAND */}
-          <Link to="/" onClick={handleBrandClick} className="flex items-center gap-3 shrink-0">
-            <img src="/logo.png" alt="CS Cinemas" className="h-10 w-auto" />
-            <div className="flex flex-col">
-              <span className="text-lg md:text-xl font-heading text-white tracking-widest uppercase leading-none whitespace-nowrap">Party House</span>
-              <span className="text-[8px] md:text-[10px] font-sans text-primary tracking-[0.3em] uppercase mt-1 whitespace-nowrap">CS Cinemas</span>
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/" onClick={handleBrandClick} className="flex items-center gap-2 shrink-0">
+              <img src="/logo.png" alt="CS Cinemas" className="h-8 w-auto object-contain" />
+              <div className="flex flex-col">
+                <span className="text-[12px] leading-[16px] tracking-[0.04em] font-semibold text-primary uppercase">CS Cinemas</span>
+                <span className="flex items-center gap-1 text-on-surface-variant text-[11px] leading-[14px] tracking-[0.06em] font-bold text-left">
+                  <MapPin className="h-3 w-3 text-primary" />
+                  <span>Bengaluru</span>
+                </span>
+              </div>
+            </Link>
+          </div>
 
           {/* DESKTOP NAV */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => {
               const isActive =
                 location.pathname === link.path ||
@@ -84,8 +88,8 @@ export function Header() {
                   key={link.name}
                   to={link.path}
                   onClick={scrollToTop}
-                  className={`text-sm font-sans tracking-wide transition-colors duration-300 ${
-                    isActive ? 'text-white' : 'text-text-muted hover:text-white'
+                  className={`text-sm font-bold tracking-[0.02em] transition-colors duration-300 ${
+                    isActive ? 'text-primary' : 'text-on-surface hover:text-primary'
                   }`}
                 >
                   {link.name}
@@ -95,25 +99,21 @@ export function Header() {
           </nav>
 
           {/* ACTIONS */}
-          <div className="flex items-center gap-4 md:gap-6 shrink-0">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <Link
-              to="/cities"
-              className="hidden lg:flex items-center gap-1.5 text-xs font-sans tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+              to="/theaters"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-1.5 rounded-full text-[11px] leading-[14px] font-bold tracking-[0.06em] shadow-[0_4px_14px_rgba(217,119,6,0.25)] hover:bg-primary-container transition-colors uppercase"
             >
-              <MapPin className="h-3.5 w-3.5" />
-              <span>Bengaluru</span>
+              Book Mini
             </Link>
 
             {isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center gap-2 text-sm font-sans text-white hover:text-text-muted transition-colors"
+                  className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 hover:bg-primary-container transition-colors"
                 >
-                  <span className="hidden sm:block">{user?.name?.split(' ')[0] || 'Account'}</span>
-                  <div className="h-8 w-8 rounded-full bg-surface-strong border border-white/10 flex items-center justify-center text-xs">
-                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                  </div>
+                  <User className="h-4 w-4 text-on-primary" />
                 </button>
 
                 <AnimatePresence>
@@ -123,31 +123,31 @@ export function Header() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-4 w-56 bg-[#151515] border border-white/10 p-2 shadow-2xl"
+                      className="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-surface-variant rounded-xl p-2 shadow-[0_12px_36px_rgba(38,28,20,0.06),0_4px_12px_rgba(217,119,6,0.08)]"
                     >
-                      <div className="px-4 py-3 border-b border-white/5 mb-2">
-                        <p className="text-sm text-white truncate">{user?.name}</p>
-                        <p className="text-xs text-text-muted truncate mt-1">{user?.email}</p>
+                      <div className="px-4 py-3 border-b border-surface-variant mb-2">
+                        <p className="text-sm font-bold text-on-surface truncate">{user?.name}</p>
+                        <p className="text-xs text-on-surface-variant truncate mt-1">{user?.email}</p>
                       </div>
                       <Link
                         to="/account/profile"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-white/5 hover:text-white transition-colors"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container hover:text-primary rounded-lg transition-colors"
                       >
                         <User className="h-4 w-4" /> Profile
                       </Link>
                       <Link
                         to="/account/bookings"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-white/5 hover:text-white transition-colors"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container hover:text-primary rounded-lg transition-colors"
                       >
                         <History className="h-4 w-4" /> Bookings
                       </Link>
-                      <div className="border-t border-white/5 mt-2 pt-2">
+                      <div className="border-t border-surface-variant mt-2 pt-2">
                         <button
                           onClick={() => {
                             logout();
                             setProfileDropdownOpen(false);
                           }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-error hover:bg-error/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold text-error hover:bg-error-container hover:text-on-error-container rounded-lg transition-colors"
                         >
                           <LogOut className="h-4 w-4" /> Sign Out
                         </button>
@@ -159,14 +159,14 @@ export function Header() {
             ) : (
               <Link
                 to="/login"
-                className="hidden md:inline-flex items-center justify-center px-6 h-10 bg-primary text-background text-sm font-sans font-medium hover:bg-primary-hover transition-colors"
+                className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 hover:bg-primary-container transition-colors"
               >
-                Plan a Screening
+                <User className="h-4 w-4 text-on-primary" />
               </Link>
             )}
 
             <button
-              className="md:hidden text-white"
+              className="md:hidden text-primary"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -174,7 +174,6 @@ export function Header() {
             </button>
           </div>
         </div>
-      </div>
 
       {/* MOBILE MENU */}
       <AnimatePresence>
@@ -183,29 +182,27 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#080808] border-t border-white/5 mt-4"
+            className="md:hidden bg-surface-container-lowest border-t border-surface-variant shadow-lg"
           >
-            <div className="px-6 py-6 space-y-6">
+            <div className="px-5 py-6 space-y-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
                   onClick={scrollToTop}
-                  className="block text-lg font-sans text-text-muted hover:text-white"
+                  className="block text-lg font-bold text-on-surface-variant hover:text-primary transition-colors"
                 >
                   {link.name}
                 </Link>
               ))}
-              {!isAuthenticated && (
-                <div className="pt-4 border-t border-white/5">
-                  <Link
-                    to="/login"
-                    className="flex w-full items-center justify-center h-12 bg-primary text-background text-sm font-medium"
-                  >
-                    Plan a Screening
-                  </Link>
-                </div>
-              )}
+              <div className="pt-4 border-t border-surface-variant flex flex-col gap-3">
+                <Link
+                  to="/theaters"
+                  className="flex w-full items-center justify-center h-12 bg-primary text-on-primary rounded-xl font-bold uppercase tracking-[0.06em] text-[11px] shadow-sm"
+                >
+                  Book Mini
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
