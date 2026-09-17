@@ -59,7 +59,7 @@ export function EventsPage() {
         </svg>
       </div>
 
-      <div className="container mx-auto px-6 md:px-12 relative z-10">
+      <div className="w-full mx-auto px-6 sm:px-12 lg:px-20 xl:px-24 relative z-10 max-w-[1920px]">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

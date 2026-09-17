@@ -22,6 +22,8 @@ import { EventDetailsPage } from '../pages/EventDetailsPage';
 import { OffersPage } from '../pages/OffersPage';
 import { InvoicePage } from '../pages/InvoicePage';
 import { ReviewPage } from '../pages/ReviewPage';
+import { HelpPage } from '../pages/HelpPage';
+import { SitemapPage } from '../pages/SitemapPage';
 
 function RouteErrorElement() {
   const error = useRouteError();
@@ -143,6 +145,14 @@ const router = createBrowserRouter([
       {
         path: 'privacy',
         element: <PrivacyPage />,
+      },
+      {
+        path: 'help',
+        element: <HelpPage />,
+      },
+      {
+        path: 'sitemap',
+        element: <SitemapPage />,
       },
       {
         path: '*',

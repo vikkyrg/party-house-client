@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { useAuthStore } from '../store/authStore';
 import { handleApiError } from '../lib/apiClient';
 import { SEO } from '../components/common/SEO';
 import { motion } from 'framer-motion';
@@ -18,6 +19,8 @@ const registerSchema = z.object({
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { setAuth } = useAuthStore();
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -30,7 +33,15 @@ export function RegisterPage() {
     try {
       const response = await authService.register(data);
       if (response.success) {
-        navigate('/verify-otp', { state: { email: data.email } });
+        if (response.data?.user && response.data?.accessToken) {
+          setAuth(response.data.user, response.data.accessToken);
+        }
+        const returnTo = location.state?.returnTo || '/account/profile';
+        if (location.state?.bookingState) {
+          navigate(returnTo, { state: location.state.bookingState, replace: true });
+        } else {
+          navigate(returnTo, { replace: true });
+        }
       }
     } catch (err) {
       setError(handleApiError(err));
@@ -150,7 +161,7 @@ export function RegisterPage() {
               <div className="mt-8 text-center">
                 <p className="text-[14px] font-medium text-[#6b5c52]">
                   Already have an account?{' '}
-                  <Link to="/login" className="text-[#8c5211] font-bold hover:underline underline-offset-4 transition-colors">
+                  <Link to="/login" state={location.state} className="text-[#8c5211] font-bold hover:underline underline-offset-4 transition-colors">
                     Sign in
                   </Link>
                 </p>

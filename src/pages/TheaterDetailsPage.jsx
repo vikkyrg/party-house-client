@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MapPin, Users, Info, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
+import { getImageUrl } from '../utils/imageUtils';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { Button } from '../components/common/Button';
@@ -61,7 +62,7 @@ export function TheaterDetailsPage() {
 
             <div className="aspect-video bg-surface-container overflow-hidden rounded-2xl relative shadow-md">
               <img 
-                src={theater.images?.[0] || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
+                src={theater.images?.[0] ? getImageUrl(theater.images[0]) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
                 alt={theater.name} 
                 className="w-full h-full object-cover"
               />

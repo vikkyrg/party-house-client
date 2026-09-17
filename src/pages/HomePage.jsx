@@ -243,31 +243,16 @@ export function HomePage() {
                 From romantic date nights to birthdays and special events, our private theaters are designed for every moment that matters.
               </p>
             </div>
-            
-            <div className="flex items-center gap-4">
-              <Link to="/events" className="px-6 py-3 rounded-full border border-[#8c5211] text-[#8c5211] font-bold text-xs uppercase tracking-widest hover:bg-[#8c5211] hover:text-white transition-colors flex items-center gap-2">
-                EXPLORE ALL <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-              </Link>
-              <div className="flex gap-2">
-                <button className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-[#8c5211] hover:bg-[#8c5211] hover:text-white transition-colors">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                </button>
-                <button className="w-10 h-10 rounded-full bg-[#8c5211] flex items-center justify-center text-white hover:bg-[#6b3e0d] transition-colors">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Cards Section */}
-          <motion.div 
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
-          >
-            {[
+          <div className="overflow-hidden w-full relative -mx-4 px-4 pb-8 pt-4 md:-mx-12 md:px-12">
+            <motion.div 
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ repeat: Infinity, ease: "linear", duration: 30 }}
+              className="flex w-max gap-6"
+            >
+              {[...Array(2)].flatMap(() => [
               { 
                 icon: <svg className="w-5 h-5 text-[#8c5211]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
                 title: "Romantic Date Nights", 
@@ -296,9 +281,10 @@ export function HomePage() {
                 img: "/event_corporate.jpg",
                 link: "/events"
               }
-            ].map((item, idx) => (
-              <Link to={item.link} key={idx} className="block group">
-                <motion.div variants={fadeUpVariant} className="relative bg-[#0F1014] rounded-[1.5rem] shadow-lg border border-[#2a2c35] flex flex-col overflow-hidden text-left h-full transition-transform group-hover:-translate-y-1 duration-300">
+              ]).map((item, idx) => (
+                <div key={idx} className="w-[300px] md:w-[320px] shrink-0 h-[440px]">
+                  <Link to={item.link} className="block group h-full">
+                    <div className="relative bg-[#0F1014] rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#2a2c35] flex flex-col overflow-hidden text-left h-full transition-transform group-hover:-translate-y-2 duration-300">
                   
                   {/* Image Section */}
                   <div className="relative h-[200px] w-full overflow-hidden shrink-0">
@@ -323,10 +309,12 @@ export function HomePage() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              </Link>
-            ))}
-          </motion.div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
 

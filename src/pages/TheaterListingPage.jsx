@@ -5,6 +5,7 @@ import { MapPin, Users, ArrowRight, Filter, Heart, Star, ChevronDown, Monitor, C
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
 import { cityService } from '../services/cityService';
+import { getImageUrl } from '../utils/imageUtils';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { Button } from '../components/common/Button';
@@ -158,7 +159,7 @@ export function TheaterListingPage() {
                     {/* Card Image Section */}
                     <div className="h-[220px] overflow-hidden relative">
                       <img 
-                        src={theater.images?.[0] || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
+                        src={theater.images?.[0] ? getImageUrl(theater.images[0]) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
                         alt={theater.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
@@ -171,12 +172,7 @@ export function TheaterListingPage() {
                         </span>
                       </div>
 
-                      {/* Top Right Heart */}
-                      <div className="absolute top-4 right-4">
-                        <button className="w-8 h-8 rounded-full bg-black/40 border border-white/30 flex items-center justify-center text-white hover:bg-black/60 transition-colors backdrop-blur-sm">
-                          <Heart className="w-4 h-4" />
-                        </button>
-                      </div>
+
                     </div>
                     
                     {/* Card Content Section */}
@@ -206,7 +202,7 @@ export function TheaterListingPage() {
                       {/* Card Footer */}
                       <div className="flex items-center justify-between pt-1">
                         <Link 
-                          to={`/theaters/${theater._id}`}
+                          to={`/book/${theater._id}`}
                           onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
                           className="text-[13px] font-bold text-[#8c5211] hover:text-[#5e370b] transition-colors"
                         >
@@ -214,7 +210,7 @@ export function TheaterListingPage() {
                         </Link>
                         
                         <Link 
-                           to={`/theaters/${theater._id}`}
+                           to={`/book/${theater._id}`}
                            onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
                            className="w-8 h-8 rounded-full bg-[#9e6223] text-white flex items-center justify-center hover:bg-[#7a4b1b] transition-colors"
                         >

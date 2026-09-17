@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight, Search, Grid, List, Monitor } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
+import { getImageUrl } from '../utils/imageUtils';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
@@ -177,7 +178,7 @@ export function CitiesPage() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 xl:pl-16"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-6 xl:pl-16"
           >
             {filteredCities.map((city, idx) => (
               <motion.div key={idx} variants={itemVariants} className="group relative h-full">
@@ -188,7 +189,7 @@ export function CitiesPage() {
                     {/* Image Section (Top Half) */}
                     <div className="relative h-[220px] w-full overflow-hidden bg-[#1a1c21] shrink-0">
                       <img 
-                        src={city.image} 
+                        src={getImageUrl(city.image)} 
                         alt={city.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />

@@ -63,12 +63,12 @@ export function Header() {
       <div className="h-16 w-full max-w-[1440px] mx-auto px-5 md:px-8 flex items-center justify-between gap-2">
           
           {/* BRAND */}
-          <div className="flex items-center gap-2">
-            <Link to="/" onClick={handleBrandClick} className="flex items-center gap-2 shrink-0">
-              <img src="/logo.png" alt="CS Cinemas" className="h-8 w-auto object-contain" />
+          <div className="flex items-center gap-3">
+            <Link to="/" onClick={handleBrandClick} className="flex items-center gap-3 shrink-0 group">
+              <img src="/logo.png" alt="CS Cinemas" className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
               <div className="flex flex-col">
-                <span className="text-[16px] font-heading font-black tracking-[0.1em] uppercase leading-[1.2] text-[#1a1c21]">Party House</span>
-                <span className="text-[9px] font-sans text-[#a86523] tracking-[0.35em] uppercase mt-0.5 font-bold">CS Cinemas</span>
+                <span className="text-[20px] font-heading font-black tracking-[0.12em] uppercase leading-[1.1] text-[#1a1c21]">Party House</span>
+                <span className="text-[10px] font-sans text-[#a86523] tracking-[0.35em] uppercase mt-1 font-bold">CS Cinemas</span>
               </div>
             </Link>
           </div>
@@ -101,7 +101,7 @@ export function Header() {
               to="/theaters"
               className="hidden sm:inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-1.5 rounded-full text-[11px] leading-[14px] font-bold tracking-[0.06em] shadow-[0_4px_14px_rgba(217,119,6,0.25)] hover:bg-primary-container transition-colors uppercase"
             >
-              Book Mini
+              Book Mini Theaters
             </Link>
 
             {isAuthenticated ? (
@@ -197,7 +197,7 @@ export function Header() {
                   to="/theaters"
                   className="flex w-full items-center justify-center h-12 bg-primary text-on-primary rounded-xl font-bold uppercase tracking-[0.06em] text-[11px] shadow-sm"
                 >
-                  Book Mini
+                  Book Mini Theaters
                 </Link>
               </div>
             </div>

@@ -131,7 +131,7 @@ export function LoginPage() {
               <div className="mt-10 text-center">
                 <p className="text-[14px] font-medium text-[#6b5c52]">
                   Don't have an account?{' '}
-                  <Link to="/register" className="text-[#8c5211] font-bold hover:underline underline-offset-4 transition-colors">
+                  <Link to="/register" state={location.state} className="text-[#8c5211] font-bold hover:underline underline-offset-4 transition-colors">
                     Create one
                   </Link>
                 </p>
