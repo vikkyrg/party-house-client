@@ -32,13 +32,10 @@ export function HeroBookingWidget() {
   const handleBookNow = () => {
     const params = new URLSearchParams();
     if (selectedCity) params.append('city', selectedCity);
+    if (selectedLocation) params.append('location', selectedLocation);
     if (selectedDate) params.append('date', selectedDate);
 
-    if (selectedLocation) {
-      navigate(`/book/${selectedLocation}?${params.toString()}`);
-    } else {
-      navigate(`/theaters?${params.toString()}`);
-    }
+    navigate(`/theaters?${params.toString()}`);
   };
 
   const handleBookOnCall = () => {

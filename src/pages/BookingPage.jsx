@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { bookingService } from '../services/bookingService';
@@ -9,22 +9,22 @@ import { useAuthStore } from '../store/authStore';
 import { LoadingState } from '../components/common/LoadingState';
 import { BookingStepper } from '../components/booking/BookingStepper';
 import { handleApiError } from '../lib/apiClient';
-import { Check, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, ShieldCheck, MapPin, Calendar, Clock, Edit } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { calculateBookingTotal } from '../utils/bookingCalculator';
 import { getImageUrl } from '../utils/imageUtils';
 
 const STEPS = [
-  { id: 'datetime', title: 'Date & Time' },
+  { id: 'details', title: 'Guest Details' },
   { id: 'occasion', title: 'Occasion' },
   { id: 'addons', title: 'Add-ons' },
-  { id: 'details', title: 'Details' },
   { id: 'review', title: 'Review & Pay' }
 ];
 
 export function BookingPage() {
   const { theaterId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const { user, isAuthenticated } = useAuthStore();
   
@@ -37,13 +37,11 @@ export function BookingPage() {
   const [eventTypes, setEventTypes] = useState([]);
   const [addons, setAddons] = useState([]);
   
-  const [initialDate, setInitialDate] = useState('');
-  const [slotsData, setSlotsData] = useState([]);
-  const [fetchingSlots, setFetchingSlots] = useState(false);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  // Get date and slot from URL
+  const selectedDate = searchParams.get('date');
+  const selectedTimeSlot = searchParams.get('slot');
   
   const [selectedEventType, setSelectedEventType] = useState('');
-  // Object: { addonId: { quantity: number, variantName: string } }
   const [selectedAddons, setSelectedAddons] = useState({}); 
   
   const [customerDetails, setCustomerDetails] = useState({
@@ -59,7 +57,13 @@ export function BookingPage() {
   
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { returnTo: `/book/${theaterId}` } });
+      navigate('/login', { state: { returnTo: `/book/${theaterId}?date=${selectedDate}&slot=${selectedTimeSlot}` } });
+      return;
+    }
+
+    if (!selectedDate || !selectedTimeSlot) {
+      // If accessed without date/slot, redirect to theater details to force selection
+      navigate(`/theaters/${theaterId}`);
       return;
     }
 
@@ -81,38 +85,7 @@ export function BookingPage() {
       }
     };
     fetchData();
-  }, [theaterId, isAuthenticated, navigate]);
-
-  useEffect(() => {
-    if (initialDate && theaterId) {
-      setFetchingSlots(true);
-      setSelectedTimeSlot('');
-      bookingService.checkAvailability({ theaterId, date: initialDate })
-        .then(res => {
-          if (res.success) {
-            const allSlots = [...res.data.availableSlots, ...res.data.bookedSlots];
-            const structured = allSlots.map(s => ({
-              id: s,
-              time: s,
-              available: res.data.availableSlots.includes(s)
-            })).sort((a, b) => {
-              // crude sort for display
-              return a.time.localeCompare(b.time);
-            });
-            setSlotsData(structured);
-          }
-        })
-        .catch(err => {
-          setError('Failed to fetch availability.');
-        })
-        .finally(() => {
-          setFetchingSlots(false);
-        });
-    } else {
-      setSlotsData([]);
-      setSelectedTimeSlot('');
-    }
-  }, [initialDate, theaterId]);
+  }, [theaterId, selectedDate, selectedTimeSlot, isAuthenticated, navigate]);
 
   const handleAddonToggle = (addonId, defaultVariant = '') => {
     setSelectedAddons(prev => {
@@ -152,26 +125,22 @@ export function BookingPage() {
   ), [theater, eventTypes, selectedEventType, selectedAddons, addons]);
 
   const validateStep = () => {
-    if (currentStep === 1 && (!initialDate || !selectedTimeSlot)) {
-      setError('Please select a date and time slot for your booking.');
-      return false;
-    }
-    if (currentStep === 2 && !selectedEventType) {
-      setError('Please select an occasion for your celebration.');
-      return false;
-    }
-    if (currentStep === 4) {
+    if (currentStep === 1) { // Guest Details
       if (!customerDetails.name || !customerDetails.phone) {
         setError('Please provide your name and phone number.');
         return false;
       }
       const totalGuests = Number(customerDetails.members) + Number(customerDetails.kids);
-      if (totalGuests > theater?.capacity) {
-        setError(`Maximum capacity for this theater is ${theater.capacity} guests.`);
+      if (totalGuests > (theater?.capacity || 999)) {
+        setError(`Maximum capacity for this theater is ${theater?.capacity} guests.`);
         return false;
       }
     }
-    if (currentStep === 5 && !termsAccepted) {
+    if (currentStep === 2 && !selectedEventType) { // Occasion
+      setError('Please select an occasion for your celebration.');
+      return false;
+    }
+    if (currentStep === 4 && !termsAccepted) { // Review & Pay
       setError('You must accept the terms and conditions to proceed.');
       return false;
     }
@@ -197,9 +166,19 @@ export function BookingPage() {
     setSubmitting(true);
     setError(null);
     try {
+      // Real-time re-check availability before booking
+      const availRes = await bookingService.checkAvailability(theaterId, selectedDate);
+      if (availRes.success) {
+        if (!availRes.data.availableSlots.includes(selectedTimeSlot)) {
+           setError('This slot is no longer available. Please choose another time.');
+           setSubmitting(false);
+           return;
+        }
+      }
+
       const payload = {
         theaterId,
-        date: initialDate,
+        date: selectedDate,
         timeSlot: selectedTimeSlot,
         eventTypeId: selectedEventType,
         addOns: Object.entries(selectedAddons).map(([id, selection]) => ({ 
@@ -277,12 +256,30 @@ export function BookingPage() {
         
         {/* Main Content Area */}
         <div className="flex-1">
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-            <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-4 block">Reservation</span>
-            <h1 className="text-[36px] md:text-[54px] font-extrabold text-[#1a1c21] font-heading leading-[1.1]">Complete Your <span className="bg-gradient-to-r from-[#d18428] to-[#991c4d] bg-clip-text text-transparent">Experience</span></h1>
+          
+          {/* Booking Context Header */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-4 md:p-6 bg-white border border-[#ecdcd1] rounded-[24px] shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+             <div>
+               <h2 className="text-[20px] font-heading font-extrabold text-[#1a1c21] flex items-center gap-2">
+                 {theater?.name}
+               </h2>
+               <div className="text-[13px] font-bold text-[#8c5211] mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</span>
+                 <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                 <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {selectedTimeSlot}</span>
+               </div>
+             </div>
+             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+               <button onClick={() => navigate('/theaters')} className="px-4 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[12px] font-bold rounded-lg transition border border-[#ecdcd1] flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                 Change Theater
+               </button>
+               <button onClick={() => navigate(`/theaters/${theaterId}?date=${selectedDate}`)} className="px-4 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[12px] font-bold rounded-lg transition border border-[#ecdcd1] flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                 Change Time
+               </button>
+             </div>
           </motion.div>
 
-          <div className="mb-10">
+          <div className="mb-8">
             <BookingStepper steps={STEPS} currentStep={currentStep} />
           </div>
 
@@ -301,61 +298,46 @@ export function BookingPage() {
             <AnimatePresence mode="wait">
               <motion.div key={currentStep} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2, ease: 'easeOut' }}>
                 
-                {/* STEP 1: DATE & TIME */}
+                {/* STEP 1: DETAILS */}
                 {currentStep === 1 && (
                   <div className="space-y-8">
                     <div>
-                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select Date & Time</h2>
-                      <p className="text-[14px] text-[#6b5c52]">When would you like to reserve {theater?.name}?</p>
+                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Guest details</h2>
+                      <p className="text-[14px] text-[#6b5c52]">Maximum capacity for this theater is {theater?.capacity} guests.</p>
                     </div>
-                    
-                    <div className="grid gap-8">
+
+                    <div className="space-y-5">
                       <div>
-                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Select Date *</label>
-                        <input 
-                          type="date" 
-                          min={new Date().toISOString().split('T')[0]}
-                          value={initialDate} 
-                          onChange={(e) => setInitialDate(e.target.value)} 
-                          className="h-12 w-full max-w-sm rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" 
-                        />
+                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Full Name *</label>
+                        <input type="text" value={customerDetails.name} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, name: e.target.value }))} placeholder="John Doe" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                      </div>
+
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Phone Number *</label>
+                          <input type="tel" value={customerDetails.phone} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, phone: e.target.value }))} placeholder="10-digit number" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Email Address</label>
+                          <input type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, email: e.target.value }))} placeholder="For booking receipt" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                        </div>
                       </div>
                       
-                      {initialDate && (
+                      <div className="grid gap-5 md:grid-cols-2">
                         <div>
-                          <label className="mb-4 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Available Slots *</label>
-                          {fetchingSlots ? (
-                            <div className="text-sm text-[#8c5211]">Loading slots...</div>
-                          ) : slotsData.length === 0 ? (
-                            <div className="text-sm text-error">No slots configured for this theater.</div>
-                          ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {slotsData.map(slot => (
-                                <button
-                                  key={slot.id}
-                                  type="button"
-                                  disabled={!slot.available}
-                                  onClick={() => { setSelectedTimeSlot(slot.time); setError(null); }}
-                                  className={`p-4 rounded-xl border text-center transition-all ${
-                                    !slot.available 
-                                      ? 'opacity-50 bg-gray-100 border-gray-200 cursor-not-allowed line-through' 
-                                      : selectedTimeSlot === slot.time
-                                        ? 'border-[#8c5211] bg-[#f9f2eb] shadow-sm ring-1 ring-[#8c5211]'
-                                        : 'border-[#ecdcd1] hover:border-[#8c5211] bg-white'
-                                  }`}
-                                >
-                                  <div className={`text-sm font-bold ${!slot.available ? 'text-gray-500' : selectedTimeSlot === slot.time ? 'text-[#8c5211]' : 'text-[#1a1c21]'}`}>
-                                    {slot.time}
-                                  </div>
-                                  <div className="text-[11px] mt-1 text-gray-500 uppercase font-medium">
-                                    {!slot.available ? 'Full' : 'Available'}
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Number of Members *</label>
+                          <input type="number" min="1" max={theater?.capacity} value={customerDetails.members} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, members: e.target.value }))} className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" />
                         </div>
-                      )}
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Number of Kids</label>
+                          <input type="number" min="0" value={customerDetails.kids} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, kids: e.target.value }))} className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Special Requests</label>
+                        <textarea value={customerDetails.specialRequest} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, specialRequest: e.target.value }))} placeholder="Any setup or décor notes..." className="h-32 w-full resize-none rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] p-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -469,52 +451,8 @@ export function BookingPage() {
                   </div>
                 )}
 
-                {/* STEP 4: DETAILS */}
+                {/* STEP 4: REVIEW */}
                 {currentStep === 4 && (
-                  <div className="space-y-8">
-                    <div>
-                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Guest details</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Maximum capacity for this theater is {theater?.capacity} guests.</p>
-                    </div>
-
-                    <div className="space-y-5">
-                      <div>
-                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Full Name *</label>
-                        <input type="text" value={customerDetails.name} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, name: e.target.value }))} placeholder="John Doe" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                      </div>
-
-                      <div className="grid gap-5 md:grid-cols-2">
-                        <div>
-                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Phone Number *</label>
-                          <input type="tel" value={customerDetails.phone} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, phone: e.target.value }))} placeholder="10-digit number" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                        </div>
-                        <div>
-                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Email Address</label>
-                          <input type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, email: e.target.value }))} placeholder="For booking receipt" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                        </div>
-                      </div>
-                      
-                      <div className="grid gap-5 md:grid-cols-2">
-                        <div>
-                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Number of Members *</label>
-                          <input type="number" min="1" max={theater?.capacity} value={customerDetails.members} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, members: e.target.value }))} className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" />
-                        </div>
-                        <div>
-                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Number of Kids</label>
-                          <input type="number" min="0" value={customerDetails.kids} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, kids: e.target.value }))} className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Special Requests</label>
-                        <textarea value={customerDetails.specialRequest} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, specialRequest: e.target.value }))} placeholder="Any setup or décor notes..." className="h-32 w-full resize-none rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] p-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 5: REVIEW */}
-                {currentStep === 5 && (
                   <div className="space-y-8">
                     <div>
                       <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Review & Confirm</h2>
@@ -525,7 +463,7 @@ export function BookingPage() {
                       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                         <div>
                           <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Date & time</p>
-                          <p className="text-[20px] font-bold text-[#1a1c21]">{initialDate} <span className="mx-2 text-[#8c5211]">|</span> {selectedTimeSlot}</p>
+                          <p className="text-[20px] font-bold text-[#1a1c21]">{selectedDate} <span className="mx-2 text-[#8c5211]">|</span> {selectedTimeSlot}</p>
                           <p className="mt-2 font-medium text-[#6b5c52]">{theater?.name}</p>
                         </div>
                         <div className="inline-flex items-center gap-2 rounded-full bg-[#f9f2eb] px-3 py-1.5 text-[13px] font-bold text-[#8c5211] border border-[#ecdcd1]">
