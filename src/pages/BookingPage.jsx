@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { bookingService } from '../services/bookingService';
 import { paymentService } from '../services/paymentService';
 import { theaterService } from '../services/theaterService';
 import { useAuthStore } from '../store/authStore';
-import { Button } from '../components/common/Button';
 import { LoadingState } from '../components/common/LoadingState';
 import { BookingStepper } from '../components/booking/BookingStepper';
 import { handleApiError } from '../lib/apiClient';
 import { Check, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
+import { calculateBookingTotal } from '../utils/bookingCalculator';
+import { getImageUrl } from '../utils/imageUtils';
 
 const STEPS = [
   { id: 'datetime', title: 'Date & Time' },
@@ -23,7 +24,6 @@ const STEPS = [
 
 export function BookingPage() {
   const { theaterId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   
   const { user, isAuthenticated } = useAuthStore();
@@ -37,25 +37,31 @@ export function BookingPage() {
   const [eventTypes, setEventTypes] = useState([]);
   const [addons, setAddons] = useState([]);
   
-  const [initialDate, setInitialDate] = useState(location.state?.date || '');
-  const [initialTimeSlot, setInitialTimeSlot] = useState(location.state?.timeSlot || '');
+  const [initialDate, setInitialDate] = useState('');
+  const [slotsData, setSlotsData] = useState([]);
+  const [fetchingSlots, setFetchingSlots] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   
   const [selectedEventType, setSelectedEventType] = useState('');
-  const [selectedAddons, setSelectedAddons] = useState({}); // { addonId: quantity }
+  // Object: { addonId: { quantity: number, variantName: string } }
+  const [selectedAddons, setSelectedAddons] = useState({}); 
+  
   const [customerDetails, setCustomerDetails] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
     email: user?.email || '',
+    members: 1,
+    kids: 0,
     specialRequest: ''
   });
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { returnTo: `/book/${theaterId}`, bookingState: location.state } });
+      navigate('/login', { state: { returnTo: `/book/${theaterId}` } });
       return;
     }
-
-    // We no longer require initialDate/initialTimeSlot because we let them select it in step 1
 
     const fetchData = async () => {
       try {
@@ -75,36 +81,78 @@ export function BookingPage() {
       }
     };
     fetchData();
-  }, [theaterId, isAuthenticated, navigate, location.state, initialDate, initialTimeSlot]);
+  }, [theaterId, isAuthenticated, navigate]);
 
-  const handleAddonToggle = (addonId) => {
+  useEffect(() => {
+    if (initialDate && theaterId) {
+      setFetchingSlots(true);
+      setSelectedTimeSlot('');
+      bookingService.checkAvailability({ theaterId, date: initialDate })
+        .then(res => {
+          if (res.success) {
+            const allSlots = [...res.data.availableSlots, ...res.data.bookedSlots];
+            const structured = allSlots.map(s => ({
+              id: s,
+              time: s,
+              available: res.data.availableSlots.includes(s)
+            })).sort((a, b) => {
+              // crude sort for display
+              return a.time.localeCompare(b.time);
+            });
+            setSlotsData(structured);
+          }
+        })
+        .catch(err => {
+          setError('Failed to fetch availability.');
+        })
+        .finally(() => {
+          setFetchingSlots(false);
+        });
+    } else {
+      setSlotsData([]);
+      setSelectedTimeSlot('');
+    }
+  }, [initialDate, theaterId]);
+
+  const handleAddonToggle = (addonId, defaultVariant = '') => {
     setSelectedAddons(prev => {
       const next = { ...prev };
       if (next[addonId]) {
         delete next[addonId];
       } else {
-        next[addonId] = 1;
+        next[addonId] = { quantity: 1, variantName: defaultVariant };
       }
       return next;
     });
   };
 
-  const calculateTotal = () => {
-    let total = theater?.pricePerHour || 0; 
-    
-    const eventType = eventTypes.find(e => e._id === selectedEventType);
-    if (eventType?.price) total += eventType.price;
-    
-    Object.entries(selectedAddons).forEach(([id, qty]) => {
-      const addon = addons.find(a => a._id === id);
-      if (addon) total += addon.price * qty;
+  const handleVariantChange = (addonId, variantName) => {
+    setSelectedAddons(prev => {
+      const next = { ...prev };
+      if (next[addonId]) {
+        next[addonId].variantName = variantName;
+      }
+      return next;
     });
-    
-    return total;
   };
 
+  const {
+    theaterPrice,
+    eventTypePrice,
+    addOnsTotal,
+    subtotal,
+    advanceAmount,
+    balanceAmount,
+    processedAddons
+  } = useMemo(() => calculateBookingTotal(
+    theater, 
+    eventTypes.find(e => e._id === selectedEventType), 
+    selectedAddons, 
+    addons
+  ), [theater, eventTypes, selectedEventType, selectedAddons, addons]);
+
   const validateStep = () => {
-    if (currentStep === 1 && (!initialDate || !initialTimeSlot)) {
+    if (currentStep === 1 && (!initialDate || !selectedTimeSlot)) {
       setError('Please select a date and time slot for your booking.');
       return false;
     }
@@ -112,8 +160,19 @@ export function BookingPage() {
       setError('Please select an occasion for your celebration.');
       return false;
     }
-    if (currentStep === 4 && (!customerDetails.name || !customerDetails.phone)) {
-      setError('Please provide your name and phone number so we can contact you.');
+    if (currentStep === 4) {
+      if (!customerDetails.name || !customerDetails.phone) {
+        setError('Please provide your name and phone number.');
+        return false;
+      }
+      const totalGuests = Number(customerDetails.members) + Number(customerDetails.kids);
+      if (totalGuests > theater?.capacity) {
+        setError(`Maximum capacity for this theater is ${theater.capacity} guests.`);
+        return false;
+      }
+    }
+    if (currentStep === 5 && !termsAccepted) {
+      setError('You must accept the terms and conditions to proceed.');
       return false;
     }
     setError(null);
@@ -141,9 +200,13 @@ export function BookingPage() {
       const payload = {
         theaterId,
         date: initialDate,
-        timeSlot: initialTimeSlot,
+        timeSlot: selectedTimeSlot,
         eventTypeId: selectedEventType,
-        addons: Object.entries(selectedAddons).map(([id, quantity]) => ({ id, quantity })),
+        addOns: Object.entries(selectedAddons).map(([id, selection]) => ({ 
+          id, 
+          quantity: selection.quantity,
+          variantName: selection.variantName
+        })),
         customerDetails
       };
       
@@ -160,7 +223,7 @@ export function BookingPage() {
             amount: amount,
             currency: currency,
             name: 'CS Cinemas',
-            description: `Booking for ${theater?.name}`,
+            description: `Advance Payment for ${theater?.name}`,
             order_id: orderId,
             handler: async function (response) {
               try {
@@ -194,262 +257,380 @@ export function BookingPage() {
     }
   };
 
+  const groupedAddons = useMemo(() => {
+    return addons.reduce((acc, addon) => {
+      const cat = addon.category || 'Other';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(addon);
+      return acc;
+    }, {});
+  }, [addons]);
+
   if (loading) return <LoadingState />;
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[#FCF5EB] pb-20 pt-28 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#FCF5EB] pb-20 pt-28 relative overflow-hidden font-sans flex flex-col">
       <SEO title="Complete Booking | CS Cinemas" />
+      
+      <div className="container relative z-10 mx-auto max-w-6xl px-4 flex flex-col lg:flex-row gap-8">
+        
+        {/* Main Content Area */}
+        <div className="flex-1">
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+            <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-4 block">Reservation</span>
+            <h1 className="text-[36px] md:text-[54px] font-extrabold text-[#1a1c21] font-heading leading-[1.1]">Complete Your <span className="bg-gradient-to-r from-[#d18428] to-[#991c4d] bg-clip-text text-transparent">Experience</span></h1>
+          </motion.div>
 
-      {/* Background Film Strip SVG (Top Right) */}
-      <div className="absolute top-0 right-0 pointer-events-none overflow-hidden w-[600px] h-[600px] z-0 opacity-40">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
-          <g transform="translate(600, 0)">
-            <circle cx="0" cy="0" r="550" fill="none" stroke="#eaddd0" strokeWidth="50" />
-            <circle cx="0" cy="0" r="535" fill="none" stroke="#FAF4ED" strokeWidth="12" strokeDasharray="15 15" />
-            <circle cx="0" cy="0" r="565" fill="none" stroke="#FAF4ED" strokeWidth="12" strokeDasharray="15 15" />
-          </g>
-        </svg>
-      </div>
+          <div className="mb-10">
+            <BookingStepper steps={STEPS} currentStep={currentStep} />
+          </div>
 
-      <div className="container relative z-10 mx-auto max-w-4xl px-4">
-        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
-          <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-4 block">Reservation</span>
-          <h1 className="text-[36px] md:text-[54px] font-extrabold text-[#1a1c21] font-heading leading-[1.1]">Complete Your <span className="bg-gradient-to-r from-[#d18428] to-[#991c4d] bg-clip-text text-transparent">Experience</span></h1>
-          <p className="mt-4 text-[#6b5c52] font-medium text-[14px]">You’re moments away from an unforgettable private screening.</p>
-        </motion.div>
-
-        <div className="mb-10">
-          <BookingStepper steps={STEPS} currentStep={currentStep} />
-        </div>
-
-        <AnimatePresence>
-          {error && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8 overflow-hidden">
-              <div className="flex items-center gap-3 rounded-2xl border border-error/20 bg-error/10 p-4 text-error">
-                <div className="h-2.5 w-2.5 rounded-full bg-error" />
-                <p className="text-sm font-medium">{error}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="bg-white rounded-[32px] border border-[#ecdcd1] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:p-10">
-          <AnimatePresence mode="wait">
-            <motion.div key={currentStep} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2, ease: 'easeOut' }}>
-              {currentStep === 1 && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select Date & Time</h2>
-                    <p className="text-[14px] text-[#6b5c52]">When would you like to reserve the theater?</p>
-                  </div>
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Date *</label>
-                      <input 
-                        type="date" 
-                        value={initialDate} 
-                        onChange={(e) => setInitialDate(e.target.value)} 
-                        className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" 
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Time Slot *</label>
-                      <select 
-                        value={initialTimeSlot} 
-                        onChange={(e) => setInitialTimeSlot(e.target.value)} 
-                        className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 cursor-pointer"
-                      >
-                        <option value="">Select a slot</option>
-                        <option value="10:00 AM - 01:00 PM">10:00 AM - 01:00 PM</option>
-                        <option value="02:00 PM - 05:00 PM">02:00 PM - 05:00 PM</option>
-                        <option value="06:00 PM - 09:00 PM">06:00 PM - 09:00 PM</option>
-                        <option value="09:30 PM - 12:30 AM">09:30 PM - 12:30 AM</option>
-                      </select>
-                    </div>
-                  </div>
+          <AnimatePresence>
+            {error && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8 overflow-hidden">
+                <div className="flex items-center gap-3 rounded-2xl border border-error/20 bg-error/10 p-4 text-error">
+                  <div className="h-2.5 w-2.5 rounded-full bg-error" />
+                  <p className="text-sm font-medium">{error}</p>
                 </div>
-              )}
-
-              {currentStep === 2 && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select occasion</h2>
-                    <p className="text-[14px] text-[#6b5c52]">Choose what you’re celebrating.</p>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {eventTypes.map((type) => (
-                      <button
-                        key={type._id}
-                        onClick={() => {
-                          setSelectedEventType(type._id);
-                          setError(null);
-                        }}
-                        className={`rounded-[24px] border p-5 text-left transition-all duration-300 ${
-                          selectedEventType === type._id
-                            ? 'border-[#8c5211] bg-[#f9f2eb] shadow-sm'
-                            : 'border-[#ecdcd1] bg-white hover:border-[#8c5211]/40 hover:bg-[#F9F6F0]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className={`text-[18px] font-bold ${selectedEventType === type._id ? 'text-[#8c5211]' : 'text-[#1a1c21]'}`}>{type.name}</span>
-                          {type.price > 0 && (
-                            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${selectedEventType === type._id ? 'bg-[#8c5211]/10 text-[#8c5211]' : 'bg-[#F9F6F0] text-[#6b5c52]'}`}>
-                              +₹{type.price}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-3 text-[13px] leading-relaxed text-[#6b5c52]">{type.description || 'Premium private experience tailored for your celebration.'}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Add the finishing touches</h2>
-                    <p className="text-[14px] text-[#6b5c52]">Optional extras to personalize the experience.</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {addons.map((addon) => {
-                      const isSelected = selectedAddons[addon._id];
-                      return (
-                        <div key={addon._id} className={`flex items-center justify-between rounded-[22px] border p-4 md:p-5 transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb]' : 'border-[#ecdcd1] bg-white'}`}>
-                          <div>
-                            <p className="text-[16px] font-bold text-[#1a1c21]">{addon.name}</p>
-                            <p className="mt-1 text-[13px] text-[#8c5211] font-bold">₹{addon.price}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleAddonToggle(addon._id)}
-                            className={`flex h-11 items-center justify-center rounded-xl px-5 text-[13px] font-bold transition-all ${isSelected ? 'bg-[#9e6223] text-white shadow-sm' : 'bg-[#F9F6F0] text-[#1a1c21] hover:bg-[#eaddd0]'}`}
-                          >
-                            {isSelected ? <><Check className="mr-1.5 h-4 w-4" /> Added</> : 'Add'}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 4 && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Guest details</h2>
-                    <p className="text-[14px] text-[#6b5c52]">Tell us who the reservation is for.</p>
-                  </div>
-
-                  <div className="space-y-5">
-                    <div>
-                      <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Full Name *</label>
-                      <input type="text" value={customerDetails.name} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, name: e.target.value }))} placeholder="John Doe" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                    </div>
-
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Phone Number *</label>
-                        <input type="tel" value={customerDetails.phone} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, phone: e.target.value }))} placeholder="10-digit number" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Email Address</label>
-                        <input type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, email: e.target.value }))} placeholder="For booking receipt" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Special Requests</label>
-                      <textarea value={customerDetails.specialRequest} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, specialRequest: e.target.value }))} placeholder="Any setup or décor notes for your celebration..." className="h-32 w-full resize-none rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] p-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 5 && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Review and confirm</h2>
-                    <p className="text-[14px] text-[#6b5c52]">Check the final details before payment.</p>
-                  </div>
-
-                  <div className="space-y-6 rounded-[26px] border border-[#ecdcd1] bg-[#FCF5EB] p-6 shadow-sm">
-                    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                      <div>
-                        <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Date & time</p>
-                        <p className="text-[20px] font-bold text-[#1a1c21]">{initialDate} <span className="mx-2 text-[#8c5211]">|</span> {initialTimeSlot}</p>
-                        <p className="mt-2 font-medium text-[#6b5c52]">{theater?.name}</p>
-                      </div>
-                      <div className="inline-flex items-center gap-2 rounded-full bg-[#f9f2eb] px-3 py-1.5 text-[13px] font-bold text-[#8c5211] border border-[#ecdcd1]">
-                        <ShieldCheck className="h-4 w-4" /> Secure booking
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-[#ecdcd1]" />
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-[14px]">
-                        <span className="text-[#6b5c52] font-medium">Theater base price</span>
-                        <span className="font-bold text-[#1a1c21]">₹{theater?.pricePerHour}</span>
-                      </div>
-
-                      {selectedEventType && eventTypes.find((e) => e._id === selectedEventType)?.price > 0 && (
-                        <div className="flex items-center justify-between text-[14px]">
-                          <span className="text-[#6b5c52] font-medium">{eventTypes.find((e) => e._id === selectedEventType)?.name}</span>
-                          <span className="font-bold text-[#1a1c21]">₹{eventTypes.find((e) => e._id === selectedEventType)?.price}</span>
-                        </div>
-                      )}
-
-                      {Object.entries(selectedAddons).map(([id, qty]) => {
-                        const addon = addons.find((a) => a._id === id);
-                        if (!addon) return null;
-                        return (
-                          <div key={id} className="flex items-center justify-between text-[14px]">
-                            <span className="text-[#6b5c52] font-medium">{addon.name}</span>
-                            <span className="font-bold text-[#1a1c21]">₹{addon.price * qty}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="h-px bg-[#ecdcd1]" />
-
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-[14px] font-bold text-[#1a1c21]">Total amount</p>
-                        <p className="mt-1 text-[12px] font-medium text-[#6b5c52]">Includes all applicable taxes</p>
-                      </div>
-                      <span className="text-[32px] font-extrabold tracking-tight text-[#9e6223] font-heading">₹{calculateTotal()}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </motion.div>
+              </motion.div>
+            )}
           </AnimatePresence>
 
-          <div className="mt-10 flex items-center justify-between border-t border-[#ecdcd1] pt-8">
-            {currentStep > 1 ? (
-              <button type="button" onClick={handleBack} disabled={submitting} className="flex items-center gap-2 px-2 text-[14px] font-bold text-[#6b5c52] transition hover:text-[#9e6223] disabled:opacity-50">
-                <ArrowLeft className="h-4 w-4" /> Back
-              </button>
-            ) : <div />}
+          <div className="bg-white rounded-[32px] border border-[#ecdcd1] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:p-10">
+            <AnimatePresence mode="wait">
+              <motion.div key={currentStep} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2, ease: 'easeOut' }}>
+                
+                {/* STEP 1: DATE & TIME */}
+                {currentStep === 1 && (
+                  <div className="space-y-8">
+                    <div>
+                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select Date & Time</h2>
+                      <p className="text-[14px] text-[#6b5c52]">When would you like to reserve {theater?.name}?</p>
+                    </div>
+                    
+                    <div className="grid gap-8">
+                      <div>
+                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Select Date *</label>
+                        <input 
+                          type="date" 
+                          min={new Date().toISOString().split('T')[0]}
+                          value={initialDate} 
+                          onChange={(e) => setInitialDate(e.target.value)} 
+                          className="h-12 w-full max-w-sm rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" 
+                        />
+                      </div>
+                      
+                      {initialDate && (
+                        <div>
+                          <label className="mb-4 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Available Slots *</label>
+                          {fetchingSlots ? (
+                            <div className="text-sm text-[#8c5211]">Loading slots...</div>
+                          ) : slotsData.length === 0 ? (
+                            <div className="text-sm text-error">No slots configured for this theater.</div>
+                          ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {slotsData.map(slot => (
+                                <button
+                                  key={slot.id}
+                                  type="button"
+                                  disabled={!slot.available}
+                                  onClick={() => { setSelectedTimeSlot(slot.time); setError(null); }}
+                                  className={`p-4 rounded-xl border text-center transition-all ${
+                                    !slot.available 
+                                      ? 'opacity-50 bg-gray-100 border-gray-200 cursor-not-allowed line-through' 
+                                      : selectedTimeSlot === slot.time
+                                        ? 'border-[#8c5211] bg-[#f9f2eb] shadow-sm ring-1 ring-[#8c5211]'
+                                        : 'border-[#ecdcd1] hover:border-[#8c5211] bg-white'
+                                  }`}
+                                >
+                                  <div className={`text-sm font-bold ${!slot.available ? 'text-gray-500' : selectedTimeSlot === slot.time ? 'text-[#8c5211]' : 'text-[#1a1c21]'}`}>
+                                    {slot.time}
+                                  </div>
+                                  <div className="text-[11px] mt-1 text-gray-500 uppercase font-medium">
+                                    {!slot.available ? 'Full' : 'Available'}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-            {currentStep < STEPS.length ? (
-              <button onClick={handleNext} className="h-12 flex items-center justify-center rounded-full bg-[#9e6223] px-8 text-white hover:bg-[#7a4b1b] font-bold text-[14px] transition-colors shadow-sm">
-                Continue <ArrowRight className="ml-2 h-4 w-4" />
-              </button>
-            ) : (
-              <button onClick={handleCreateBooking} disabled={submitting} className="h-12 flex items-center justify-center rounded-full bg-[#9e6223] px-10 text-white hover:bg-[#7a4b1b] font-bold text-[14px] transition-colors shadow-sm">
-                {submitting ? 'Processing...' : 'Pay securely'}
-              </button>
-            )}
+                {/* STEP 2: OCCASION */}
+                {currentStep === 2 && (
+                  <div className="space-y-8">
+                    <div>
+                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select occasion</h2>
+                      <p className="text-[14px] text-[#6b5c52]">Choose what you’re celebrating.</p>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      {eventTypes.map((type) => (
+                        <button
+                          key={type._id}
+                          onClick={() => { setSelectedEventType(type._id); setError(null); }}
+                          className={`relative overflow-hidden rounded-2xl border text-left transition-all duration-300 h-48 group ${
+                            selectedEventType === type._id
+                              ? 'border-[#8c5211] shadow-md ring-2 ring-[#8c5211]'
+                              : 'border-[#ecdcd1] hover:shadow-lg'
+                          }`}
+                        >
+                          <img src={getImageUrl(type.image)} alt={type.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                          <div className="absolute bottom-0 left-0 w-full p-4">
+                            <span className="text-lg font-bold text-white block drop-shadow-md">{type.name}</span>
+                            {type.basePrice > 0 && (
+                              <span className="mt-1 inline-block rounded bg-[#8c5211] px-2 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
+                                +₹{type.basePrice}
+                              </span>
+                            )}
+                          </div>
+                          {selectedEventType === type._id && (
+                            <div className="absolute top-3 right-3 bg-[#8c5211] text-white rounded-full p-1 shadow-md">
+                              <Check className="h-4 w-4" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3: ADD ONS */}
+                {currentStep === 3 && (
+                  <div className="space-y-10">
+                    <div>
+                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Finishing Touches</h2>
+                      <p className="text-[14px] text-[#6b5c52]">Add cakes, decorations, and gifts.</p>
+                    </div>
+
+                    {['Cake', 'Decoration', 'Gift', 'Special Service'].map(cat => {
+                      const catAddons = groupedAddons[cat] || [];
+                      if (catAddons.length === 0) return null;
+                      
+                      return (
+                        <div key={cat} className="space-y-4">
+                          <h3 className="text-lg font-bold font-heading text-[#1a1c21] border-b border-[#ecdcd1] pb-2 uppercase tracking-wider">{cat}s</h3>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {catAddons.map(addon => {
+                              const isSelected = !!selectedAddons[addon._id];
+                              const hasVariants = addon.variants && addon.variants.length > 0;
+                              const currentVariant = selectedAddons[addon._id]?.variantName || (hasVariants ? addon.variants[0].name : '');
+                              const displayPrice = isSelected && hasVariants 
+                                ? addon.variants.find(v => v.name === currentVariant)?.price 
+                                : (addon.price || 0);
+
+                              return (
+                                <div key={addon._id} className={`flex flex-col justify-between rounded-[22px] border p-4 transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb]' : 'border-[#ecdcd1] bg-white'}`}>
+                                  <div className="flex gap-4">
+                                    <div className="h-16 w-16 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
+                                      <img src={getImageUrl(addon.image) || '/placeholder.png'} alt={addon.name} className="h-full w-full object-cover" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-[15px] font-bold text-[#1a1c21]">{addon.name}</p>
+                                      {hasVariants ? (
+                                        <div className="mt-1">
+                                          <select 
+                                            disabled={!isSelected}
+                                            value={currentVariant}
+                                            onChange={(e) => handleVariantChange(addon._id, e.target.value)}
+                                            className="text-[12px] bg-white border border-[#ecdcd1] rounded px-2 py-1 outline-none focus:border-[#8c5211]"
+                                          >
+                                            {addon.variants.map(v => (
+                                              <option key={v.name} value={v.name}>{v.name} - ₹{v.price}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      ) : (
+                                        <p className="mt-1 text-[13px] text-[#8c5211] font-bold">₹{addon.price}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="mt-4 flex justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddonToggle(addon._id, hasVariants ? addon.variants[0].name : '')}
+                                      className={`flex h-10 w-full sm:w-auto items-center justify-center rounded-xl px-5 text-[13px] font-bold transition-all ${isSelected ? 'bg-[#9e6223] text-white shadow-sm' : 'bg-[#F9F6F0] text-[#1a1c21] hover:bg-[#eaddd0]'}`}
+                                    >
+                                      {isSelected ? <><Check className="mr-1.5 h-4 w-4" /> Added (₹{displayPrice})</> : 'Add'}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* STEP 4: DETAILS */}
+                {currentStep === 4 && (
+                  <div className="space-y-8">
+                    <div>
+                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Guest details</h2>
+                      <p className="text-[14px] text-[#6b5c52]">Maximum capacity for this theater is {theater?.capacity} guests.</p>
+                    </div>
+
+                    <div className="space-y-5">
+                      <div>
+                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Full Name *</label>
+                        <input type="text" value={customerDetails.name} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, name: e.target.value }))} placeholder="John Doe" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                      </div>
+
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Phone Number *</label>
+                          <input type="tel" value={customerDetails.phone} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, phone: e.target.value }))} placeholder="10-digit number" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Email Address</label>
+                          <input type="email" value={customerDetails.email} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, email: e.target.value }))} placeholder="For booking receipt" className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                        </div>
+                      </div>
+                      
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Number of Members *</label>
+                          <input type="number" min="1" max={theater?.capacity} value={customerDetails.members} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, members: e.target.value }))} className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Number of Kids</label>
+                          <input type="number" min="0" value={customerDetails.kids} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, kids: e.target.value }))} className="h-12 w-full rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] px-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Special Requests</label>
+                        <textarea value={customerDetails.specialRequest} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, specialRequest: e.target.value }))} placeholder="Any setup or décor notes..." className="h-32 w-full resize-none rounded-xl border border-[#ecdcd1] bg-[#F9F6F0] p-4 text-[#1a1c21] font-medium outline-none transition focus:border-[#8c5211] focus:ring-1 focus:ring-[#8c5211]/20 placeholder:text-[#a6998f]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 5: REVIEW */}
+                {currentStep === 5 && (
+                  <div className="space-y-8">
+                    <div>
+                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Review & Confirm</h2>
+                      <p className="text-[14px] text-[#6b5c52]">Check your booking details carefully.</p>
+                    </div>
+
+                    <div className="space-y-6 rounded-[26px] border border-[#ecdcd1] bg-[#FCF5EB] p-6 shadow-sm">
+                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                        <div>
+                          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Date & time</p>
+                          <p className="text-[20px] font-bold text-[#1a1c21]">{initialDate} <span className="mx-2 text-[#8c5211]">|</span> {selectedTimeSlot}</p>
+                          <p className="mt-2 font-medium text-[#6b5c52]">{theater?.name}</p>
+                        </div>
+                        <div className="inline-flex items-center gap-2 rounded-full bg-[#f9f2eb] px-3 py-1.5 text-[13px] font-bold text-[#8c5211] border border-[#ecdcd1]">
+                          <ShieldCheck className="h-4 w-4" /> Secure booking
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-[#ecdcd1]" />
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211] mb-2">Guest Details</p>
+                          <p className="font-bold text-[#1a1c21]">{customerDetails.name}</p>
+                          <p className="text-sm text-[#6b5c52]">{customerDetails.phone}</p>
+                          <p className="text-sm text-[#6b5c52]">{customerDetails.members} Members, {customerDetails.kids} Kids</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211] mb-2">Occasion</p>
+                          <p className="font-bold text-[#1a1c21]">{eventTypes.find(e => e._id === selectedEventType)?.name}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="h-px bg-[#ecdcd1]" />
+
+                      <div>
+                        <label className="flex items-start gap-3 cursor-pointer mt-4">
+                          <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} className="mt-1 h-4 w-4 rounded border-[#ecdcd1] text-[#9e6223] focus:ring-[#9e6223]" />
+                          <span className="text-[13px] text-[#6b5c52]">I agree to the <a href="/terms" target="_blank" className="text-[#9e6223] underline">Terms & Conditions</a> and cancellation policy.</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="mt-10 flex items-center justify-between border-t border-[#ecdcd1] pt-8">
+              {currentStep > 1 ? (
+                <button type="button" onClick={handleBack} disabled={submitting} className="flex items-center gap-2 px-2 text-[14px] font-bold text-[#6b5c52] transition hover:text-[#9e6223] disabled:opacity-50">
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </button>
+              ) : <div />}
+
+              {currentStep < STEPS.length ? (
+                <button onClick={handleNext} className="h-12 flex items-center justify-center rounded-full bg-[#9e6223] px-8 text-white hover:bg-[#7a4b1b] font-bold text-[14px] transition-colors shadow-sm">
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </button>
+              ) : (
+                <button onClick={handleCreateBooking} disabled={submitting} className="h-12 flex items-center justify-center rounded-full bg-[#9e6223] px-10 text-white hover:bg-[#7a4b1b] font-bold text-[14px] transition-colors shadow-sm">
+                  {submitting ? 'Processing...' : `Pay Advance ₹${advanceAmount}`}
+                </button>
+              )}
+            </div>
           </div>
         </div>
+        
+        {/* Sticky Booking Summary on Desktop */}
+        <div className="lg:w-80 shrink-0">
+          <div className="sticky top-28 bg-white rounded-[24px] border border-[#ecdcd1] p-6 shadow-sm overflow-hidden">
+            <h3 className="text-[18px] font-bold font-heading text-[#1a1c21] mb-6">Booking Summary</h3>
+            
+            <div className="space-y-4 text-[14px]">
+              <div className="flex justify-between items-center">
+                <span className="text-[#6b5c52]">Theater Base</span>
+                <span className="font-bold text-[#1a1c21]">₹{theaterPrice}</span>
+              </div>
+              
+              {selectedEventType && eventTypePrice > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[#6b5c52]">{eventTypes.find(e => e._id === selectedEventType)?.name}</span>
+                  <span className="font-bold text-[#1a1c21]">₹{eventTypePrice}</span>
+                </div>
+              )}
+              
+              {processedAddons.map((addon) => (
+                <div key={addon._id} className="flex justify-between items-start border-t border-dashed border-[#ecdcd1] pt-3 mt-3">
+                  <div className="flex flex-col">
+                    <span className="text-[#6b5c52]">{addon.name}</span>
+                    {addon.selectedVariant && <span className="text-[11px] text-[#8c5211] font-medium">{addon.selectedVariant}</span>}
+                  </div>
+                  <span className="font-bold text-[#1a1c21]">₹{addon.total}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-[#ecdcd1]">
+              <div className="flex justify-between items-end mb-4">
+                <span className="text-[14px] font-bold text-[#1a1c21]">Subtotal</span>
+                <span className="text-[20px] font-bold text-[#1a1c21]">₹{subtotal}</span>
+              </div>
+              <div className="bg-[#f9f2eb] rounded-xl p-4 border border-[#ecdcd1]/50">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[13px] font-bold text-[#9e6223]">Advance Payable</span>
+                  <span className="text-[18px] font-extrabold text-[#9e6223]">₹{advanceAmount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#6b5c52]">Balance Amount</span>
+                  <span className="text-[12px] font-bold text-[#6b5c52]">₹{balanceAmount}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
       </div>
     </div>
   );
 }
-

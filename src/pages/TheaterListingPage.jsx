@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MapPin, Users, ArrowRight, Filter, Heart, Star, ChevronDown, Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
@@ -12,7 +12,9 @@ import { Button } from '../components/common/Button';
 import { SEO } from '../components/common/SEO';
 
 export function TheaterListingPage() {
-  const [selectedCity, setSelectedCity] = useState('');
+  const [searchParams] = useSearchParams();
+  const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || '');
+  const selectedDate = searchParams.get('date');
 
   const { data: theatersResponse, isLoading: isLoadingTheaters, error: theatersError } = useQuery({
     queryKey: ['theaters'],
@@ -202,7 +204,8 @@ export function TheaterListingPage() {
                       {/* Card Footer */}
                       <div className="flex items-center justify-between pt-1">
                         <Link 
-                          to={`/book/${theater._id}`}
+                          to={`/theaters/${theater._id}`}
+                          state={{ date: selectedDate }}
                           onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
                           className="text-[13px] font-bold text-[#8c5211] hover:text-[#5e370b] transition-colors"
                         >
@@ -211,6 +214,7 @@ export function TheaterListingPage() {
                         
                         <Link 
                            to={`/book/${theater._id}`}
+                           state={{ date: selectedDate }}
                            onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
                            className="w-8 h-8 rounded-full bg-[#9e6223] text-white flex items-center justify-center hover:bg-[#7a4b1b] transition-colors"
                         >

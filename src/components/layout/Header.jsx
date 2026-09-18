@@ -143,13 +143,13 @@ export function Header() {
                   )}
 
                   {link.dropdownId === 'learn' && activeDropdown === 'learn' && (
-                    <div className="absolute top-[70px] left-0 w-56 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-[70px] left-0 w-64 bg-white border border-[#f0e6dd] rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden py-3 animate-in fade-in slide-in-from-top-2 duration-200">
                       {learnLinks.map((learnLink) => (
                         <Link
                           key={learnLink.name}
                           to={learnLink.path}
                           onClick={scrollToTop}
-                          className="block px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#322a59] transition-colors"
+                          className="block px-6 py-2.5 text-[15px] font-medium text-[#4a403a] hover:bg-[#FCF5EB] hover:text-[#8c5211] hover:pl-8 transition-all duration-300"
                         >
                           {learnLink.name}
                         </Link>

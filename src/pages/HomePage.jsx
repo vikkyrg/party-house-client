@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Play, Sparkles, MapPin, Calendar, Users, Star } from 'lucide-react';
+import { Play, Sparkles, MapPin, Calendar, Users, Star, Film, Lock, Heart } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { SEO } from '../components/common/SEO';
 import { useState, useEffect } from 'react';
@@ -44,12 +44,11 @@ export function HomePage() {
       <SEO title="CS Cinemas | Premium Private Screenings" />
 
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden pt-24 pb-12 bg-surface-container-low">
+      <section className="relative pt-32 pb-20 overflow-hidden flex items-center justify-center">
         
-        {/* Right side banner image */}
-        <div className="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 pointer-events-none">
-          <div className="absolute inset-y-0 left-0 w-[40%] bg-gradient-to-r from-surface-container-low to-transparent z-10 hidden lg:block" />
-          <div className="absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-t from-surface-container-low to-transparent z-10 lg:hidden" />
+        {/* Full-width background image */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-black/60 z-10" />
           <AnimatePresence mode="wait">
             {banners.length > 0 ? (
               <motion.img 
@@ -72,40 +71,46 @@ export function HomePage() {
           </AnimatePresence>
         </div>
 
-        <div className="container mx-auto px-6 z-10 pt-8">
-          <div className="grid lg:grid-cols-12 gap-8 items-center">
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-              className="lg:col-span-7 xl:col-span-6 text-left"
-            >
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-[2px] w-8 bg-[#8c5211]"></div>
-                <span className="font-sans text-[11px] uppercase tracking-widest font-bold text-[#8c5211]">BENGALURU'S #1 BOUTIQUE MINI THEATERS</span>
-              </div>
-              
-              <h1 className="text-5xl md:text-7xl font-heading text-[#1a1c21] mb-6 leading-[1.1] tracking-tight font-black">
-                Big Moments <br/>
-                Deserve a <br/>
-                <span className="text-[#a46422]">Private </span>
-                <span className="text-[#B04A55]">Screen</span>
-              </h1>
-              
-              <p className="text-base md:text-[15px] font-sans text-[#6b5c52] mb-10 max-w-xl font-medium leading-[1.6]">
-                Experience 4K Dolby Atmos mini-theaters for romantic dates, epic birthday bashes, binge nights, and live gaming tournaments. 100% private to you and your crew.
-              </p>
-            </motion.div>
-          </div>
+        <div className="container mx-auto px-4 z-20 flex flex-col items-center justify-center relative">
           
-          {/* Full-width booking widget */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-            className="w-full mt-4"
+            transition={{ duration: 1.0, ease: "easeOut" }}
+            className="text-center mb-8 w-full px-2"
+          >
+            <h1 className="text-4xl md:text-5xl lg:text-[64px] font-heading text-white font-black leading-[1.15] mb-4 tracking-tight">
+              India's Best Private Theatre Venue <br className="hidden md:block" />
+              for <span className="text-[#f2b7a5]">Celebrations</span>
+            </h1>
+            <p className="text-[16px] md:text-xl text-white/90 font-sans font-medium">
+              Book Your Perfect Celebration: Birthdays, Anniversaries, Date Nights & More!
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="w-full max-w-[800px]"
           >
             <HeroBookingWidget />
+          </motion.div>
+
+          {/* Features Strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            className="mt-8 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/90 font-bold text-[11px] md:text-[13px] uppercase tracking-wider"
+          >
+            <span className="flex items-center gap-2"><Film className="w-4 h-4 md:w-5 md:h-5"/> 4K Dolby Atmos</span>
+            <span className="hidden md:block w-px h-5 bg-white/30"></span>
+            <span className="flex items-center gap-2"><Lock className="w-4 h-4 md:w-5 md:h-5"/> 100% Private</span>
+            <span className="hidden md:block w-px h-5 bg-white/30"></span>
+            <span className="flex items-center gap-2"><Users className="w-4 h-4 md:w-5 md:h-5"/> Custom Setup</span>
+            <span className="hidden md:block w-px h-5 bg-white/30"></span>
+            <span className="flex items-center gap-2"><Heart className="w-4 h-4 md:w-5 md:h-5"/> Memories Forever</span>
           </motion.div>
         </div>
       </section>

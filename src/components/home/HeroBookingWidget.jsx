@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, ChevronDown, PhoneCall, Sparkles, Users } from 'lucide-react';
+import { Calendar, ChevronDown, PhoneCall, Sparkles, Users, MapPin, Building2, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../../services/theaterService';
 import { cityService } from '../../services/cityService';
@@ -30,104 +30,111 @@ export function HeroBookingWidget() {
   }, [theaters, selectedCity]);
 
   const handleBookNow = () => {
+    const params = new URLSearchParams();
+    if (selectedCity) params.append('city', selectedCity);
+    if (selectedDate) params.append('date', selectedDate);
+
     if (selectedLocation) {
-      navigate(`/theaters/${selectedLocation}`);
+      navigate(`/book/${selectedLocation}?${params.toString()}`);
     } else {
-      navigate(`/theaters?city=${selectedCity}`);
+      navigate(`/theaters?${params.toString()}`);
     }
   };
 
+  const handleBookOnCall = () => {
+    window.location.href = "tel:+918000000000"; // Placeholder phone number
+  };
+
   return (
-    <div className="w-full mt-8 bg-[#FAF4ED] p-2 rounded-[2rem] shadow-sm border border-[#f0e6dd]">
-      {/* Tabs */}
-      <div className="flex gap-2 mb-2 px-2 pt-2">
-        <button className="bg-[#9e6223] text-white font-bold text-[13px] px-6 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
-          Book a Theater
-        </button>
-        <button onClick={() => navigate('/events')} className="bg-transparent text-[#6b5c52] font-bold text-[13px] px-6 py-2.5 rounded-full flex items-center gap-2 hover:bg-[#F0E6DD] transition-colors">
-          <Sparkles className="w-4 h-4" /> Plan an Event
-        </button>
-        <button onClick={() => navigate('/contact')} className="bg-transparent text-[#6b5c52] font-bold text-[13px] px-6 py-2.5 rounded-full flex items-center gap-2 hover:bg-[#F0E6DD] transition-colors hidden sm:flex">
-          <Users className="w-4 h-4" /> For Businesses
-        </button>
-      </div>
-
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-        className="bg-[#FAF4ED] rounded-[2rem] p-1 flex flex-col md:flex-row gap-2 relative text-left w-full"
-      >
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {/* City */}
-          <div className="relative group bg-[#F4EBE1] rounded-[1.5rem] p-3 px-4 flex items-center gap-3 cursor-pointer border border-transparent hover:border-[#eaddd0] transition-colors">
-            <div className="flex flex-col w-full">
-              <label className="block text-[9px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5">City</label>
-              <div className="relative w-full">
-                <select 
-                  value={selectedCity}
-                  onChange={(e) => {
-                    setSelectedCity(e.target.value);
-                    setSelectedLocation('');
-                  }}
-                  className="w-full appearance-none bg-transparent text-[13px] font-medium text-[#1a1c21] focus:outline-none cursor-pointer"
-                >
-                  <option value="" className="bg-white">Bengaluru</option>
-                  {cities.map(city => (
-                    <option key={city._id} value={city._id} className="bg-white">{city.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8c5211] pointer-events-none" />
-              </div>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.6 }}
+      className="w-full max-w-[800px] mx-auto mt-6 bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden text-left font-sans border border-[#f0e6dd]"
+    >
+      <div className="p-4 md:p-6">
+        
+        {/* Inputs Stack */}
+        <div className="space-y-3">
+          
+          {/* City Select */}
+          <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
+            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
+              <MapPin className="w-3 h-3" /> CITY
+            </label>
+            <div className="relative w-full">
+              <select 
+                value={selectedCity}
+                onChange={(e) => {
+                  setSelectedCity(e.target.value);
+                  setSelectedLocation('');
+                }}
+                className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
+              >
+                <option value="">{`Select from ${cities.length} options`}</option>
+                {cities.map(city => (
+                  <option key={city._id} value={city._id}>{city.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] pointer-events-none" />
             </div>
           </div>
 
-          {/* Location */}
-          <div className="relative group bg-[#F4EBE1] rounded-[1.5rem] p-3 px-4 flex items-center gap-3 cursor-pointer border border-transparent hover:border-[#eaddd0] transition-colors">
-            <div className="flex flex-col w-full">
-              <label className="block text-[9px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5">Location</label>
-              <div className="relative w-full">
-                <select 
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="w-full appearance-none bg-transparent text-[13px] font-medium text-[#1a1c21] focus:outline-none cursor-pointer"
-                >
-                  <option value="" className="bg-white">Choose a location</option>
-                  {availableLocations.map(t => (
-                    <option key={t._id} value={t._id} className="bg-white">{t.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8c5211] pointer-events-none" />
-              </div>
+          {/* Location Select */}
+          <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
+            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
+              <Building2 className="w-3 h-3" /> LOCATION
+            </label>
+            <div className="relative w-full">
+              <select 
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
+              >
+                <option value="">Choose a location</option>
+                {availableLocations.map(t => (
+                  <option key={t._id} value={t._id}>{t.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] pointer-events-none" />
             </div>
           </div>
 
-          {/* Date */}
-          <div className="relative group bg-[#F4EBE1] rounded-[1.5rem] p-3 px-4 flex items-center gap-3 cursor-pointer border border-transparent hover:border-[#eaddd0] transition-colors">
-            <div className="flex flex-col w-full">
-              <label className="block text-[9px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5">Date</label>
-              <div className="relative w-full">
-                <input 
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full appearance-none bg-transparent text-[13px] font-medium text-[#1a1c21] focus:outline-none cursor-pointer"
-                />
-              </div>
+          {/* Date Select */}
+          <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
+            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
+              <Calendar className="w-3 h-3" /> DATE
+            </label>
+            <div className="relative w-full">
+              <input 
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
+              />
             </div>
           </div>
-
 
         </div>
 
-        <button 
-          onClick={handleBookNow}
-          className="bg-[#8c5211] text-white font-bold text-[13px] px-8 py-3 rounded-[1.5rem] hover:bg-[#6b3e0d] transition-colors flex items-center justify-center gap-2 whitespace-nowrap mt-2 md:mt-0"
-        >
-          Find Theaters <span className="text-lg leading-none">→</span>
-        </button>
-      </motion.div>
-    </div>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+          <button 
+            onClick={handleBookNow}
+            className="bg-[#7a420b] text-white font-bold text-[15px] py-4 rounded-xl shadow-md hover:bg-[#5e3208] transition-colors flex items-center justify-center gap-2"
+          >
+            Book Now
+          </button>
+          
+          <button 
+            onClick={handleBookOnCall}
+            className="bg-white border-2 border-[#7a420b] text-[#7a420b] font-bold text-[15px] py-4 rounded-xl shadow-sm hover:bg-[#faf4ed] transition-colors flex items-center justify-center gap-2"
+          >
+            <Phone className="w-4 h-4" /> Book On Call
+          </button>
+        </div>
+
+      </div>
+    </motion.div>
   );
 }

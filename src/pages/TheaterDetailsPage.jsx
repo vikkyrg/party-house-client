@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, Users, Info, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,6 +11,8 @@ import { SEO } from '../components/common/SEO';
 
 export function TheaterDetailsPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const selectedDate = searchParams.get('date');
 
   const { data: response, isLoading, error } = useQuery({
     queryKey: ['theater', id],
@@ -128,7 +130,9 @@ export function TheaterDetailsPage() {
               </div>
 
               <Button asChild className="w-full">
-                <Link to={`/booking?theater=${theater._id}`}>Reserve this space</Link>
+                <Link to={`/book/${theater._id}`} state={{ date: selectedDate }}>
+                  Reserve this space
+                </Link>
               </Button>
             </motion.div>
           </div>

@@ -31,6 +31,9 @@ import { GalleryPage } from '../pages/GalleryPage';
 import { BlogsPage } from '../pages/BlogsPage';
 import { StoryDetailPage } from '../pages/StoryDetailPage';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
+import { AboutPage } from '../pages/AboutPage';
+import { FoundersPage } from '../pages/FoundersPage';
+import { ListYourVenuePage } from '../pages/ListYourVenuePage';
 
 function RouteErrorElement() {
   const error = useRouteError();
@@ -180,14 +183,14 @@ const router = createBrowserRouter([
         element: <StoryDetailPage />,
       },
 
-      // Placeholder pages for dropdown
+      // Dropdown pages
       {
         path: 'about',
-        element: <PlaceholderPage title="About Us" />,
+        element: <AboutPage />,
       },
       {
         path: 'founders',
-        element: <PlaceholderPage title="Founders" />,
+        element: <FoundersPage />,
       },
       {
         path: 'franchise',
@@ -195,7 +198,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'list-venue',
-        element: <PlaceholderPage title="List Your Venue" />,
+        element: <ListYourVenuePage />,
       },
       {
         path: 'refund-policy',

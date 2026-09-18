@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { useQuery } from '@tanstack/react-query';
 import { contentService } from '../services/contentService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function ContactPage() {
   return null; // Note: ContactPage is now exported from its own file.
 }
 
 export function FaqPage() {
+  const [openIndex, setOpenIndex] = useState(null);
+
   const { data: faqsRes, isLoading } = useQuery({
     queryKey: ['faqs'],
     queryFn: () => contentService.getFaqs(),
@@ -16,25 +20,50 @@ export function FaqPage() {
 
   const faqs = faqsRes?.data || [];
 
+  const toggleFaq = (index) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
     <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 relative overflow-hidden font-sans">
       <div className="container mx-auto px-6 md:px-12 max-w-3xl relative z-10">
-        <span className="font-sans text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-4 block text-center">HELP CENTER</span>
-        <h1 className="text-[40px] md:text-[48px] font-heading text-[#1a1c21] font-extrabold mb-4 text-center leading-tight">
-          Frequently Asked Questions
+        <h1 className="text-[40px] md:text-[48px] font-heading text-[#1a1c21] font-extrabold mb-12 text-center leading-tight">
+          FAQs
         </h1>
-        <p className="text-[15px] font-medium text-[#6b5c52] text-center mb-12">
-          Everything you need to know about celebrating with us.
-        </p>
 
         <div className="space-y-4">
           {isLoading ? (
             <div className="text-center p-8 text-[#6b5c52] font-medium">Loading FAQs...</div>
           ) : faqs.length > 0 ? (
             faqs.map((faq, i) => (
-              <div key={faq._id || i} className="bg-white p-6 md:p-8 rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-[#f0e6dd]">
-                <h3 className="text-[18px] font-bold mb-3 text-[#1a1c21]">{faq.question}</h3>
-                <p className="text-[14px] font-medium text-[#6b5c52] leading-[1.6]">{faq.answer}</p>
+              <div key={faq._id || i} className="bg-white rounded-[16px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-[#f0e6dd] overflow-hidden">
+                <button
+                  onClick={() => toggleFaq(i)}
+                  className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors"
+                >
+                  <h3 className="text-[16px] md:text-[18px] font-bold text-[#1a1c21] pr-8">{faq.question}</h3>
+                  <div className="shrink-0 text-[#1a1c21]">
+                    {openIndex === i ? (
+                      <ArrowUp className="w-5 h-5" strokeWidth={2} />
+                    ) : (
+                      <ArrowDown className="w-5 h-5" strokeWidth={2} />
+                    )}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {openIndex === i && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="px-6 pb-6 pt-2">
+                        <p className="text-[15px] font-medium text-[#6b5c52] leading-[1.6]">{faq.answer}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))
           ) : (
@@ -44,7 +73,7 @@ export function FaqPage() {
           )}
         </div>
 
-        <div className="mt-12 text-center p-8 bg-[#f4e6d9] rounded-[24px] border border-[#eaddd0]">
+        <div className="mt-16 text-center p-8 bg-[#f4e6d9] rounded-[24px] border border-[#eaddd0]">
           <h3 className="text-[20px] font-bold mb-2 text-[#1a1c21]">Still have questions?</h3>
           <p className="text-[14px] font-medium text-[#6b5c52] mb-6">Can't find the answer you're looking for? Please chat to our friendly team.</p>
           <Link to="/contact" className="inline-flex items-center justify-center px-6 h-12 bg-[#9e6223] text-white font-bold text-[14px] rounded-[16px] hover:bg-[#7a4b1b] transition-colors">
