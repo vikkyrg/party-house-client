@@ -1,21 +1,42 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Users, ArrowRight, Filter, Heart, Star, ChevronDown, Monitor, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { MapPin, Filter, ChevronDown, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
 import { cityService } from '../services/cityService';
-import { getImageUrl } from '../utils/imageUtils';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
-import { Button } from '../components/common/Button';
 import { SEO } from '../components/common/SEO';
+import { TheaterCard } from '../components/theater/TheaterCard';
 
 export function TheaterListingPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || '');
   const selectedDate = searchParams.get('date');
   const selectedLocation = searchParams.get('location');
+
+  const [selectedBooking, setSelectedBooking] = useState({ theaterId: null, slotId: null });
+  const dateInputRef = useRef(null);
+
+  const handleOpenDatePicker = () => {
+    if (dateInputRef.current && dateInputRef.current.showPicker) {
+      dateInputRef.current.showPicker();
+    } else if (dateInputRef.current) {
+      dateInputRef.current.focus();
+    }
+  };
+
+  const handleDateChange = (newDate) => {
+    setSelectedBooking({ theaterId: null, slotId: null });
+    const params = new URLSearchParams(searchParams);
+    if (newDate) {
+      params.set('date', newDate);
+    } else {
+      params.delete('date');
+    }
+    setSearchParams(params);
+  };
 
   const { data: theatersResponse, isLoading: isLoadingTheaters, error: theatersError } = useQuery({
     queryKey: ['theaters'],
@@ -30,23 +51,28 @@ export function TheaterListingPage() {
   const theaters = theatersResponse?.data || [];
   const cities = citiesResponse?.data || [];
 
-  const { primaryTheater, otherTheaters } = useMemo(() => {
+  const filteredTheaters = useMemo(() => {
     let list = theaters;
+    
+    // Filter by active
+    list = list.filter(t => t.isActive);
+
     if (selectedCity) {
-      list = theaters.filter(t => t.city?._id === selectedCity || t.city === selectedCity);
+      list = list.filter(t => t.city?._id === selectedCity || t.city === selectedCity);
     }
     
-    let primary = null;
-    let others = list;
-
+    // We optionally can sort to bring the specifically requested location to the top
     if (selectedLocation) {
-      primary = list.find(t => t._id === selectedLocation || t.location?._id === selectedLocation);
-      if (primary) {
-        others = list.filter(t => t._id !== primary._id);
-      }
+      list.sort((a, b) => {
+        const aIsLoc = a._id === selectedLocation || a.location?._id === selectedLocation;
+        const bIsLoc = b._id === selectedLocation || b.location?._id === selectedLocation;
+        if (aIsLoc && !bIsLoc) return -1;
+        if (!aIsLoc && bIsLoc) return 1;
+        return 0;
+      });
     }
 
-    return { primaryTheater: primary, otherTheaters: others };
+    return list;
   }, [theaters, selectedCity, selectedLocation]);
 
   if (isLoadingTheaters) return <LoadingState message="Preparing venues..." />;
@@ -97,8 +123,12 @@ export function TheaterListingPage() {
               Top Bangalore <span className="bg-gradient-to-r from-[#d18428] to-[#991c4d] bg-clip-text text-transparent">Theaters.</span>
             </h1>
             
+            <p className="text-[#6b5c52] text-[15px] font-medium mb-4">
+               Premium private cinemas across Bangalore for unforgettable celebrations.
+            </p>
+
             {/* Show Selected Search Filters */}
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Your Search:</span>
               {selectedCity && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f2eb] border border-[#ecdcd1] rounded-full text-[12px] font-bold text-[#8c5211]">
@@ -107,10 +137,22 @@ export function TheaterListingPage() {
                 </span>
               )}
               {selectedDate && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f2eb] border border-[#ecdcd1] rounded-full text-[12px] font-bold text-[#8c5211]">
+                <div 
+                  onClick={handleOpenDatePicker}
+                  className="relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f2eb] border border-[#ecdcd1] rounded-full text-[12px] font-bold text-[#8c5211] cursor-pointer hover:bg-[#f2efe9] transition-colors overflow-hidden group"
+                  title="Click to change date"
+                >
+                  <input 
+                    ref={dateInputRef}
+                    type="date"
+                    value={selectedDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    className="absolute invisible w-0 h-0"
+                  />
                   <Calendar className="w-3.5 h-3.5" />
                   {selectedDate}
-                </span>
+                </div>
               )}
             </div>
           </div>
@@ -138,23 +180,14 @@ export function TheaterListingPage() {
           </div>
         </motion.div>
 
-        {primaryTheater && !otherTheaters.length && (
-          <div className="mb-12">
-             <PrimaryTheaterCard theater={primaryTheater} selectedDate={selectedDate} />
-          </div>
+        {!selectedDate && (
+           <div className="mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm font-bold flex items-center gap-3">
+             <Calendar className="w-5 h-5 text-yellow-600" />
+             Please select a date from the Home page search or the filters to view available time slots.
+           </div>
         )}
 
-        {primaryTheater && otherTheaters.length > 0 && (
-          <div className="mb-16">
-            <PrimaryTheaterCard theater={primaryTheater} selectedDate={selectedDate} />
-            <div className="mt-16 mb-8 border-b border-[#ecdcd1] pb-4">
-               <h2 className="text-[24px] font-heading font-extrabold text-[#1a1c21]">Other Theaters</h2>
-               <p className="text-[#6b5c52] text-[14px]">Explore more premium venues in your selected area.</p>
-            </div>
-          </div>
-        )}
-
-        {otherTheaters.length === 0 && !primaryTheater ? (
+        {filteredTheaters.length === 0 ? (
            <div className="bg-white rounded-[32px] p-16 text-center shadow-sm">
             <h3 className="text-[22px] font-heading text-[#1a1c21] font-bold mb-4">No venues found</h3>
             <p className="text-[#6b5c52] font-medium text-[14px] mb-8">We couldn't find any theaters matching your criteria.</p>
@@ -166,59 +199,29 @@ export function TheaterListingPage() {
             </button>
           </div>
         ) : (
+          <div className="mb-6 flex justify-between items-center border-b border-[#ecdcd1] pb-4">
+             <h2 className="text-[20px] font-heading font-extrabold text-[#1a1c21]">
+               {filteredTheaters.length} private theater{filteredTheaters.length !== 1 ? 's' : ''} {selectedCity ? `in ${cities.find(c => c._id === selectedCity)?.name || 'your area'}` : 'available'}
+             </h2>
+          </div>
+        )}
+
+        {filteredTheaters.length > 0 && (
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 xl:gap-8 mb-16"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 xl:gap-10 mb-16"
           >
-            {otherTheaters.map((theater) => (
-              <motion.div key={theater._id} variants={itemVariants} className="group relative">
-                  <div className="bg-white rounded-[28px] overflow-hidden shadow-sm border border-[#f4e6d9] flex flex-col h-full hover:shadow-md transition-shadow duration-300">
-                    
-                    {/* Card Image Section */}
-                    <div className="h-[220px] overflow-hidden relative">
-                      <img 
-                        src={theater.images?.[0] ? getImageUrl(theater.images[0]) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
-                        alt={theater.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                      
-                      <div className="absolute top-4 left-4">
-                        <span className="px-3 py-1.5 rounded-full bg-white font-sans text-[9px] font-extrabold text-[#1a1c21] tracking-widest uppercase shadow-sm">
-                          {theater.city?.name || 'BENGALURU'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Card Content Section */}
-                    <div className="p-6 flex flex-col flex-1">
-                      <div className="flex items-center justify-between gap-4 mb-4">
-                        <h3 className="text-[20px] font-heading font-extrabold text-[#1a1c21] truncate">
-                          {theater.name}
-                        </h3>
-                        <span className="text-[15px] font-extrabold text-[#9e6223] shrink-0">
-                          ₹{theater.pricePerHour}/hr
-                        </span>
-                      </div>
-                      
-                      <p className="text-[#6b5c52] font-medium text-[13px] leading-[1.6] line-clamp-2 mb-6 flex-1">
-                        {theater.description || "A cozy and premium theater perfect for small gatherings and special moments."}
-                      </p>
-                      
-                      {/* Card Footer */}
-                      <div className="flex items-center justify-between pt-1">
-                        <Link 
-                          to={`/theaters/${theater._id}${selectedDate ? `?date=${selectedDate}` : ''}`}
-                          onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
-                          className="w-full text-center py-2.5 rounded-xl border border-[#ecdcd1] text-[13px] font-bold text-[#8c5211] hover:bg-[#f9f2eb] transition-colors"
-                        >
-                          View Details & Slots
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+            {filteredTheaters.map((theater) => (
+              <motion.div key={theater._id} variants={itemVariants}>
+                 <TheaterCard 
+                   theater={theater}
+                   selectedDate={selectedDate}
+                   selectedBooking={selectedBooking}
+                   onSelectBooking={setSelectedBooking}
+                   onDateChange={handleDateChange}
+                 />
               </motion.div>
             ))}
           </motion.div>
@@ -226,64 +229,5 @@ export function TheaterListingPage() {
 
       </div>
     </div>
-  );
-}
-
-// Sub-component for the Primary Theater Card
-function PrimaryTheaterCard({ theater, selectedDate }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="bg-white rounded-[32px] overflow-hidden shadow-lg border border-[#f4e6d9] flex flex-col lg:flex-row group"
-    >
-      <div className="lg:w-[55%] h-[300px] lg:h-[400px] relative overflow-hidden">
-        <img 
-          src={theater.images?.[0] ? getImageUrl(theater.images[0]) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
-          alt={theater.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/40"></div>
-      </div>
-      <div className="lg:w-[45%] p-8 lg:p-12 flex flex-col justify-center">
-        <div className="flex items-center gap-3 mb-4">
-           <span className="px-3 py-1 rounded-full bg-[#f9f2eb] text-[#8c5211] text-[10px] font-extrabold uppercase tracking-widest border border-[#ecdcd1]">
-             Matched Location
-           </span>
-        </div>
-        <h2 className="text-[32px] md:text-[40px] font-heading font-extrabold text-[#1a1c21] mb-2 leading-tight">
-          {theater.name}
-        </h2>
-        <div className="flex items-center gap-2 text-[#6b5c52] mb-6 text-[14px]">
-           <MapPin className="w-4 h-4" /> {theater.city?.name || 'Bengaluru'} · {theater.location?.name || 'Premium'}
-        </div>
-        
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex flex-col">
-            <span className="text-[11px] font-bold text-[#6b5c52] uppercase tracking-widest">Price</span>
-            <span className="text-[24px] font-extrabold text-[#9e6223]">₹{theater.pricePerHour}/hr</span>
-          </div>
-          <div className="w-px h-10 bg-[#ecdcd1]"></div>
-          <div className="flex flex-col">
-             <span className="text-[11px] font-bold text-[#6b5c52] uppercase tracking-widest">Capacity</span>
-             <span className="text-[16px] font-bold text-[#1a1c21] mt-1 flex items-center gap-1.5">
-               <Users className="w-4 h-4 text-[#8c5211]" /> Up to {theater.capacity}
-             </span>
-          </div>
-        </div>
-
-        <p className="text-[#6b5c52] text-[15px] mb-8 line-clamp-3">
-          {theater.description || "Experience cinematic perfection in our state-of-the-art private screening room. Designed for ultimate comfort and acoustic brilliance."}
-        </p>
-
-        <Link 
-          to={`/theaters/${theater._id}${selectedDate ? `?date=${selectedDate}` : ''}`}
-          className="inline-flex items-center justify-center bg-[#9e6223] text-white px-8 py-4 rounded-xl font-bold text-[15px] hover:bg-[#7a4b1b] transition-colors shadow-md w-full sm:w-auto"
-        >
-          Select Time Slot <ArrowRight className="ml-2 w-5 h-5" />
-        </Link>
-      </div>
-    </motion.div>
   );
 }

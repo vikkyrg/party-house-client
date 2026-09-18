@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { getImageUrl } from '../utils/imageUtils';
 import { HeroBookingWidget } from '../components/home/HeroBookingWidget';
+import { WhyChooseUsSection } from '../components/home/WhyChooseUsSection';
+import { ServicesCarouselSection } from '../components/home/ServicesCarouselSection';
+import { ReviewsCarouselSection } from '../components/home/ReviewsCarouselSection';
 
 export function HomePage() {
   const fadeUpVariant = {
@@ -28,6 +31,12 @@ export function HomePage() {
     queryFn: () => contentService.getBanners('homepage-hero'),
   });
   const banners = bannersResponse?.data || [];
+
+  const { data: eventTypesResponse } = useQuery({
+    queryKey: ['event-types'],
+    queryFn: () => contentService.getEventTypes(),
+  });
+  const eventTypes = eventTypesResponse?.data || [];
   
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
@@ -227,6 +236,7 @@ export function HomePage() {
       </section>
 
       {/* Occasions Teaser */}
+      {eventTypes.length > 0 && (
       <section className="py-24 bg-surface-container-low relative">
         <div className="container mx-auto px-6 md:px-12">
           
@@ -257,55 +267,26 @@ export function HomePage() {
               transition={{ repeat: Infinity, ease: "linear", duration: 30 }}
               className="flex w-max gap-6"
             >
-              {[...Array(2)].flatMap(() => [
-              { 
-                icon: <svg className="w-5 h-5 text-[#8c5211]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
-                title: "Romantic Date Nights", 
-                desc: "A cozy space for two, with the perfect ambience for love.",
-                img: "/event_romantic.jpg",
-                link: "/events"
-              },
-              { 
-                icon: <svg className="w-5 h-5 text-[#8c5211]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" /></svg>,
-                title: "Birthday Celebrations", 
-                desc: "Make birthdays extra special with a private big-screen experience.",
-                img: "/event_birthday.jpg",
-                link: "/events"
-              },
-              { 
-                icon: <svg className="w-5 h-5 text-[#8c5211]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
-                title: "Friends & Group Hangouts", 
-                desc: "Bigger fun, better together. Enjoy movies, games and more.",
-                img: "/event_friends.jpg",
-                link: "/events"
-              },
-              { 
-                icon: <svg className="w-5 h-5 text-[#8c5211]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-                title: "Corporate & Special Events", 
-                desc: "Host product launches, team events or private screenings in style.",
-                img: "/event_corporate.jpg",
-                link: "/events"
-              }
-              ]).map((item, idx) => (
+              {[...Array(2)].flatMap(() => eventTypes).map((item, idx) => (
                 <div key={idx} className="w-[300px] md:w-[320px] shrink-0 h-[440px]">
-                  <Link to={item.link} className="block group h-full">
-                    <div className="relative bg-[#0F1014] rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#2a2c35] flex flex-col overflow-hidden text-left h-full transition-transform group-hover:-translate-y-2 duration-300">
+                  <Link to="/theaters" className="block group h-full">
+                    <div className="relative bg-[#0F1014] rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-[#2a2c35] flex flex-col overflow-hidden text-left h-full transition-transform group-hover:-translate-y-2 duration-300 transform-gpu">
                   
                   {/* Image Section */}
-                  <div className="relative h-[200px] w-full overflow-hidden shrink-0">
-                    <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-80" />
+                  <div className="relative h-[220px] w-full overflow-hidden shrink-0 bg-[#0F1014]">
+                    <img src={getImageUrl(item.image)} alt={item.name} className="block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-80" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F1014] via-[#0F1014]/40 to-transparent" />
                   </div>
                   
                   {/* Content Section */}
-                  <div className="relative px-6 pb-6 pt-2 flex flex-col flex-grow">
+                  <div className="relative px-6 pb-6 pt-2 flex flex-col flex-grow bg-[#0F1014] z-10 -mt-[1px]">
                     {/* Floating Icon */}
                     <div className="absolute -top-12 left-6 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(0,0,0,0.2)]">
-                      {item.icon}
+                      <Star className="w-5 h-5 text-[#8c5211]" />
                     </div>
                     
-                    <h3 className="text-xl font-heading text-white font-bold mb-3 mt-4 leading-tight">{item.title}</h3>
-                    <p className="text-gray-400 font-sans text-[13px] leading-relaxed mb-6 flex-grow">{item.desc}</p>
+                    <h3 className="text-xl font-heading text-white font-bold mb-3 mt-4 leading-tight">{item.name}</h3>
+                    <p className="text-gray-400 font-sans text-[13px] leading-relaxed mb-6 flex-grow line-clamp-3">{item.description}</p>
                     
                     <div className="flex items-center justify-between mt-auto">
                       <span className="text-[10px] font-bold tracking-widest text-[#d8a471] uppercase">EXPLORE <span className="ml-1">→</span></span>
@@ -322,6 +303,15 @@ export function HomePage() {
           </div>
         </div>
       </section>
+      )}
+      {/* Why Choose CS Cinemas Section */}
+      <WhyChooseUsSection />
+
+      {/* Services Carousel Section */}
+      <ServicesCarouselSection />
+
+      {/* Reviews Carousel Section */}
+      <ReviewsCarouselSection />
 
     </div>
   );

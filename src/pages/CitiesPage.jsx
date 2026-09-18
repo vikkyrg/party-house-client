@@ -23,6 +23,7 @@ export function CitiesPage() {
     const cityName = theater.city?.name || theater.city || 'Unknown';
     if (!acc[cityName]) {
       acc[cityName] = {
+        _id: theater.city?._id || theater.city,
         name: cityName,
         image: theater.images?.[0] || 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=2064&auto=format&fit=crop',
         theaters: []
@@ -183,7 +184,7 @@ export function CitiesPage() {
             {filteredCities.map((city, idx) => (
               <motion.div key={idx} variants={itemVariants} className="group relative h-full">
                 
-                <Link to={`/theaters?city=${city.name}`} className="block h-full">
+                <Link to={`/theaters?city=${city._id}`} className="block h-full">
                   <div className="flex flex-col h-full bg-white rounded-[28px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 border border-[#f0e6dd]">
                     
                     {/* Image Section (Top Half) */}

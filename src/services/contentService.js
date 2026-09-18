@@ -40,5 +40,10 @@ export const contentService = {
   getStories: async () => {
     const { data } = await apiClient.get('/stories');
     return data;
+  },
+
+  getPublicReviews: async () => {
+    const { data } = await apiClient.get('/reviews/public');
+    return data;
   }
 };

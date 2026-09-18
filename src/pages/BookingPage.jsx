@@ -270,10 +270,10 @@ export function BookingPage() {
                </div>
              </div>
              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-               <button onClick={() => navigate('/theaters')} className="px-4 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[12px] font-bold rounded-lg transition border border-[#ecdcd1] flex items-center justify-center gap-1.5 w-full sm:w-auto">
+               <button onClick={() => navigate(`/theaters?city=${theater?.city?._id || theater?.city}&date=${selectedDate}`)} className="px-4 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[12px] font-bold rounded-lg transition border border-[#ecdcd1] flex items-center justify-center gap-1.5 w-full sm:w-auto">
                  Change Theater
                </button>
-               <button onClick={() => navigate(`/theaters/${theaterId}?date=${selectedDate}`)} className="px-4 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[12px] font-bold rounded-lg transition border border-[#ecdcd1] flex items-center justify-center gap-1.5 w-full sm:w-auto">
+               <button onClick={() => navigate(`/theaters?city=${theater?.city?._id || theater?.city}&location=${theaterId}&date=${selectedDate}`)} className="px-4 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[12px] font-bold rounded-lg transition border border-[#ecdcd1] flex items-center justify-center gap-1.5 w-full sm:w-auto">
                  Change Time
                </button>
              </div>
