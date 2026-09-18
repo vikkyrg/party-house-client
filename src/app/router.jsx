@@ -29,6 +29,7 @@ import { SitemapPage } from '../pages/SitemapPage';
 import { ServicesPage } from '../pages/ServicesPage';
 import { GalleryPage } from '../pages/GalleryPage';
 import { BlogsPage } from '../pages/BlogsPage';
+import { StoryDetailPage } from '../pages/StoryDetailPage';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
 
 function RouteErrorElement() {
@@ -173,6 +174,10 @@ const router = createBrowserRouter([
       {
         path: 'blogs',
         element: <BlogsPage />,
+      },
+      {
+        path: 'blogs/:id',
+        element: <StoryDetailPage />,
       },
 
       // Placeholder pages for dropdown
