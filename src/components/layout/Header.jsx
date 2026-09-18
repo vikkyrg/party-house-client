@@ -65,7 +65,7 @@ export function Header() {
     { name: 'Gallery', path: '/gallery' },
     { name: 'Our stories - blogs', path: '/blogs' },
     { name: 'Learn', path: '#learn', hasDropdown: true, dropdownId: 'learn' },
-    { name: 'My Bookings', path: '/account/bookings' },
+
   ];
 
   return (

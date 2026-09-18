@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { MapPin, Filter, ChevronDown, Calendar } from 'lucide-react';
+import { MapPin, ChevronDown, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
 import { cityService } from '../services/cityService';
@@ -91,8 +91,10 @@ export function TheaterListingPage() {
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
   };
 
+  const selectedCityName = cities.find(city => city._id === selectedCity)?.name || 'Bangalore';
+
   return (
-    <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 relative overflow-hidden font-sans text-[#6b5c52]">
+    <div className="min-h-screen bg-[#fcf5eb] pt-28 pb-20 relative overflow-hidden font-sans text-[#6b5c52]">
       <SEO title="Our Premium Theaters | CS Cinemas" />
 
       {/* Background Film Strip SVG (Top Right) */}
@@ -106,30 +108,30 @@ export function TheaterListingPage() {
         </svg>
       </div>
 
-      <div className="w-full mx-auto px-6 sm:px-12 lg:px-20 xl:px-24 relative z-10 max-w-[1920px]">
+      <div className="w-full mx-auto px-5 sm:px-8 lg:px-12 relative z-10 max-w-[1240px]">
         
         {/* Header Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 pb-4"
+          className="flex flex-col md:flex-row justify-between items-start md:items-end mb-7 pb-2"
         >
-          <div className="max-w-3xl mb-8 md:mb-0">
-            <span className="font-sans text-[11px] font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-4 flex items-center gap-2">
-              <span className="w-4 h-[2px] bg-[#8c5211] rounded-full"></span> HANDPICKED LOCATIONS
+          <div className="max-w-3xl mb-6 md:mb-0">
+            <span className="font-sans text-[10px] font-bold tracking-[0.2em] uppercase text-[#8c5211] mb-3 flex items-center gap-2">
+              <span className="w-4 h-px bg-[#8c5211]"></span> SELECT YOUR THEATRE
             </span>
-            <h1 className="text-[36px] md:text-[54px] font-heading text-[#1a1c21] font-extrabold leading-[1.1] mb-4">
-              Top Bangalore <span className="bg-gradient-to-r from-[#d18428] to-[#991c4d] bg-clip-text text-transparent">Theaters.</span>
+            <h1 className="text-[34px] md:text-[42px] font-heading text-[#17171c] font-extrabold leading-[1.05] mb-2">
+              Choose Your Perfect <span className="text-[#a9651c]">Theatre</span>
             </h1>
             
-            <p className="text-[#6b5c52] text-[15px] font-medium mb-4">
-               Premium private cinemas across Bangalore for unforgettable celebrations.
+            <p className="text-[#6b5c52] text-[13px] font-medium mb-3">
+               Premium private theatres for your special moments.
             </p>
 
             {/* Show Selected Search Filters */}
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-[13px] font-bold text-[#1a1c21] uppercase tracking-wide">Your Search:</span>
+              <span className="text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Your Search:</span>
               {selectedCity && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f2eb] border border-[#ecdcd1] rounded-full text-[12px] font-bold text-[#8c5211]">
                   <MapPin className="w-3.5 h-3.5" />
@@ -139,7 +141,7 @@ export function TheaterListingPage() {
               {selectedDate && (
                 <div 
                   onClick={handleOpenDatePicker}
-                  className="relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f2eb] border border-[#ecdcd1] rounded-full text-[12px] font-bold text-[#8c5211] cursor-pointer hover:bg-[#f2efe9] transition-colors overflow-hidden group"
+                  className="relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fffaf5] border border-[#ead9ca] rounded-full text-[11px] font-bold text-[#8c5211] cursor-pointer hover:bg-[#f2efe9] transition-colors overflow-hidden group"
                   title="Click to change date"
                 >
                   <input 
@@ -158,15 +160,15 @@ export function TheaterListingPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-6 md:mt-0">
+          <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-2 md:mt-0">
              <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Filter className="w-4 h-4 text-[#8c5211]" />
+                  <MapPin className="w-4 h-4 text-[#8c5211]" />
                 </div>
                 <select 
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="appearance-none bg-[#f4e6d9] border border-[#ecdcd1] rounded-full pl-10 pr-10 py-2.5 text-[13px] font-bold text-[#1a1c21] focus:outline-none focus:border-[#8c5211] cursor-pointer"
+                  className="appearance-none bg-[#fffaf5] border border-[#ead9ca] rounded-full pl-10 pr-10 py-2.5 text-[12px] font-bold text-[#17171c] focus:outline-none focus:border-[#8c5211] cursor-pointer"
                 >
                   <option value="">All Locations</option>
                   {cities.map(city => (
@@ -181,15 +183,15 @@ export function TheaterListingPage() {
         </motion.div>
 
         {!selectedDate && (
-           <div className="mb-8 p-4 rounded-2xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm font-bold flex items-center gap-3">
-             <Calendar className="w-5 h-5 text-yellow-600" />
+           <div className="mb-6 p-3.5 rounded-2xl bg-[#fff9d9] border border-[#eadb91] text-[#80651a] text-[12px] font-bold flex items-center gap-3">
+             <Calendar className="w-4 h-4 text-[#a17d17]" />
              Please select a date from the Home page search or the filters to view available time slots.
            </div>
         )}
 
         {filteredTheaters.length === 0 ? (
-           <div className="bg-white rounded-[32px] p-16 text-center shadow-sm">
-            <h3 className="text-[22px] font-heading text-[#1a1c21] font-bold mb-4">No venues found</h3>
+           <div className="bg-[#fffaf5] rounded-[24px] p-16 text-center shadow-sm border border-[#ead9ca]">
+            <h3 className="text-[22px] font-heading text-[#17171c] font-bold mb-4">No venues found</h3>
             <p className="text-[#6b5c52] font-medium text-[14px] mb-8">We couldn't find any theaters matching your criteria.</p>
             <button 
               onClick={() => setSelectedCity('')}
@@ -199,9 +201,9 @@ export function TheaterListingPage() {
             </button>
           </div>
         ) : (
-          <div className="mb-6 flex justify-between items-center border-b border-[#ecdcd1] pb-4">
-             <h2 className="text-[20px] font-heading font-extrabold text-[#1a1c21]">
-               {filteredTheaters.length} private theater{filteredTheaters.length !== 1 ? 's' : ''} {selectedCity ? `in ${cities.find(c => c._id === selectedCity)?.name || 'your area'}` : 'available'}
+          <div className="mb-4 flex justify-between items-center border-b border-[#ead9ca] pb-3">
+             <h2 className="text-[16px] font-heading font-extrabold text-[#17171c]">
+               {filteredTheaters.length} private theatre{filteredTheaters.length !== 1 ? 's' : ''} {selectedCity ? `in ${selectedCityName}` : 'available'}
              </h2>
           </div>
         )}
@@ -211,7 +213,7 @@ export function TheaterListingPage() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 xl:gap-10 mb-16"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-[1040px] mb-16"
           >
             {filteredTheaters.map((theater) => (
               <motion.div key={theater._id} variants={itemVariants}>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Play, ExternalLink } from 'lucide-react';
 import { contentService } from '../../services/contentService';
 import { getImageUrl } from '../../utils/imageUtils';
+import { CinemaSectionBackdrop } from './CinemaSectionBackdrop';
 
 export function ReviewsCarouselSection() {
   const { data: response } = useQuery({
@@ -11,7 +12,7 @@ export function ReviewsCarouselSection() {
     queryFn: contentService.getPublicReviews,
   });
 
-  const reviews = response?.data || [];
+  const reviews = (response?.data || []).filter((review) => review.isPublished === true);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardsToShow, setCardsToShow] = useState(3);
@@ -79,22 +80,23 @@ export function ReviewsCarouselSection() {
   if (reviews.length === 0) return null;
 
   return (
-    <section className="py-24 bg-surface-container-low relative overflow-hidden">
-      <div className="container mx-auto px-6 md:px-12">
+    <section className="py-16 md:py-20 lg:py-28 bg-surface-container-low relative overflow-hidden">
+      <CinemaSectionBackdrop variant="reviews" />
+      <div className="container mx-auto max-w-[1320px] px-6 md:px-12 relative z-10">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12">
           <div className="max-w-xl">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-[2px] w-8 bg-[#8c5211]"></div>
-              <span className="font-label-sm text-[11px] font-bold tracking-widest uppercase text-[#8c5211]">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px w-10 bg-[#a9651c]"></div>
+              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#a9651c]">
                 CUSTOMER STORIES
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-heading text-[#1a1c21] font-extrabold leading-tight mb-4">
-              Memories They Loved.
+            <h2 className="text-4xl md:text-5xl lg:text-[56px] font-heading text-[#17171c] font-extrabold leading-[1.08] mb-5">
+              Memories <span className="text-[#b94d5c]">They Loved.</span>
             </h2>
-            <p className="text-[#6b5c52] font-medium text-[16px] leading-relaxed">
+            <p className="text-[#62554d] font-medium text-[16px] leading-relaxed">
               Real experiences from guests who celebrated their special moments with CS Cinemas.
             </p>
           </div>
@@ -105,14 +107,14 @@ export function ReviewsCarouselSection() {
               <div className="flex items-center gap-3">
                 <button 
                   onClick={handlePrev}
-                  className="w-12 h-12 rounded-full border border-[#f0e6dd] flex items-center justify-center hover:bg-white text-[#8c5211] transition-colors shadow-sm hover:shadow-md"
+                  className="w-11 h-11 rounded-full border border-[#dfc7b3] flex items-center justify-center hover:bg-[#fffaf5] text-[#a9651c] transition-colors"
                   aria-label="Previous Review"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button 
                   onClick={handleNext}
-                  className="w-12 h-12 rounded-full bg-[#8c5211] hover:bg-[#6b3e0d] flex items-center justify-center transition-colors shadow-md hover:shadow-lg"
+                  className="w-11 h-11 rounded-full bg-[#a9651c] hover:bg-[#8e5217] flex items-center justify-center transition-colors shadow-sm"
                   aria-label="Next Review"
                 >
                   <ChevronRight className="w-6 h-6 text-white" />
@@ -126,7 +128,7 @@ export function ReviewsCarouselSection() {
                     key={i}
                     onClick={() => setCurrentIndex(i)}
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      currentIndex === i ? 'w-6 bg-[#8c5211]' : 'w-2 bg-[#d9c8b8] hover:bg-[#b0947a]'
+                      currentIndex === i ? 'w-6 bg-[#a9651c]' : 'w-2 bg-[#dfc7b3] hover:bg-[#c7a789]'
                     }`}
                     aria-label={`Go to slide ${i + 1}`}
                   />
@@ -147,23 +149,23 @@ export function ReviewsCarouselSection() {
             style={{ transform: `translateX(-${currentIndex * (100 / cardsToShow)}%)` }}
           >
             {reviews.map((review, idx) => (
-              <div key={review._id || idx} className="w-full md:w-1/2 lg:w-1/3 shrink-0 px-4 h-[420px]">
-                <div className="bg-white rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-[#f0e6dd] flex flex-col overflow-hidden text-left h-full transition-shadow hover:shadow-[0_10px_30px_rgba(140,82,17,0.12)]">
+              <div key={review._id || idx} className="w-full md:w-1/2 lg:w-1/3 shrink-0 px-4 h-[440px]">
+                <div className="bg-[#fffaf5] rounded-[1.5rem] shadow-[0_4px_20px_rgba(75,43,20,0.06)] border border-[#ead9ca] flex flex-col overflow-hidden text-left h-full transition-shadow hover:shadow-[0_10px_30px_rgba(169,101,28,0.14)]">
                   
                   {/* Media Section */}
-                  {review.mediaType !== 'none' && review.mediaUrl && (
+                  {review.mediaType !== 'none' && (review.mediaUrl || review.images?.[0]?.url) && (
                     <div 
                       className="relative h-[200px] w-full overflow-hidden shrink-0 bg-[#0F1014] cursor-pointer group"
                       onClick={() => handleMediaClick(review)}
                     >
                       {review.mediaType === 'image' ? (
                         <img 
-                          src={getImageUrl(review.mediaUrl)} 
+                          src={getImageUrl(review.mediaUrl || review.images?.[0]?.url)} 
                           alt="Customer Review" 
                           className="block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-90 group-hover:opacity-100" 
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-900 group-hover:bg-slate-800 transition-colors">
+                        <div className="w-full h-full flex items-center justify-center bg-[#302522] group-hover:bg-[#49362f] transition-colors">
                           {review.mediaType === 'video' ? (
                             <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                               <Play className="w-6 h-6 text-white ml-1" />
@@ -180,19 +182,19 @@ export function ReviewsCarouselSection() {
                   )}
 
                   {/* Content Section */}
-                  <div className="px-8 pt-8 pb-8 flex flex-col flex-grow bg-white relative">
+                  <div className="px-8 pt-8 pb-8 flex flex-col flex-grow bg-[#fffaf5] relative">
                     {renderStars(review.rating)}
                     
-                    <p className="text-[#1a1c21] font-medium text-[15px] leading-relaxed mb-6 line-clamp-4 italic">
+                    <p className="text-[#17171c] font-medium text-[15px] leading-relaxed mb-6 line-clamp-5 italic">
                       "{review.comment}"
                     </p>
                     
-                    <div className="mt-auto pt-4 border-t border-slate-100">
-                      <h4 className="font-bold text-[#1a1c21] text-[15px]">
+                    <div className="mt-auto pt-4 border-t border-[#eadfd5]">
+                      <h4 className="font-bold text-[#17171c] text-[15px]">
                         {review.customerName || review.user?.name || 'Happy Customer'}
                       </h4>
                       {review.theater && (
-                        <p className="text-[#8c5211] text-[13px] font-medium mt-1 uppercase tracking-wider">
+                        <p className="text-[#a9651c] text-[13px] font-medium mt-1 uppercase tracking-wider">
                           {review.theater.name || review.theater}
                         </p>
                       )}

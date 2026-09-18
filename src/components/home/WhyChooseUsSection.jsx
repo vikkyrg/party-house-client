@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Star, Heart, CheckCircle2, LayoutGrid } from 'lucide-react';
 import { contentService } from '../../services/contentService';
 import { getImageUrl } from '../../utils/imageUtils';
+import { CinemaSectionBackdrop } from './CinemaSectionBackdrop';
 
 export function WhyChooseUsSection() {
   const navigate = useNavigate();
@@ -65,37 +66,38 @@ export function WhyChooseUsSection() {
   ];
 
   return (
-    <section className="py-24 bg-background relative overflow-hidden">
-      <div className="container mx-auto px-6 md:px-12">
+    <section className="py-16 md:py-20 lg:py-28 bg-surface-container-low relative overflow-hidden">
+      <CinemaSectionBackdrop variant="why" />
+      <div className="container mx-auto max-w-[1320px] px-6 md:px-12 relative z-10">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center">
           
           {/* Left Column: Content */}
           <div className="w-full lg:w-[50%] flex flex-col">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-[2px] w-8 bg-[#8c5211]"></div>
-              <span className="font-label-sm text-[11px] font-bold tracking-widest uppercase text-[#8c5211]">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px w-10 bg-[#a9651c]"></div>
+              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#a9651c]">
                 WHY CHOOSE US
               </span>
             </div>
             
-            <h2 className="text-4xl md:text-5xl font-heading text-[#1a1c21] font-extrabold leading-tight mb-6">
+            <h2 className="text-4xl md:text-5xl lg:text-[56px] font-heading text-[#17171c] font-extrabold leading-[1.08] mb-6">
               Why Celebrate <br className="hidden md:block"/>
-              at CS Cinemas?
+              at <span className="text-[#a9651c]">CS Cinemas?</span>
             </h2>
             
-            <p className="text-[#6b5c52] font-medium text-[16px] leading-relaxed mb-10 max-w-lg">
+            <p className="text-[#62554d] font-medium text-[16px] leading-relaxed mb-10 max-w-lg">
               Unforgettable celebrations, thoughtfully designed for you. Create premium private cinema experiences tailored perfectly to your special moments.
             </p>
 
             <div className="space-y-6 mb-10">
               {benefits.map((benefit, idx) => (
                 <div key={idx} className="flex items-start gap-4">
-                  <div className="mt-1 w-10 h-10 shrink-0 rounded-full bg-[#f9f6f0] border border-[#f0e6dd] flex items-center justify-center shadow-sm">
+                  <div className="mt-1 w-10 h-10 shrink-0 rounded-full bg-[#fffaf5] border border-[#ead9ca] flex items-center justify-center">
                     {benefit.icon}
                   </div>
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1a1c21] mb-1">{benefit.title}</h3>
-                    <p className="text-[#6b5c52] font-medium text-[14px] leading-relaxed max-w-md">{benefit.desc}</p>
+                    <h3 className="text-[17px] font-bold text-[#17171c] mb-1">{benefit.title}</h3>
+                    <p className="text-[#62554d] font-medium text-[14px] leading-relaxed max-w-md">{benefit.desc}</p>
                   </div>
                 </div>
               ))}
@@ -104,7 +106,7 @@ export function WhyChooseUsSection() {
             <div>
               <button 
                 onClick={() => navigate('/theaters')}
-                className="px-8 py-4 bg-[#8c5211] hover:bg-[#6b3e0d] text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(140,82,17,0.25)] hover:shadow-[0_8px_25px_rgba(140,82,17,0.35)] hover:-translate-y-0.5 transition-all duration-300"
+                className="px-8 py-4 bg-[#a9651c] hover:bg-[#8e5217] text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(169,101,28,0.2)] hover:-translate-y-0.5 transition-all duration-300"
               >
                 Book Your Experience
               </button>
@@ -112,8 +114,8 @@ export function WhyChooseUsSection() {
           </div>
 
           {/* Right Column: Gallery Carousel */}
-          <div className="w-full lg:w-[50%] mt-12 lg:mt-0">
-            <div className="relative w-full aspect-[4/5] md:aspect-square lg:aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-[#f9f6f0] border border-[#f0e6dd]">
+          <div className="w-full lg:w-[55%] mt-4 lg:mt-0">
+            <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(75,43,20,0.12)] bg-[#f9f6f0] border border-[#ead9ca]">
               <AnimatePresence>
                 {activeImages.length > 0 ? (
                   <motion.img

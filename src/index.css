@@ -136,6 +136,23 @@
 }
 
 @layer utilities {
+  @keyframes hero-background-ken-burns {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  .hero-background-image {
+    transform-origin: center center;
+    animation: hero-background-ken-burns 10s ease-in-out infinite;
+    will-change: transform;
+  }
+
   .surface-panel {
     background: var(--color-surface-container-lowest);
     border: 1px solid rgba(255, 255, 255, 0.8);
@@ -161,6 +178,11 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .hero-background-image {
+    animation: none;
+    transform: none;
   }
 
   *, *::before, *::after {

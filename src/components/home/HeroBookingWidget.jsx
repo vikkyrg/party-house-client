@@ -6,6 +6,14 @@ import { motion } from 'framer-motion';
 import { theaterService } from '../../services/theaterService';
 import { cityService } from '../../services/cityService';
 
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export function HeroBookingWidget() {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState('');
@@ -106,7 +114,9 @@ export function HeroBookingWidget() {
               <input 
                 type="date"
                 value={selectedDate}
+                min={getTodayDate()}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                aria-label="Select booking date"
                 className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
               />
             </div>

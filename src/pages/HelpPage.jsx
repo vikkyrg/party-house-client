@@ -73,7 +73,7 @@ export function HelpPage() {
           <div className="space-y-6">
             <div>
               <h4 className="font-bold text-[#1a1c21] mb-2 text-[15px]">How do I cancel my booking?</h4>
-              <p className="text-[#6b5c52] text-sm">You can cancel your booking up to 24 hours in advance for a full refund by visiting the 'My Bookings' section in your account.</p>
+              <p className="text-[#6b5c52] text-sm">You can cancel your booking up to 24 hours in advance for a full refund by visiting the 'Booking History' section in your account.</p>
             </div>
             <hr className="border-[#f0e6dd]"/>
             <div>

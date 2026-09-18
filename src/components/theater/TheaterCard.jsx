@@ -4,6 +4,20 @@ import { MapPin, Users, Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight }
 import { bookingService } from '../../services/bookingService';
 import { getImageUrl } from '../../utils/imageUtils';
 
+const getSlotStartMinutes = (slotTime) => {
+  const match = slotTime?.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+
+  if (hours === 12) hours = 0;
+  if (period === 'PM') hours += 12;
+
+  return hours * 60 + minutes;
+};
+
 export function TheaterCard({ 
   theater, 
   selectedDate, 
@@ -47,7 +61,7 @@ export function TheaterCard({
               id: s,
               time: s,
               available: res.data.availableSlots.includes(s)
-            })).sort((a, b) => a.time.localeCompare(b.time));
+            })).sort((a, b) => getSlotStartMinutes(a.time) - getSlotStartMinutes(b.time));
             setSlotsData(structured);
           }
         })
@@ -87,11 +101,11 @@ export function TheaterCard({
   };
 
   return (
-    <div className={`bg-white rounded-[24px] overflow-hidden border transition-all duration-300 flex flex-col h-full
-      ${isSelected ? 'border-[#8c5211] shadow-[0_8px_30px_rgba(140,82,17,0.12)]' : 'border-[#ecdcd1] shadow-sm hover:shadow-md'}
+    <div className={`bg-[#fffaf5] rounded-[18px] overflow-hidden border transition-all duration-300 flex flex-col h-full
+      ${isSelected ? 'border-[#a9651c] shadow-[0_8px_30px_rgba(169,101,28,0.16)]' : 'border-[#ead9ca] shadow-[0_4px_18px_rgba(75,43,20,0.06)] hover:shadow-[0_10px_26px_rgba(75,43,20,0.1)]'}
     `}>
       {/* IMAGE GALLERY SECTION */}
-      <div className="relative h-[240px] md:h-[280px] w-full overflow-hidden bg-gray-100 group">
+      <div className="relative h-[190px] md:h-[205px] w-full overflow-hidden bg-[#eadfce] group">
         <img 
           src={getImageUrl(images[currentImageIndex])} 
           alt={theater.name}
@@ -100,7 +114,7 @@ export function TheaterCard({
         
         {/* City Badge */}
         <div className="absolute top-4 left-4 z-10">
-          <span className="px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm font-sans text-[10px] font-extrabold text-[#1a1c21] tracking-widest uppercase shadow-sm">
+          <span className="px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm font-sans text-[9px] font-extrabold text-[#17171c] tracking-widest uppercase shadow-sm">
             {theater.city?.name || 'BENGALURU'}
           </span>
         </div>
@@ -108,10 +122,10 @@ export function TheaterCard({
         {/* Gallery Controls */}
         {hasMultipleImages && (
           <>
-            <button onClick={handlePrevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#1a1c21] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-sm z-10">
+            <button onClick={handlePrevImage} aria-label="Previous theater image" className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#17171c] transition-opacity hover:bg-white shadow-sm z-10">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button onClick={handleNextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#1a1c21] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-sm z-10">
+            <button onClick={handleNextImage} aria-label="Next theater image" className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#17171c] transition-opacity hover:bg-white shadow-sm z-10">
               <ChevronRight className="w-5 h-5" />
             </button>
             {/* Dots */}
@@ -125,7 +139,7 @@ export function TheaterCard({
         
         {/* Rating Mockup (Optional per screenshot) */}
         <div className="absolute top-4 right-4 z-10">
-          <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm font-sans text-[11px] font-bold text-[#1a1c21] flex items-center gap-1 shadow-sm">
+          <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm font-sans text-[10px] font-bold text-[#17171c] flex items-center gap-1 shadow-sm">
              ★ 4.9
           </span>
         </div>
@@ -148,16 +162,16 @@ export function TheaterCard({
       )}
 
       {/* DETAILS SECTION */}
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-4 md:p-5 flex flex-col flex-1">
         
         <div className="flex justify-between items-start mb-2 gap-4">
-          <h2 className="text-[22px] font-heading font-extrabold text-[#1a1c21] leading-tight">
+          <h2 className="text-[20px] font-heading font-extrabold text-[#17171c] leading-tight">
             {theater.name}
           </h2>
         </div>
 
         {/* Location & Maps */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="flex items-center gap-1 text-[13px] font-medium text-[#6b5c52]">
             <MapPin className="w-4 h-4 text-[#8c5211]" /> {theater.location?.name || 'Premium'}
           </span>
@@ -167,14 +181,14 @@ export function TheaterCard({
             </a>
           )}
           {selectedDate && !fetchingSlots && (
-            <span className={`ml-auto inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${availableCount > 0 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-100'}`}>
+             <span className={`ml-auto inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${availableCount > 0 ? 'bg-[#ecfff3] text-[#198754] border-[#bde8ce]' : 'bg-red-50 text-red-600 border-red-100'}`}>
                {availableCount > 0 ? '🟢' : '🔴'} {availableCount} Slot{availableCount !== 1 ? 's' : ''} Available
             </span>
           )}
         </div>
 
         {/* Features List */}
-        <div className="space-y-2 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mb-5">
            <div className="flex items-center gap-2 text-[13px] text-[#4a4038] font-medium">
              <span className="w-5 flex justify-center"><Users className="w-4 h-4 text-[#8c5211]"/></span>
              Max {theater.capacity} People
@@ -203,7 +217,7 @@ export function TheaterCard({
         </div>
 
         <div className="mt-auto border-t border-[#ecdcd1] pt-5">
-           <p className="text-[12px] font-bold text-[#1a1c21] uppercase tracking-wider mb-3 text-center">
+           <p className="text-[10px] font-bold text-[#17171c] uppercase tracking-wider mb-3">
              Select Time Slot
            </p>
 
@@ -234,7 +248,7 @@ export function TheaterCard({
                <span>Please choose another date.</span>
              </div>
            ) : (
-             <div className="grid grid-cols-2 gap-2 mb-5">
+             <div className="grid grid-cols-4 gap-1.5 mb-4">
                {slotsData.map(slot => {
                  const isSlotSelected = isSelected && activeSlot === slot.time;
                  return (
@@ -243,19 +257,19 @@ export function TheaterCard({
                      type="button"
                      disabled={!slot.available}
                      onClick={() => onSelectBooking({ theaterId: theater._id, slotId: slot.time })}
-                     className={`p-2 rounded-lg border text-center transition-all ${
+                     className={`min-h-[46px] px-1 py-1 rounded-lg border text-center transition-all ${
                        !slot.available 
                          ? 'opacity-40 bg-gray-50 border-gray-200 cursor-not-allowed line-through' 
                          : isSlotSelected
                            ? 'border-[#8c5211] bg-[#f9f2eb] ring-1 ring-[#8c5211]'
-                           : 'border-[#ecdcd1] hover:border-[#8c5211] bg-white'
+                           : 'border-[#ead9ca] hover:border-[#a9651c] bg-[#fffaf5]'
                      }`}
                    >
-                     <div className={`text-[12px] font-bold ${!slot.available ? 'text-gray-500' : isSlotSelected ? 'text-[#8c5211]' : 'text-[#1a1c21]'}`}>
+                     <div className={`text-[9px] leading-tight font-bold whitespace-nowrap ${!slot.available ? 'text-gray-500' : isSlotSelected ? 'text-[#8c5211]' : 'text-[#1a1c21]'}`}>
                        {slot.time}
                      </div>
-                     <div className="text-[9px] mt-0.5 uppercase font-bold tracking-wider">
-                       {!slot.available ? <span className="text-error">Full</span> : isSlotSelected ? <span className="text-[#8c5211]">Selected</span> : <span className="text-success">Available</span>}
+                     <div className="text-[8px] mt-1 uppercase font-bold tracking-wide">
+                       {!slot.available ? <span className="text-error">Booked</span> : isSlotSelected ? <span className="text-[#8c5211]">Selected</span> : <span className="text-success">Available</span>}
                      </div>
                    </button>
                  );
@@ -266,9 +280,9 @@ export function TheaterCard({
            {slotError && <p className="text-[11px] font-bold text-error text-center mb-3">{slotError}</p>}
 
            {/* PRICE & CONTINUE */}
-           <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100">
+           <div className="flex items-center justify-between mt-2 pt-4 border-t border-[#eadfd5]">
              <div className="flex flex-col">
-               <span className="text-[20px] font-extrabold text-[#9e6223]">₹{theater.pricePerHour}</span>
+               <span className="text-[20px] font-extrabold text-[#a9651c]">₹{theater.pricePerHour}</span>
                <span className="text-[10px] uppercase tracking-wider font-bold text-[#6b5c52]">Per Hour</span>
              </div>
              
@@ -278,7 +292,7 @@ export function TheaterCard({
                className={`px-5 py-3 rounded-xl font-bold text-[13px] transition-all flex items-center gap-1 ${
                  !isSelected || !activeSlot
                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                   : 'bg-[#1a1c21] text-white hover:bg-black shadow-md'
+                   : 'bg-[#a9651c] text-white hover:bg-[#8e5217] shadow-md'
                }`}
              >
                Continue <ArrowRight className="w-4 h-4" />

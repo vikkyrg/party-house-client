@@ -56,25 +56,25 @@ export function HomePage() {
       <section className="relative pt-32 pb-20 overflow-hidden flex items-center justify-center">
         
         {/* Full-width background image */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-black/60 z-10" />
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className="absolute inset-0 bg-black/40 z-10" />
           <AnimatePresence mode="wait">
             {banners.length > 0 ? (
               <motion.img 
                 key={currentBannerIndex}
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.5 }}
                 src={getImageUrl(banners[currentBannerIndex]?.image)} 
                 alt="Private Theater" 
-                className="w-full h-full object-cover"
+                className="hero-background-image w-full h-full object-cover"
               />
             ) : (
               <img 
-                src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop" 
+                src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop" 
                 alt="Private Theater" 
-                className="w-full h-full object-cover"
+                className="hero-background-image w-full h-full object-cover"
               />
             )}
           </AnimatePresence>
