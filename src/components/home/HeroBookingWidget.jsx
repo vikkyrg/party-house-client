@@ -59,7 +59,7 @@ export function HeroBookingWidget() {
         transition={{ delay: 0.2, duration: 0.6 }}
         className="bg-[#FAF4ED] rounded-[2rem] p-1 flex flex-col md:flex-row gap-2 relative text-left w-full"
       >
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-5 gap-2">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
           {/* City */}
           <div className="relative group bg-[#F4EBE1] rounded-[1.5rem] p-3 px-4 flex items-center gap-3 cursor-pointer border border-transparent hover:border-[#eaddd0] transition-colors">
             <div className="flex flex-col w-full">
@@ -118,43 +118,7 @@ export function HeroBookingWidget() {
             </div>
           </div>
 
-          {/* People */}
-          <div className="relative group bg-[#F4EBE1] rounded-[1.5rem] p-3 px-4 flex items-center gap-3 cursor-pointer border border-transparent hover:border-[#eaddd0] transition-colors">
-            <div className="flex flex-col w-full">
-              <label className="block text-[9px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5">People</label>
-              <div className="relative w-full">
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                  <Users className="w-3.5 h-3.5 text-[#8c5211]" />
-                </div>
-                <select className="w-full appearance-none bg-transparent text-[13px] font-medium text-[#1a1c21] focus:outline-none cursor-pointer pl-6">
-                  <option value="2-10" className="bg-white">2 - 10</option>
-                  <option value="11-20" className="bg-white">11 - 20</option>
-                  <option value="21-30" className="bg-white">21 - 30</option>
-                  <option value="31+" className="bg-white">31+</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8c5211] pointer-events-none" />
-              </div>
-            </div>
-          </div>
 
-          {/* Experience Level */}
-          <div className="relative group bg-[#F4EBE1] rounded-[1.5rem] p-3 px-4 flex items-center gap-3 cursor-pointer border border-transparent hover:border-[#eaddd0] transition-colors">
-            <div className="flex flex-col w-full">
-              <label className="block text-[9px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5">Experience Level</label>
-              <div className="relative w-full">
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                  <svg className="w-3.5 h-3.5 text-[#8c5211]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                </div>
-                <select className="w-full appearance-none bg-transparent text-[13px] font-medium text-[#1a1c21] focus:outline-none cursor-pointer pl-6">
-                  <option value="all" className="bg-white">All Levels</option>
-                  <option value="premium" className="bg-white">Premium</option>
-                  <option value="luxury" className="bg-white">Luxury</option>
-                  <option value="vip" className="bg-white">VIP</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8c5211] pointer-events-none" />
-              </div>
-            </div>
-          </div>
         </div>
 
         <button 

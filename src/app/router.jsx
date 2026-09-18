@@ -25,6 +25,12 @@ import { ReviewPage } from '../pages/ReviewPage';
 import { HelpPage } from '../pages/HelpPage';
 import { SitemapPage } from '../pages/SitemapPage';
 
+// New Pages
+import { ServicesPage } from '../pages/ServicesPage';
+import { GalleryPage } from '../pages/GalleryPage';
+import { BlogsPage } from '../pages/BlogsPage';
+import { PlaceholderPage } from '../pages/PlaceholderPage';
+
 function RouteErrorElement() {
   const error = useRouteError();
   const message = isRouteErrorResponse(error)
@@ -154,6 +160,47 @@ const router = createBrowserRouter([
         path: 'sitemap',
         element: <SitemapPage />,
       },
+      
+      // Dynamic content pages
+      {
+        path: 'services',
+        element: <ServicesPage />,
+      },
+      {
+        path: 'gallery',
+        element: <GalleryPage />,
+      },
+      {
+        path: 'blogs',
+        element: <BlogsPage />,
+      },
+
+      // Placeholder pages for dropdown
+      {
+        path: 'about',
+        element: <PlaceholderPage title="About Us" />,
+      },
+      {
+        path: 'founders',
+        element: <PlaceholderPage title="Founders" />,
+      },
+      {
+        path: 'franchise',
+        element: <PlaceholderPage title="Franchise" />,
+      },
+      {
+        path: 'list-venue',
+        element: <PlaceholderPage title="List Your Venue" />,
+      },
+      {
+        path: 'refund-policy',
+        element: <PlaceholderPage title="Refund Policy" />,
+      },
+      {
+        path: 'waitlist',
+        element: <PlaceholderPage title="Join Waitlist" />,
+      },
+      
       {
         path: '*',
         element: <NotFoundPage />,

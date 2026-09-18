@@ -25,5 +25,20 @@ export const contentService = {
   getTestimonials: async () => {
     const { data } = await apiClient.get('/testimonials');
     return data;
+  },
+  
+  getServices: async () => {
+    const { data } = await apiClient.get('/services');
+    return data;
+  },
+  
+  getGallery: async () => {
+    const { data } = await apiClient.get('/gallery');
+    return data;
+  },
+  
+  getStories: async () => {
+    const { data } = await apiClient.get('/stories');
+    return data;
   }
 };
