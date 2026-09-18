@@ -102,23 +102,43 @@ export function TheaterDetailsPage() {
           >
             <div>
               <h1 className="text-4xl md:text-5xl font-heading text-[#1a1c21] font-extrabold mb-4">{theater.name}</h1>
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm mt-2">
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f9f2eb] text-[#8c5211] text-[11px] uppercase tracking-widest font-bold border border-[#ecdcd1]">
                   <MapPin className="w-3.5 h-3.5" /> {theater.city?.name || 'Bengaluru'}
                 </span>
                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#1a1c21] text-[11px] uppercase tracking-widest font-bold border border-[#ecdcd1]">
                   <Users className="w-3.5 h-3.5 text-[#8c5211]" /> Up to {theater.capacity} guests
                 </span>
+                {theater.googleMapsLink && (
+                  <a href={theater.googleMapsLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8f0fe] text-[#1967d2] hover:bg-[#d2e3fc] text-[11px] uppercase tracking-widest font-bold border border-[#d2e3fc] transition-colors">
+                    📍 MAPS
+                  </a>
+                )}
               </div>
             </div>
 
-            <div className="aspect-video bg-[#f9f2eb] overflow-hidden rounded-[24px] relative shadow-md border border-[#ecdcd1]">
+            <div className="aspect-video bg-[#f9f2eb] overflow-hidden rounded-[24px] relative shadow-md border border-[#ecdcd1] mb-6">
               <img 
                 src={theater.images?.[0] ? getImageUrl(theater.images[0]) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070'} 
                 alt={theater.name} 
                 className="w-full h-full object-cover"
               />
             </div>
+
+            {(theater.theatreVideoUrl || theater.branchVideoUrl) && (
+              <div className="flex flex-wrap gap-3 mb-8">
+                {theater.theatreVideoUrl && (
+                  <a href={theater.theatreVideoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#ecdcd1] text-[#1a1c21] rounded-xl text-[13px] font-bold hover:bg-[#f9f2eb] transition-colors shadow-sm">
+                    <span className="text-[#8c5211]">▶</span> Theatre Video
+                  </a>
+                )}
+                {theater.branchVideoUrl && (
+                  <a href={theater.branchVideoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#ecdcd1] text-[#1a1c21] rounded-xl text-[13px] font-bold hover:bg-[#f9f2eb] transition-colors shadow-sm">
+                    <span className="text-[#8c5211]">▶</span> Branch Video
+                  </a>
+                )}
+              </div>
+            )}
 
             <div className="prose prose-lg max-w-none">
               <h2 className="text-[24px] font-heading text-[#1a1c21] font-bold mb-4">About this space</h2>
