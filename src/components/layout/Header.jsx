@@ -88,9 +88,9 @@ export function Header() {
           <div className="flex items-center shrink-0">
             <Link to="/" onClick={handleBrandClick} className="flex items-center gap-0 shrink-0 group">
               <img src="/logo.png" alt="Rio Party House" className="h-[74px] w-[87px] object-contain transition-transform duration-300 group-hover:scale-105" />
-              <div className="hidden sm:flex -ml-4 w-[140px] flex-col items-center justify-center leading-none">
-                <span className="block text-center text-[28px] font-heading font-black tracking-[0.18em] leading-none text-[#ad641b]">RIO</span>
-                <span className="mt-2.5 block whitespace-nowrap text-center text-[12px] font-heading font-extrabold tracking-[0.16em] leading-none text-[#17243d]">PARTY HOUSE</span>
+              <div className="flex -ml-3 w-[108px] flex-col items-center justify-center leading-none sm:-ml-4 sm:w-[140px]">
+                <span className="block text-center text-[22px] font-heading font-black tracking-[0.14em] leading-none text-[#ad641b] sm:text-[28px] sm:tracking-[0.18em]">RIO</span>
+                <span className="mt-2 block whitespace-nowrap text-center text-[9px] font-heading font-extrabold tracking-[0.12em] leading-none text-[#17243d] sm:mt-2.5 sm:text-[12px] sm:tracking-[0.16em]">PARTY HOUSE</span>
               </div>
             </Link>
           </div>
