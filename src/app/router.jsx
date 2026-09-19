@@ -5,8 +5,8 @@ import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { VerifyOtpPage } from '../pages/VerifyOtpPage';
-import { CitiesPage } from '../pages/CitiesPage';
 import { TheaterListingPage } from '../pages/TheaterListingPage';
+import { TheaterDetailsPage } from '../pages/TheaterDetailsPage';
 import { BookingPage } from '../pages/BookingPage';
 import { BookingSuccessPage, BookingFailurePage } from '../pages/BookingStatusPages';
 import { MyBookingsPage } from '../pages/MyBookingsPage';
@@ -78,12 +78,16 @@ const router = createBrowserRouter([
         element: <ResetPasswordPage />,
       },
       {
-        path: 'cities',
-        element: <CitiesPage />,
-      },
-      {
         path: 'theaters',
         element: <TheaterListingPage />,
+      },
+      {
+        path: 'theaters/:theaterId',
+        element: <TheaterDetailsPage />,
+      },
+      {
+        path: 'theaters/:theaterId/rooms/:roomId',
+        element: <TheaterDetailsPage />,
       },
       {
         path: 'book/:theaterId',

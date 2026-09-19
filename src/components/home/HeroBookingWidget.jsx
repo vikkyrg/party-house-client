@@ -1,10 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, ChevronDown, PhoneCall, Sparkles, Users, MapPin, Building2, Phone } from 'lucide-react';
+import { Calendar, ChevronDown, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../../services/theaterService';
-import { cityService } from '../../services/cityService';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -16,15 +15,8 @@ const getTodayDate = () => {
 
 export function HeroBookingWidget() {
   const navigate = useNavigate();
-  const [selectedCity, setSelectedCity] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedTheater, setSelectedTheater] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-
-  const { data: citiesResponse } = useQuery({
-    queryKey: ['cities'],
-    queryFn: () => cityService.getCities(),
-  });
-  const cities = citiesResponse?.data || [];
 
   const { data: theatersResponse } = useQuery({
     queryKey: ['theaters'],
@@ -32,18 +24,13 @@ export function HeroBookingWidget() {
   });
   const theaters = theatersResponse?.data || [];
 
-  const availableLocations = useMemo(() => {
-    if (!selectedCity) return theaters;
-    return theaters.filter(t => (t.city?._id === selectedCity) || (t.city === selectedCity));
-  }, [theaters, selectedCity]);
-
   const handleBookNow = () => {
-    const params = new URLSearchParams();
-    if (selectedCity) params.append('city', selectedCity);
-    if (selectedLocation) params.append('location', selectedLocation);
-    if (selectedDate) params.append('date', selectedDate);
-
-    navigate(`/theaters?${params.toString()}`);
+    if (selectedTheater) {
+      const params = selectedDate ? `?date=${selectedDate}` : '';
+      navigate(`/theaters/${selectedTheater}${params}`);
+      return;
+    }
+    navigate(selectedDate ? `/theaters?date=${selectedDate}` : '/theaters');
   };
 
   const handleBookOnCall = () => {
@@ -62,43 +49,20 @@ export function HeroBookingWidget() {
         {/* Inputs Stack */}
         <div className="space-y-3">
           
-          {/* City Select */}
+          {/* Theater Select */}
           <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
             <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
-              <MapPin className="w-3 h-3" /> CITY
+              THEATER
             </label>
             <div className="relative w-full">
               <select 
-                value={selectedCity}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value);
-                  setSelectedLocation('');
-                }}
+                value={selectedTheater}
+                onChange={(e) => setSelectedTheater(e.target.value)}
                 className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
               >
-                <option value="">{`Select from ${cities.length} options`}</option>
-                {cities.map(city => (
-                  <option key={city._id} value={city._id}>{city.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Location Select */}
-          <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
-            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
-              <Building2 className="w-3 h-3" /> LOCATION
-            </label>
-            <div className="relative w-full">
-              <select 
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
-              >
-                <option value="">Choose a location</option>
-                {availableLocations.map(t => (
-                  <option key={t._id} value={t._id}>{t.name}</option>
+                <option value="">Select a theater</option>
+                {theaters.map(theater => (
+                  <option key={theater._id} value={theater._id}>{theater.name}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] pointer-events-none" />

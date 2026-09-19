@@ -5,6 +5,7 @@ import { contentService } from '../services/contentService';
 import { bookingService } from '../services/bookingService';
 import { paymentService } from '../services/paymentService';
 import { theaterService } from '../services/theaterService';
+import { roomService } from '../services/roomService';
 import { useAuthStore } from '../store/authStore';
 import { LoadingState } from '../components/common/LoadingState';
 import { BookingStepper } from '../components/booking/BookingStepper';
@@ -42,6 +43,8 @@ export function BookingPage() {
   // Get date and slot from URL
   const selectedDate = searchParams.get('date');
   const selectedTimeSlot = searchParams.get('slot');
+    const roomId = searchParams.get('roomId');
+    const [room, setRoom] = useState(null);
   
   const [selectedEventType, setSelectedEventType] = useState('');
   const [selectedCake, setSelectedCake] = useState(null); // { cakeId, size }
@@ -65,11 +68,11 @@ export function BookingPage() {
   
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { returnTo: `/book/${theaterId}?date=${selectedDate}&slot=${selectedTimeSlot}` } });
+      navigate('/login', { state: { returnTo: `/book/${theaterId}?roomId=${roomId}&date=${selectedDate}&slot=${selectedTimeSlot}` } });
       return;
     }
 
-    if (!selectedDate || !selectedTimeSlot) {
+    if (!roomId || !selectedDate || !selectedTimeSlot) {
       // If accessed without date/slot, redirect to theater details to force selection
       navigate(`/theaters/${theaterId}`);
       return;
@@ -77,13 +80,15 @@ export function BookingPage() {
 
     const fetchData = async () => {
       try {
-        const [theaterRes, eventsRes, addonsRes] = await Promise.all([
+        const [theaterRes, roomRes, eventsRes, addonsRes] = await Promise.all([
           theaterService.getTheaterById(theaterId),
+          roomService.getRoom(roomId),
           contentService.getEventTypes(),
           contentService.getAddons()
         ]);
         
         if (theaterRes.success) setTheater(theaterRes.data);
+        if (roomRes.success) setRoom(roomRes.data);
         if (eventsRes.success) setEventTypes(eventsRes.data);
         if (addonsRes.success) setAddons(addonsRes.data);
       } catch (err) {
@@ -93,7 +98,7 @@ export function BookingPage() {
       }
     };
     fetchData();
-  }, [theaterId, selectedDate, selectedTimeSlot, isAuthenticated, navigate]);
+  }, [theaterId, roomId, selectedDate, selectedTimeSlot, isAuthenticated, navigate]);
 
   const handleAddonToggle = (addonId) => {
     setSelectedAddons(prev => {
@@ -111,6 +116,9 @@ export function BookingPage() {
 
   const {
     theaterPrice,
+    extraGuestPrice,
+    extraGuestCount,
+    extraGuestTotal,
     cakePrice,
     addOnsTotal,
     subtotal,
@@ -119,13 +127,13 @@ export function BookingPage() {
     processedCake,
     processedAddons
   } = useMemo(() => calculateBookingTotal(
-    theater, 
+    room ? { ...theater, pricePerHour: room.basePrice, capacity: room.capacity, additionalGuestPrice: room.additionalGuestPrice ?? room.extraGuestPrice, selectedMembers: customerDetails.members } : theater,
     eventTypes.find(e => e._id === selectedEventType), 
     selectedCake,
     cakesList,
     selectedAddons, 
     addons
-  ), [theater, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons]);
+  ), [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons]);
 
   const validateStep = () => {
     if (currentStep === 1) { // Guest Details
@@ -134,10 +142,6 @@ export function BookingPage() {
         return false;
       }
       const totalGuests = Number(customerDetails.members) + Number(customerDetails.kids);
-      if (totalGuests > (theater?.capacity || 999)) {
-        setError(`Maximum capacity for this theater is ${theater?.capacity} guests.`);
-        return false;
-      }
     }
     if (currentStep === 2 && !selectedEventType) { // Occasion
       setError('Please select an occasion for your celebration.');
@@ -170,7 +174,7 @@ export function BookingPage() {
     setError(null);
     try {
       // Real-time re-check availability before booking
-      const availRes = await bookingService.checkAvailability(theaterId, selectedDate);
+      const availRes = await bookingService.checkAvailability(theaterId, selectedDate, roomId);
       if (availRes.success) {
         if (!availRes.data.availableSlots.includes(selectedTimeSlot)) {
            setError('This slot is no longer available. Please choose another time.');
@@ -181,8 +185,12 @@ export function BookingPage() {
 
       const payload = {
         theaterId,
+        locationId: theater?.location?._id || theater?.location,
+        roomId,
         date: selectedDate,
+        bookingDate: selectedDate,
         timeSlot: selectedTimeSlot,
+        timeSlotId: undefined,
         eventTypeId: selectedEventType,
         cake: selectedCake ? {
           cakeId: selectedCake.cakeId,
@@ -255,6 +263,7 @@ export function BookingPage() {
   if (!isAuthenticated) return null;
 
   const theaterImage = theater?.images?.length ? getImageUrl(theater.images[0]) : null;
+  const roomImage = room?.image ? getImageUrl(room.image) : theaterImage;
 
   return (
     <div className="min-h-screen bg-[#fcf5eb] pb-16 pt-24 relative overflow-hidden font-sans flex flex-col">
@@ -294,14 +303,14 @@ export function BookingPage() {
           {/* Booking Context Header */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4 p-3 md:p-4 bg-[#fffaf5] border border-[#ead9ca] rounded-[18px] shadow-[0_4px_18px_rgba(75,43,20,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
              <div className="flex items-center gap-3 min-w-0">
-               {theaterImage ? (
-                 <img src={theaterImage} alt={theater?.name} className="h-14 w-20 shrink-0 rounded-lg object-cover border border-[#ead9ca]" />
+               {roomImage ? (
+                 <img src={roomImage} alt={room?.name || theater?.name} className="h-14 w-20 shrink-0 rounded-lg object-cover border border-[#ead9ca]" />
                ) : (
                  <div className="h-14 w-20 shrink-0 rounded-lg bg-[#f4e7da] border border-[#ead9ca]" aria-hidden="true" />
                )}
                <div className="min-w-0">
                  <h2 className="text-[17px] font-heading font-extrabold text-[#17171c] truncate">
-                   {theater?.name}
+                   {theater?.name} · {room?.name}
                  </h2>
                  <div className="text-[11px] font-bold text-[#8c5211] mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</span>
@@ -344,7 +353,7 @@ export function BookingPage() {
                   <div className="space-y-8">
                     <div>
                       <h2 className="mb-2 text-[22px] font-bold text-[#17171c] font-heading">Guest details</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Maximum capacity for this theater is {theater?.capacity} guests.</p>
+                      <p className="text-[14px] text-[#6b5c52]">Room capacity: {room?.capacity} guests · Additional guest: ₹{room?.additionalGuestPrice ?? room?.extraGuestPrice ?? 0}</p>
                     </div>
 
                     <div className="space-y-5">
@@ -367,7 +376,7 @@ export function BookingPage() {
                       <div className="grid gap-5 md:grid-cols-2">
                         <div>
                           <label className="mb-2 block text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Number of Members *</label>
-                          <input type="number" min="1" max={theater?.capacity} value={customerDetails.members} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, members: e.target.value }))} className="h-11 w-full rounded-full border border-[#ead9ca] bg-[#f9f6f0] px-4 text-[13px] text-[#17171c] font-medium outline-none transition focus:border-[#a9651c] focus:ring-1 focus:ring-[#a9651c]/20" />
+                          <input type="number" min="1" value={customerDetails.members} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, members: e.target.value }))} className="h-11 w-full rounded-full border border-[#ead9ca] bg-[#f9f6f0] px-4 text-[13px] text-[#17171c] font-medium outline-none transition focus:border-[#a9651c] focus:ring-1 focus:ring-[#a9651c]/20" />
                         </div>
                         <div>
                           <label className="mb-2 block text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Number of Kids</label>
@@ -659,16 +668,22 @@ export function BookingPage() {
               )}
               <div className="min-w-0">
                 <p className="text-[12px] font-bold text-[#17171c] truncate">{theater?.name}</p>
-                <p className="text-[10px] text-[#6b5c52] truncate">{theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</p>
+                <p className="text-[10px] text-[#6b5c52] truncate">{room?.name} · {theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</p>
                 <p className="text-[10px] text-[#a9651c] font-bold mt-1">{selectedDate} · {selectedTimeSlot}</p>
               </div>
             </div>
             
             <div className="space-y-4 text-[14px]">
               <div className="flex justify-between items-center">
-                <span className="text-[#6b5c52]">Theater Base</span>
+                <span className="text-[#6b5c52]">Room Base</span>
                 <span className="font-bold text-[#1a1c21]">₹{theaterPrice}</span>
               </div>
+              {extraGuestTotal > 0 && (
+                <div className="flex justify-between items-center border-t border-dashed border-[#ecdcd1] pt-3">
+                  <span className="text-[#6b5c52]">Extra Guests ({extraGuestCount} × ₹{extraGuestPrice})</span>
+                  <span className="font-bold text-[#1a1c21]">₹{extraGuestTotal}</span>
+                </div>
+              )}
               
               {processedCake && (
                 <div className="flex justify-between items-start border-t border-dashed border-[#ecdcd1] pt-3 mt-3">

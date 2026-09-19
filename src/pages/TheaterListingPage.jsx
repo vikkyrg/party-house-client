@@ -1,10 +1,9 @@
 import { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { MapPin, ChevronDown, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
-import { cityService } from '../services/cityService';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
@@ -12,9 +11,7 @@ import { TheaterCard } from '../components/theater/TheaterCard';
 
 export function TheaterListingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || '');
   const selectedDate = searchParams.get('date');
-  const selectedLocation = searchParams.get('location');
 
   const [selectedBooking, setSelectedBooking] = useState({ theaterId: null, slotId: null });
   const dateInputRef = useRef(null);
@@ -43,13 +40,7 @@ export function TheaterListingPage() {
     queryFn: () => theaterService.getTheaters(),
   });
 
-  const { data: citiesResponse } = useQuery({
-    queryKey: ['cities'],
-    queryFn: () => cityService.getCities(),
-  });
-
   const theaters = theatersResponse?.data || [];
-  const cities = citiesResponse?.data || [];
 
   const filteredTheaters = useMemo(() => {
     let list = theaters;
@@ -57,23 +48,8 @@ export function TheaterListingPage() {
     // Filter by active
     list = list.filter(t => t.isActive);
 
-    if (selectedCity) {
-      list = list.filter(t => t.city?._id === selectedCity || t.city === selectedCity);
-    }
-    
-    // We optionally can sort to bring the specifically requested location to the top
-    if (selectedLocation) {
-      list.sort((a, b) => {
-        const aIsLoc = a._id === selectedLocation || a.location?._id === selectedLocation;
-        const bIsLoc = b._id === selectedLocation || b.location?._id === selectedLocation;
-        if (aIsLoc && !bIsLoc) return -1;
-        if (!aIsLoc && bIsLoc) return 1;
-        return 0;
-      });
-    }
-
     return list;
-  }, [theaters, selectedCity, selectedLocation]);
+  }, [theaters]);
 
   if (isLoadingTheaters) return <LoadingState message="Preparing venues..." />;
   if (theatersError) return <ErrorState error={theatersError} />;
@@ -90,8 +66,6 @@ export function TheaterListingPage() {
     hidden: { opacity: 0, y: 30 },
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
   };
-
-  const selectedCityName = cities.find(city => city._id === selectedCity)?.name || 'Bangalore';
 
   return (
     <div className="min-h-screen bg-[#fcf5eb] pt-28 pb-20 relative overflow-hidden font-sans text-[#6b5c52]">
@@ -131,13 +105,7 @@ export function TheaterListingPage() {
 
             {/* Show Selected Search Filters */}
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Your Search:</span>
-              {selectedCity && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f2eb] border border-[#ecdcd1] rounded-full text-[12px] font-bold text-[#8c5211]">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {cities.find(c => c._id === selectedCity)?.name || 'Bengaluru'}
-                </span>
-              )}
+              <span className="text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Browse available theaters</span>
               {selectedDate && (
                 <div 
                   onClick={handleOpenDatePicker}
@@ -159,27 +127,7 @@ export function TheaterListingPage() {
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-2 md:mt-0">
-             <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <MapPin className="w-4 h-4 text-[#8c5211]" />
-                </div>
-                <select 
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="appearance-none bg-[#fffaf5] border border-[#ead9ca] rounded-full pl-10 pr-10 py-2.5 text-[12px] font-bold text-[#17171c] focus:outline-none focus:border-[#8c5211] cursor-pointer"
-                >
-                  <option value="">All Locations</option>
-                  {cities.map(city => (
-                    <option key={city._id} value={city._id}>{city.name}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <ChevronDown className="w-4 h-4 text-[#8c5211] opacity-70" />
-                </div>
-             </div>
-          </div>
+          <div className="hidden md:block" />
         </motion.div>
 
         {!selectedDate && (
@@ -194,7 +142,7 @@ export function TheaterListingPage() {
             <h3 className="text-[22px] font-heading text-[#17171c] font-bold mb-4">No venues found</h3>
             <p className="text-[#6b5c52] font-medium text-[14px] mb-8">We couldn't find any theaters matching your criteria.</p>
             <button 
-              onClick={() => setSelectedCity('')}
+              onClick={() => window.location.reload()}
               className="bg-[#9e6223] text-white px-6 py-2.5 rounded-full font-bold text-[13px]"
             >
               Clear Filters
@@ -203,7 +151,7 @@ export function TheaterListingPage() {
         ) : (
           <div className="mb-4 flex justify-between items-center border-b border-[#ead9ca] pb-3">
              <h2 className="text-[16px] font-heading font-extrabold text-[#17171c]">
-               {filteredTheaters.length} private theatre{filteredTheaters.length !== 1 ? 's' : ''} {selectedCity ? `in ${selectedCityName}` : 'available'}
+               {filteredTheaters.length} private theatre{filteredTheaters.length !== 1 ? 's' : ''} available
              </h2>
           </div>
         )}

@@ -1,22 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Users, Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { bookingService } from '../../services/bookingService';
+import { MapPin, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageUtils';
-
-const getSlotStartMinutes = (slotTime) => {
-  const match = slotTime?.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  if (!match) return Number.MAX_SAFE_INTEGER;
-
-  let hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  const period = match[3].toUpperCase();
-
-  if (hours === 12) hours = 0;
-  if (period === 'PM') hours += 12;
-
-  return hours * 60 + minutes;
-};
 
 export function TheaterCard({ 
   theater, 
@@ -27,19 +12,6 @@ export function TheaterCard({
 }) {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const dateInputRef = useRef(null);
-
-  const handleOpenDatePicker = () => {
-    if (dateInputRef.current && dateInputRef.current.showPicker) {
-      dateInputRef.current.showPicker();
-    } else if (dateInputRef.current) {
-      dateInputRef.current.focus();
-    }
-  };
-  
-  const [slotsData, setSlotsData] = useState([]);
-  const [fetchingSlots, setFetchingSlots] = useState(false);
-  const [slotError, setSlotError] = useState('');
 
   // The images array to use
   const images = theater.images?.length > 0 
@@ -48,33 +20,6 @@ export function TheaterCard({
 
   const hasMultipleImages = images.length > 1;
 
-  useEffect(() => {
-    if (selectedDate && theater._id) {
-      setFetchingSlots(true);
-      setSlotError('');
-      
-      bookingService.checkAvailability(theater._id, selectedDate)
-        .then(res => {
-          if (res.success) {
-            const allSlots = [...res.data.availableSlots, ...res.data.bookedSlots];
-            const structured = allSlots.map(s => ({
-              id: s,
-              time: s,
-              available: res.data.availableSlots.includes(s)
-            })).sort((a, b) => getSlotStartMinutes(a.time) - getSlotStartMinutes(b.time));
-            setSlotsData(structured);
-          }
-        })
-        .catch(err => {
-          setSlotError('Failed to fetch availability.');
-        })
-        .finally(() => {
-          setFetchingSlots(false);
-        });
-    } else {
-      setSlotsData([]);
-    }
-  }, [selectedDate, theater._id]);
 
   const handlePrevImage = (e) => {
     e.stopPropagation();
@@ -89,15 +34,8 @@ export function TheaterCard({
   const isSelected = selectedBooking?.theaterId === theater._id;
   const activeSlot = isSelected ? selectedBooking?.slotId : null;
   
-  const availableCount = slotsData.filter(s => s.available).length;
-
   const handleContinueBooking = () => {
-    if (!isSelected || !activeSlot) return;
-    
-    const params = new URLSearchParams();
-    params.append('date', selectedDate);
-    params.append('slot', activeSlot);
-    navigate(`/book/${theater._id}?${params.toString()}`);
+    navigate(`/theaters/${theater._id}`);
   };
 
   return (
@@ -180,18 +118,13 @@ export function TheaterCard({
               📍 MAPS
             </a>
           )}
-          {selectedDate && !fetchingSlots && (
-             <span className={`ml-auto inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${availableCount > 0 ? 'bg-[#ecfff3] text-[#198754] border-[#bde8ce]' : 'bg-red-50 text-red-600 border-red-100'}`}>
-               {availableCount > 0 ? '🟢' : '🔴'} {availableCount} Slot{availableCount !== 1 ? 's' : ''} Available
-            </span>
-          )}
         </div>
 
         {/* Features List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 mb-5">
            <div className="flex items-center gap-2 text-[13px] text-[#4a4038] font-medium">
-             <span className="w-5 flex justify-center"><Users className="w-4 h-4 text-[#8c5211]"/></span>
-             Max {theater.capacity} People
+             <span className="w-5 flex justify-center text-[#8c5211]">✓</span>
+             {theater.rooms?.filter((room) => room.isActive !== false).length || 0} Rooms Available
            </div>
            
            {/* If features exist, map them here, otherwise standard fallback for structure */}
@@ -217,85 +150,17 @@ export function TheaterCard({
         </div>
 
         <div className="mt-auto border-t border-[#ecdcd1] pt-5">
-           <p className="text-[10px] font-bold text-[#17171c] uppercase tracking-wider mb-3">
-             Select Time Slot
-           </p>
-
-           {/* SLOT GRID */}
-           {!selectedDate ? (
-             <div 
-               onClick={handleOpenDatePicker}
-               className="relative text-[12px] text-[#6b5c52] p-4 bg-[#F9F6F0] rounded-xl border border-dashed border-[#ecdcd1] text-center group overflow-hidden transition-colors hover:bg-[#f2efe9] cursor-pointer"
-             >
-               <input 
-                 ref={dateInputRef}
-                 type="date"
-                 min={new Date().toISOString().split('T')[0]}
-                 onChange={(e) => onDateChange && onDateChange(e.target.value)}
-                 className="absolute invisible w-0 h-0"
-               />
-               <span className="flex items-center justify-center gap-2 font-bold group-hover:text-[#8c5211] transition-colors">
-                 <Calendar className="w-4 h-4" /> Please select a date above.
-               </span>
-             </div>
-           ) : fetchingSlots ? (
-             <div className="text-[12px] text-[#8c5211] font-bold text-center py-6 animate-pulse">
-               Checking availability...
-             </div>
-           ) : availableCount === 0 || slotsData.length === 0 ? (
-             <div className="text-[12px] text-error p-4 bg-error/5 rounded-xl border border-error/20 text-center font-medium flex flex-col gap-1">
-               <span>No time slots available for this date.</span>
-               <span>Please choose another date.</span>
-             </div>
-           ) : (
-             <div className="grid grid-cols-4 gap-1.5 mb-4">
-               {slotsData.map(slot => {
-                 const isSlotSelected = isSelected && activeSlot === slot.time;
-                 return (
-                   <button
-                     key={slot.id}
-                     type="button"
-                     disabled={!slot.available}
-                     onClick={() => onSelectBooking({ theaterId: theater._id, slotId: slot.time })}
-                     className={`min-h-[46px] px-1 py-1 rounded-lg border text-center transition-all ${
-                       !slot.available 
-                         ? 'opacity-40 bg-gray-50 border-gray-200 cursor-not-allowed line-through' 
-                         : isSlotSelected
-                           ? 'border-[#8c5211] bg-[#f9f2eb] ring-1 ring-[#8c5211]'
-                           : 'border-[#ead9ca] hover:border-[#a9651c] bg-[#fffaf5]'
-                     }`}
-                   >
-                     <div className={`text-[9px] leading-tight font-bold whitespace-nowrap ${!slot.available ? 'text-gray-500' : isSlotSelected ? 'text-[#8c5211]' : 'text-[#1a1c21]'}`}>
-                       {slot.time}
-                     </div>
-                     <div className="text-[8px] mt-1 uppercase font-bold tracking-wide">
-                       {!slot.available ? <span className="text-error">Booked</span> : isSlotSelected ? <span className="text-[#8c5211]">Selected</span> : <span className="text-success">Available</span>}
-                     </div>
-                   </button>
-                 );
-               })}
-             </div>
-           )}
-
-           {slotError && <p className="text-[11px] font-bold text-error text-center mb-3">{slotError}</p>}
-
-           {/* PRICE & CONTINUE */}
            <div className="flex items-center justify-between mt-2 pt-4 border-t border-[#eadfd5]">
              <div className="flex flex-col">
-               <span className="text-[20px] font-extrabold text-[#a9651c]">₹{theater.pricePerHour}</span>
-               <span className="text-[10px] uppercase tracking-wider font-bold text-[#6b5c52]">Per Hour</span>
+               <span className="text-[12px] font-bold uppercase tracking-wider text-[#6b5c52]">Choose a room</span>
+               <span className="text-[10px] font-medium text-[#6b5c52]">View room pricing</span>
              </div>
              
              <button
                onClick={handleContinueBooking}
-               disabled={!isSelected || !activeSlot}
-               className={`px-5 py-3 rounded-xl font-bold text-[13px] transition-all flex items-center gap-1 ${
-                 !isSelected || !activeSlot
-                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                   : 'bg-[#a9651c] text-white hover:bg-[#8e5217] shadow-md'
-               }`}
+               className="px-5 py-3 rounded-xl bg-[#a9651c] text-white hover:bg-[#8e5217] shadow-md font-bold text-[13px] transition-all flex items-center gap-1"
              >
-               Continue <ArrowRight className="w-4 h-4" />
+               View Rooms <ArrowRight className="w-4 h-4" />
              </button>
            </div>
         </div>

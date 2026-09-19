@@ -1,9 +1,9 @@
 import { apiClient } from '../lib/apiClient';
 
 export const bookingService = {
-  checkAvailability: async (theaterId, date) => {
+  checkAvailability: async (theaterId, date, roomId) => {
     const { data } = await apiClient.get('/bookings/check-availability', {
-      params: { theaterId, date }
+      params: { theaterId, roomId, date }
     });
     return data;
   },

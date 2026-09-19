@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, History, ChevronDown, MapPin } from 'lucide-react';
+import {
+  Menu, X, User, LogOut, History, ChevronDown, MapPin, Home,
+  Gift, Image, FileText, GraduationCap, CalendarDays, ArrowRight,
+} from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 
@@ -59,12 +62,13 @@ export function Header() {
   ];
 
   const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Location', path: '#location', hasDropdown: true, dropdownId: 'location' },
-    { name: 'Our Services', path: '/services' },
-    { name: 'Gallery', path: '/gallery' },
-    { name: 'Our stories - blogs', path: '/blogs' },
-    { name: 'Learn', path: '#learn', hasDropdown: true, dropdownId: 'learn' },
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Theaters', path: '/theaters', icon: MapPin },
+    { name: 'Our Services', path: '/services', icon: Gift },
+    { name: 'Gallery', path: '/gallery', icon: Image },
+    { name: 'Our stories - blogs', path: '/blogs', icon: FileText },
+    { name: 'Learn', path: '#learn', icon: GraduationCap, hasDropdown: true, dropdownId: 'learn' },
+    { name: 'My Bookings', path: '/account/bookings', icon: History },
 
   ];
 
@@ -76,22 +80,23 @@ export function Header() {
       }}
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top,0px)] bg-white transition-colors duration-500 shadow-sm`}
+      className={`fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top,0px)] bg-white transition-colors duration-500 shadow-[0_2px_14px_rgba(36,28,74,0.08)]`}
     >
-      <div className="h-[72px] w-full max-w-[1440px] mx-auto px-5 md:px-8 flex items-center justify-between gap-2 relative">
+      <div className="h-[78px] w-full mx-auto px-4 md:px-8 xl:px-10 flex items-center justify-between gap-4 relative">
           
           {/* BRAND */}
-          <div className="flex items-center gap-3">
-            <Link to="/" onClick={handleBrandClick} className="flex items-center gap-3 shrink-0 group">
-              <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
-              <div className="flex flex-col">
-                <span className="text-[20px] font-heading font-black tracking-[0.12em] uppercase leading-[1.1] text-[#1a1c21] hidden sm:block">Party House</span>
+          <div className="flex items-center shrink-0">
+            <Link to="/" onClick={handleBrandClick} className="flex items-center gap-0 shrink-0 group">
+              <img src="/logo.png" alt="Rio Party House" className="h-[74px] w-[87px] object-contain transition-transform duration-300 group-hover:scale-105" />
+              <div className="hidden sm:flex -ml-4 w-[140px] flex-col items-center justify-center leading-none">
+                <span className="block text-center text-[28px] font-heading font-black tracking-[0.18em] leading-none text-[#ad641b]">RIO</span>
+                <span className="mt-2.5 block whitespace-nowrap text-center text-[12px] font-heading font-extrabold tracking-[0.16em] leading-none text-[#17243d]">PARTY HOUSE</span>
               </div>
             </Link>
           </div>
 
           {/* DESKTOP NAV */}
-          <nav className="hidden lg:flex items-center gap-7 flex-1 justify-center relative">
+          <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center relative">
             {navLinks.map((link) => {
               const isActive = link.path === '/' 
                 ? location.pathname === '/' 
@@ -100,7 +105,7 @@ export function Header() {
               return (
                 <div 
                   key={link.name}
-                  className="relative group h-[72px] flex items-center"
+                  className="relative group h-[78px] flex items-center"
                   onMouseEnter={() => link.hasDropdown && setActiveDropdown(link.dropdownId)}
                   onMouseLeave={() => link.hasDropdown && setActiveDropdown(null)}
                 >
@@ -113,12 +118,13 @@ export function Header() {
                         scrollToTop();
                       }
                     }}
-                    className={`flex items-center gap-1.5 text-[14px] transition-all duration-300 ${
+                    className={`flex items-center gap-2 text-[14px] whitespace-nowrap transition-all duration-300 ${
                       isActive 
-                        ? 'bg-[#322a59] text-white px-5 py-2 rounded-full font-semibold shadow-md' 
+                        ? 'bg-[#322a59] text-white px-5 py-2.5 rounded-full font-semibold shadow-[0_7px_15px_rgba(50,42,89,0.2)]' 
                         : 'text-[#181533] font-medium hover:text-[#322a59]'
                     }`}
                   >
+                    <link.icon className="h-[19px] w-[19px] shrink-0" strokeWidth={2.1} />
                     {link.name}
                     {link.hasDropdown && <ChevronDown className="h-4 w-4 opacity-80" strokeWidth={2.5} />}
                   </Link>
@@ -167,9 +173,9 @@ export function Header() {
               <div className="relative">
                 <button
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="w-10 h-10 rounded-full bg-[#322a59] flex items-center justify-center shrink-0 hover:bg-[#1f1a38] transition-colors shadow-md"
+                  className="w-11 h-11 rounded-full bg-[#f5f3fb] border border-[#ece9f5] flex items-center justify-center shrink-0 hover:bg-[#ece9f5] transition-colors"
                 >
-                  <User className="h-5 w-5 text-white" />
+                  <User className="h-[19px] w-[19px] text-[#322a59]" />
                 </button>
 
                 <AnimatePresence>
@@ -215,17 +221,19 @@ export function Header() {
             ) : (
               <Link
                 to="/login"
-                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 hover:bg-gray-200 transition-colors hidden sm:flex"
+                className="w-11 h-11 rounded-full bg-[#f5f3fb] border border-[#ece9f5] flex items-center justify-center shrink-0 hover:bg-[#ece9f5] transition-colors hidden sm:flex"
               >
-                <User className="h-5 w-5 text-gray-600" />
+                <User className="h-[19px] w-[19px] text-[#322a59]" />
               </Link>
             )}
 
             <Link
               to="/book"
-              className="hidden sm:inline-flex items-center justify-center bg-[#322a59] text-white px-7 py-2.5 rounded-full text-[15px] font-semibold shadow-md hover:bg-[#1f1a38] transition-colors"
+              className="hidden sm:inline-flex items-center justify-center gap-3 bg-[#322a59] text-white px-6 py-3 rounded-full text-[15px] font-semibold shadow-[0_8px_18px_rgba(50,42,89,0.2)] hover:bg-[#1f1a38] transition-colors"
             >
+              <CalendarDays className="h-[19px] w-[19px]" strokeWidth={2} />
               Book Now
+              <ArrowRight className="h-[18px] w-[18px]" strokeWidth={2} />
             </Link>
 
             <button
@@ -239,7 +247,7 @@ export function Header() {
         </div>
         
       {/* GRADIENT BOTTOM BAR */}
-      <div className="h-2 w-full bg-gradient-to-r from-[#202f5a] via-[#852834] to-[#f39c28]"></div>
+      <div className="h-[3px] w-full bg-gradient-to-r from-[#202f5a] via-[#852834] to-[#f39c28]"></div>
 
       {/* MOBILE MENU */}
       <AnimatePresence>
