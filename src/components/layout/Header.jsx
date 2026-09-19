@@ -228,7 +228,7 @@ export function Header() {
             )}
 
             <Link
-              to="/book"
+              to="/theaters"
               className="hidden sm:inline-flex items-center justify-center gap-3 bg-[#322a59] text-white px-6 py-3 rounded-full text-[15px] font-semibold shadow-[0_8px_18px_rgba(50,42,89,0.2)] hover:bg-[#1f1a38] transition-colors"
             >
               <CalendarDays className="h-[19px] w-[19px]" strokeWidth={2} />
