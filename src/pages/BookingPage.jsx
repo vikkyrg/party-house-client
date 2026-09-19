@@ -43,6 +43,7 @@ export function BookingPage() {
   // Get date and slot from URL
   const selectedDate = searchParams.get('date');
   const selectedTimeSlot = searchParams.get('slot');
+  const selectedTimeSlotId = searchParams.get('slotId');
     const roomId = searchParams.get('roomId');
     const [room, setRoom] = useState(null);
   
@@ -116,9 +117,6 @@ export function BookingPage() {
 
   const {
     theaterPrice,
-    extraGuestPrice,
-    extraGuestCount,
-    extraGuestTotal,
     cakePrice,
     addOnsTotal,
     subtotal,
@@ -127,7 +125,7 @@ export function BookingPage() {
     processedCake,
     processedAddons
   } = useMemo(() => calculateBookingTotal(
-    room ? { ...theater, pricePerHour: room.basePrice, capacity: room.capacity, additionalGuestPrice: room.additionalGuestPrice ?? room.extraGuestPrice, selectedMembers: customerDetails.members } : theater,
+    room ? { ...theater, price: room.price } : theater,
     eventTypes.find(e => e._id === selectedEventType), 
     selectedCake,
     cakesList,
@@ -141,7 +139,10 @@ export function BookingPage() {
         setError('Please provide your name and phone number.');
         return false;
       }
-      const totalGuests = Number(customerDetails.members) + Number(customerDetails.kids);
+      if (Number(customerDetails.members) > Number(room?.maximumMembers)) {
+        setError(`Maximum ${room.maximumMembers} members allowed for this room.`);
+        return false;
+      }
     }
     if (currentStep === 2 && !selectedEventType) { // Occasion
       setError('Please select an occasion for your celebration.');
@@ -190,7 +191,7 @@ export function BookingPage() {
         date: selectedDate,
         bookingDate: selectedDate,
         timeSlot: selectedTimeSlot,
-        timeSlotId: undefined,
+        timeSlotId: selectedTimeSlotId || undefined,
         eventTypeId: selectedEventType,
         cake: selectedCake ? {
           cakeId: selectedCake.cakeId,
@@ -353,7 +354,7 @@ export function BookingPage() {
                   <div className="space-y-8">
                     <div>
                       <h2 className="mb-2 text-[22px] font-bold text-[#17171c] font-heading">Guest details</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Room capacity: {room?.capacity} guests · Additional guest: ₹{room?.additionalGuestPrice ?? room?.extraGuestPrice ?? 0}</p>
+                      <p className="text-[14px] text-[#6b5c52]">Couple: {room?.couple} · Maximum Members: {room?.maximumMembers} · ₹{room?.price} / Hr</p>
                     </div>
 
                     <div className="space-y-5">
@@ -674,16 +675,16 @@ export function BookingPage() {
             </div>
             
             <div className="space-y-4 text-[14px]">
+              <div className="space-y-1 border-b border-dashed border-[#ecdcd1] pb-3">
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Theater</span><span className="font-bold text-[#1a1c21]">{theater?.name}</span></div>
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Room</span><span className="font-bold text-[#1a1c21]">{room?.name}</span></div>
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Couple</span><span className="font-bold text-[#1a1c21]">{room?.couple}</span></div>
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Maximum Members</span><span className="font-bold text-[#1a1c21]">{room?.maximumMembers}</span></div>
+              </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#6b5c52]">Room Base</span>
+                <span className="text-[#6b5c52]">Room Price</span>
                 <span className="font-bold text-[#1a1c21]">₹{theaterPrice}</span>
               </div>
-              {extraGuestTotal > 0 && (
-                <div className="flex justify-between items-center border-t border-dashed border-[#ecdcd1] pt-3">
-                  <span className="text-[#6b5c52]">Extra Guests ({extraGuestCount} × ₹{extraGuestPrice})</span>
-                  <span className="font-bold text-[#1a1c21]">₹{extraGuestTotal}</span>
-                </div>
-              )}
               
               {processedCake && (
                 <div className="flex justify-between items-start border-t border-dashed border-[#ecdcd1] pt-3 mt-3">

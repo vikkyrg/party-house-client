@@ -75,12 +75,6 @@ export function TheaterCard({
           </>
         )}
         
-        {/* Rating Mockup (Optional per screenshot) */}
-        <div className="absolute top-4 right-4 z-10">
-          <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm font-sans text-[10px] font-bold text-[#17171c] flex items-center gap-1 shadow-sm">
-             ★ 4.9
-          </span>
-        </div>
       </div>
 
       {/* MEDIA BUTTONS ROW (Just below image) */}

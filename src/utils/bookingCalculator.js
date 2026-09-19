@@ -1,8 +1,5 @@
 export const calculateBookingTotal = (theater, eventType, selectedCake, cakesList, selectedAddons, addonsList) => {
-  let theaterPrice = theater?.pricePerHour || 0;
-  const extraGuestPrice = theater?.additionalGuestPrice ?? theater?.extraGuestPrice ?? 0;
-  const extraGuestCount = Math.max(0, Number(theater?.selectedMembers || 0) - (theater?.capacity || 0));
-  const extraGuestTotal = extraGuestCount * extraGuestPrice;
+  const theaterPrice = theater?.price || 0;
   let cakePrice = 0;
   let processedCake = null;
   let addOnsTotal = 0;
@@ -45,15 +42,12 @@ export const calculateBookingTotal = (theater, eventType, selectedCake, cakesLis
     });
   });
 
-  const subtotal = theaterPrice + extraGuestTotal + addOnsTotal + cakePrice;
+  const subtotal = theaterPrice + addOnsTotal + cakePrice;
   const advanceAmount = 750;
   const balanceAmount = subtotal > advanceAmount ? subtotal - advanceAmount : 0;
 
   return {
     theaterPrice,
-    extraGuestPrice,
-    extraGuestCount,
-    extraGuestTotal,
     addOnsTotal,
     cakePrice,
     subtotal,
