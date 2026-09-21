@@ -1,26 +1,16 @@
 import { createBrowserRouter, RouterProvider, isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout';
-import { ProtectedRoute } from '../components/layout/ProtectedRoute';
 import { HomePage } from '../pages/HomePage';
-import { LoginPage } from '../pages/LoginPage';
-import { RegisterPage } from '../pages/RegisterPage';
-import { VerifyOtpPage } from '../pages/VerifyOtpPage';
 import { TheaterListingPage } from '../pages/TheaterListingPage';
 import { TheaterDetailsPage } from '../pages/TheaterDetailsPage';
 import { BookingPage } from '../pages/BookingPage';
 import { BookingSuccessPage, BookingFailurePage } from '../pages/BookingStatusPages';
-import { MyBookingsPage } from '../pages/MyBookingsPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { FaqPage, TermsPage, PrivacyPage } from '../pages/LegalPages';
 import { ContactPage } from '../pages/ContactPage';
-import { ForgotPasswordPage, ResetPasswordPage } from '../pages/PasswordRecoveryPages';
-import { AccountProfilePage } from '../pages/AccountProfilePage';
-import { BookingDetailsPage } from '../pages/BookingDetailsPage';
 import { EventsPage } from '../pages/EventsPage';
 import { EventDetailsPage } from '../pages/EventDetailsPage';
 import { OffersPage } from '../pages/OffersPage';
-import { InvoicePage } from '../pages/InvoicePage';
-import { ReviewPage } from '../pages/ReviewPage';
 import { HelpPage } from '../pages/HelpPage';
 import { SitemapPage } from '../pages/SitemapPage';
 
@@ -70,14 +60,6 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: 'forgot-password',
-        element: <ForgotPasswordPage />,
-      },
-      {
-        path: 'reset-password',
-        element: <ResetPasswordPage />,
-      },
-      {
         path: 'theaters',
         element: <TheaterListingPage />,
       },
@@ -100,32 +82,6 @@ const router = createBrowserRouter([
       {
         path: 'booking/failure',
         element: <BookingFailurePage />,
-      },
-      {
-        path: 'account',
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: 'bookings',
-            element: <MyBookingsPage />,
-          },
-          {
-            path: 'bookings/:bookingId',
-            element: <BookingDetailsPage />,
-          },
-          {
-            path: 'bookings/:bookingId/invoice',
-            element: <InvoicePage />,
-          },
-          {
-            path: 'bookings/:bookingId/review',
-            element: <ReviewPage />,
-          },
-          {
-            path: 'profile',
-            element: <AccountProfilePage />,
-          },
-        ]
       },
       {
         path: 'events',
@@ -213,18 +169,6 @@ const router = createBrowserRouter([
         element: <NotFoundPage />,
       }
     ]
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
-  {
-    path: '/register',
-    element: <RegisterPage />,
-  },
-  {
-    path: '/verify-otp',
-    element: <VerifyOtpPage />,
   }
 ]);
 

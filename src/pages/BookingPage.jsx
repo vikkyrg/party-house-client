@@ -29,7 +29,7 @@ export function BookingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, setGuestDetails } = useAuthStore();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,10 +68,6 @@ export function BookingPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login', { state: { returnTo: `/book/${theaterId}?roomId=${roomId}&date=${selectedDate}&slot=${selectedTimeSlot}` } });
-      return;
-    }
 
     if (!roomId || !selectedDate || !selectedTimeSlot) {
       // If accessed without date/slot, redirect to theater details to force selection
@@ -99,7 +95,7 @@ export function BookingPage() {
       }
     };
     fetchData();
-  }, [theaterId, roomId, selectedDate, selectedTimeSlot, isAuthenticated, navigate]);
+  }, [theaterId, roomId, selectedDate, selectedTimeSlot, navigate]);
 
   const handleAddonToggle = (addonId) => {
     setSelectedAddons(prev => {
@@ -158,6 +154,9 @@ export function BookingPage() {
 
   const handleNext = () => {
     if (validateStep()) {
+      if (currentStep === 1) {
+        setGuestDetails({ name: customerDetails.name, phone: customerDetails.phone, email: customerDetails.email });
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setCurrentStep(p => Math.min(p + 1, STEPS.length));
     }
@@ -261,7 +260,6 @@ export function BookingPage() {
   }, [addons]);
 
   if (loading) return <LoadingState />;
-  if (!isAuthenticated) return null;
 
   const theaterImage = theater?.images?.length ? getImageUrl(theater.images[0]) : null;
   const roomImage = room?.image ? getImageUrl(room.image) : theaterImage;

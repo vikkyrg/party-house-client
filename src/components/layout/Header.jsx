@@ -15,7 +15,7 @@ export function Header() {
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const { scrollY } = useScroll();
@@ -68,8 +68,6 @@ export function Header() {
     { name: 'Gallery', path: '/gallery', icon: Image },
     { name: 'Our stories - blogs', path: '/blogs', icon: FileText },
     { name: 'Learn', path: '#learn', icon: GraduationCap, hasDropdown: true, dropdownId: 'learn' },
-    { name: 'My Bookings', path: '/account/bookings', icon: History },
-
   ];
 
   return (
@@ -169,63 +167,6 @@ export function Header() {
 
           {/* ACTIONS */}
           <div className="flex items-center gap-3 md:gap-5 shrink-0">
-            {isAuthenticated ? (
-              <div className="relative">
-                <button
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="w-11 h-11 rounded-full bg-[#f5f3fb] border border-[#ece9f5] flex items-center justify-center shrink-0 hover:bg-[#ece9f5] transition-colors"
-                >
-                  <User className="h-[19px] w-[19px] text-[#322a59]" />
-                </button>
-
-                <AnimatePresence>
-                  {profileDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl p-2 shadow-xl"
-                    >
-                      <div className="px-4 py-3 border-b border-gray-100 mb-2">
-                        <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
-                        <p className="text-xs text-gray-500 truncate mt-1">{user?.email}</p>
-                      </div>
-                      <Link
-                        to="/account/profile"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#322a59] rounded-lg transition-colors"
-                      >
-                        <User className="h-4 w-4" /> Profile
-                      </Link>
-                      <Link
-                        to="/account/bookings"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#322a59] rounded-lg transition-colors"
-                      >
-                        <History className="h-4 w-4" /> Bookings
-                      </Link>
-                      <div className="border-t border-gray-100 mt-2 pt-2">
-                        <button
-                          onClick={() => {
-                            logout();
-                            setProfileDropdownOpen(false);
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-bold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
-                        >
-                          <LogOut className="h-4 w-4" /> Sign Out
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="w-11 h-11 rounded-full bg-[#f5f3fb] border border-[#ece9f5] flex items-center justify-center shrink-0 hover:bg-[#ece9f5] transition-colors hidden sm:flex"
-              >
-                <User className="h-[19px] w-[19px] text-[#322a59]" />
-              </Link>
-            )}
 
             <Link
               to="/theaters"
@@ -319,14 +260,6 @@ export function Header() {
                 >
                   Book Now
                 </Link>
-                {!isAuthenticated && (
-                   <Link
-                   to="/login"
-                   className="flex w-full items-center justify-center h-12 bg-gray-100 text-gray-800 rounded-full font-medium shadow-sm text-base"
-                 >
-                   Log In
-                 </Link>
-                )}
               </div>
             </div>
           </motion.div>
