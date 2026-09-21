@@ -95,7 +95,6 @@ export function Footer() {
                 <li><Link to="/theaters" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><Monitor className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Theaters</Link></li>
                 <li><Link to="/cities" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><MapPin className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Locations</Link></li>
                 <li><Link to="/events" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><Calendar className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Occasions</Link></li>
-                <li><Link to="/account/bookings" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><Ticket className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Bookings</Link></li>
               </ul>
             </div>
 
