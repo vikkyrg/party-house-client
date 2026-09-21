@@ -57,8 +57,8 @@ export function HelpPage() {
             </div>
             <h3 className="text-xl font-bold font-heading text-[#1a1c21] mb-3">Email Us</h3>
             <p className="text-[#6b5c52] text-sm mb-6">Send us an email and our team will get back to you within 24 hours.</p>
-            <a href="mailto:support@cscinemas.com" className="px-6 py-3 bg-white text-[#9e6223] border-2 border-[#9e6223] font-bold text-sm rounded-full hover:bg-[#F9F6F0] transition-colors mt-auto">
-              support@cscinemas.com
+            <a href="mailto:riopartyhouse@gmail.com" className="px-6 py-3 bg-white text-[#9e6223] border-2 border-[#9e6223] font-bold text-sm rounded-full hover:bg-[#F9F6F0] transition-colors mt-auto">
+              riopartyhouse@gmail.com
             </a>
           </motion.div>
         </div>

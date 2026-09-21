@@ -82,7 +82,16 @@ export function HeroBookingWidget() {
             <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
               <Calendar className="w-3 h-3" /> DATE
             </label>
-            <div className="relative w-full">
+            <div className="relative w-full h-[21px] flex items-center">
+              {/* Custom Display Layer */}
+              <div className="absolute inset-0 flex items-center pointer-events-none justify-between">
+                <span className={`text-[14px] font-bold ${selectedDate ? 'text-[#1a1c21]' : 'text-[#1a1c21]/60'}`}>
+                  {selectedDate ? selectedDate.split('-').reverse().join('-') : 'dd-mm-yyyy'}
+                </span>
+                <Calendar className="w-4 h-4 text-[#8c5211] opacity-70" />
+              </div>
+              
+              {/* Native Input Layer */}
               <input
                 type="date"
                 value={selectedDate}
@@ -92,7 +101,7 @@ export function HeroBookingWidget() {
                   setValidationError('');
                 }}
                 aria-label="Select booking date"
-                className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
             </div>
           </div>
