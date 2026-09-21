@@ -9,7 +9,7 @@ export function BookingSuccessPage() {
 
   return (
     <div className="min-h-screen pt-28 pb-20 bg-background flex items-center justify-center relative overflow-hidden">
-      <SEO title="Booking Confirmed | CS Cinemas" />
+      <SEO title="Booking Confirmed | RIO PARTY HOUSE" />
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-green-500/5 rounded-full blur-[120px] pointer-events-none" />
       
@@ -29,7 +29,7 @@ export function BookingSuccessPage() {
           </motion.div>
           
           <h1 className="text-3xl md:text-4xl font-black text-white font-heading tracking-tight mb-4">Booking Confirmed!</h1>
-          <p className="text-text-muted text-lg mb-8">Thank you for choosing CS Cinemas. We're excited to host your premium celebration.</p>
+          <p className="text-text-muted text-lg mb-8">Thank you for choosing RIO PARTY HOUSE. We're excited to host your celebration.</p>
           
           <div className="bg-black/30 w-full p-4 rounded-xl border border-white/5 mb-10">
             <p className="text-sm text-white/50 uppercase tracking-widest font-semibold mb-1">Booking Reference</p>
@@ -53,7 +53,7 @@ export function BookingSuccessPage() {
 export function BookingFailurePage() {
   return (
     <div className="min-h-screen pt-28 pb-20 bg-background flex items-center justify-center relative overflow-hidden">
-      <SEO title="Payment Failed | CS Cinemas" />
+      <SEO title="Payment Failed | RIO PARTY HOUSE" />
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/5 rounded-full blur-[120px] pointer-events-none" />
       

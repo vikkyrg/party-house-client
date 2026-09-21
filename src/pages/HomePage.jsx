@@ -50,7 +50,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20 overflow-hidden">
-      <SEO title="CS Cinemas | Premium Private Screenings" />
+      <SEO title="RIO PARTY HOUSE | Private Theater Celebrations" />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden flex items-center justify-center">
@@ -304,7 +304,7 @@ export function HomePage() {
         </div>
       </section>
       )}
-      {/* Why Choose CS Cinemas Section */}
+      {/* Why Choose RIO PARTY HOUSE Section */}
       <WhyChooseUsSection />
 
       {/* Services Carousel Section */}

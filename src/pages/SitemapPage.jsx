@@ -10,7 +10,7 @@ export function SitemapPage() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 font-sans relative overflow-hidden">
-      <SEO title="Sitemap | CS Cinemas" />
+      <SEO title="Sitemap | RIO PARTY HOUSE" />
       
       <div className="container mx-auto px-6 md:px-12 max-w-5xl relative z-10">
         <motion.div 

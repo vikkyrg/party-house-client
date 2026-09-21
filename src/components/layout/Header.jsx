@@ -51,14 +51,12 @@ export function Header() {
   const learnLinks = [
     { name: 'About Us', path: '/about' },
     { name: 'Founders', path: '/founders' },
-    { name: 'Franchise', path: '/franchise' },
-    { name: 'List Your Venue', path: '/list-venue' },
-    { name: 'FAQs', path: '/faq' },
+    { name: 'List Your Venue', path: '/list-your-venue' },
+    { name: 'FAQs', path: '/faqs' },
     { name: 'Refund Policy', path: '/refund-policy' },
     { name: 'Privacy Policy', path: '/privacy' },
     { name: 'T&C', path: '/terms' },
     { name: 'Contact Us', path: '/contact' },
-    { name: 'Join Waitlist', path: '/waitlist' },
   ];
 
   const navLinks = [

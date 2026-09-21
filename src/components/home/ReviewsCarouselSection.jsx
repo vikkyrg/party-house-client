@@ -97,7 +97,7 @@ export function ReviewsCarouselSection() {
               Memories <span className="text-[#b94d5c]">They Loved.</span>
             </h2>
             <p className="text-[#62554d] font-medium text-[16px] leading-relaxed">
-              Real experiences from guests who celebrated their special moments with CS Cinemas.
+              Real experiences from guests who celebrated their special moments with RIO PARTY HOUSE.
             </p>
           </div>
           

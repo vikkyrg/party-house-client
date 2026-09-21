@@ -180,7 +180,7 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#ecdcd1] flex flex-col lg:flex-row items-center justify-between gap-6 text-[11.5px] font-sans font-medium text-[#6b5c52]">
-          <p>© {new Date().getFullYear()} CS Cinemas. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} RIO PARTY HOUSE. All rights reserved.</p>
           
           <div className="hidden md:flex items-center text-[#8c5211] font-bold tracking-[0.25em] uppercase text-[10px]">
             LIGHTS OFF 

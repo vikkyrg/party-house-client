@@ -69,7 +69,7 @@ export function TheaterListingPage() {
 
   return (
     <div className="min-h-screen bg-[#fcf5eb] pt-28 pb-20 relative overflow-hidden font-sans text-[#6b5c52]">
-      <SEO title="Our Premium Theaters | CS Cinemas" />
+      <SEO title="Our Premium Theaters | RIO PARTY HOUSE" />
 
       {/* Background Film Strip SVG (Top Right) */}
       <div className="absolute top-0 right-0 pointer-events-none overflow-hidden w-[600px] h-[600px] z-0 opacity-40">

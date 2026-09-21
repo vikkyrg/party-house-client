@@ -82,7 +82,7 @@ export function WhyChooseUsSection() {
             
             <h2 className="text-4xl md:text-5xl lg:text-[56px] font-heading text-[#17171c] font-extrabold leading-[1.08] mb-6">
               Why Celebrate <br className="hidden md:block"/>
-              at <span className="text-[#a9651c]">CS Cinemas?</span>
+              at <span className="text-[#a9651c]">RIO PARTY HOUSE?</span>
             </h2>
             
             <p className="text-[#62554d] font-medium text-[16px] leading-relaxed mb-10 max-w-lg">
@@ -121,7 +121,7 @@ export function WhyChooseUsSection() {
                   <motion.img
                     key={currentIndex}
                     src={getImageUrl(activeImages[currentIndex].image)}
-                    alt={activeImages[currentIndex].title || "CS Cinemas Celebration"}
+                    alt={activeImages[currentIndex].title || "RIO PARTY HOUSE Celebration"}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -132,7 +132,7 @@ export function WhyChooseUsSection() {
                   <div className="absolute inset-0 flex items-center justify-center bg-[#f9f6f0]">
                     <div className="text-center p-8">
                       <Star className="w-12 h-12 text-[#d8a471] mx-auto mb-4 opacity-50" />
-                      <p className="text-[#8c5211] font-bold font-heading text-xl">Celebrations at CS Cinemas</p>
+                      <p className="text-[#8c5211] font-bold font-heading text-xl">Celebrations at RIO PARTY HOUSE</p>
                     </div>
                   </div>
                 )}

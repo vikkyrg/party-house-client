@@ -215,7 +215,7 @@ export function BookingPage() {
             key: key || import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: amount,
             currency: currency,
-            name: 'CS Cinemas',
+            name: 'RIO PARTY HOUSE',
             description: `Advance Payment for ${theater?.name}`,
             order_id: orderId,
             handler: async function (response) {
@@ -266,7 +266,7 @@ export function BookingPage() {
 
   return (
     <div className="min-h-screen bg-[#fcf5eb] pb-16 pt-24 relative overflow-hidden font-sans flex flex-col">
-      <SEO title="Complete Booking | CS Cinemas" />
+      <SEO title="Complete Booking | RIO PARTY HOUSE" />
 
       {/* Subtle cinema backdrop kept behind the booking interface. */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">

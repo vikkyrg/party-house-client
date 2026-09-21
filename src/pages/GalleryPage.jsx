@@ -66,7 +66,7 @@ export function GalleryPage() {
           </div>
           
           <h1 className="text-[40px] md:text-[56px] font-heading text-[#1a1c21] font-extrabold leading-[1.1] mb-4">
-            CS Cinemas – <span className="text-[#a54c13]">Gallery</span>
+            RIO PARTY HOUSE – <span className="text-[#a54c13]">Gallery</span>
           </h1>
           
           <h2 className="text-[18px] md:text-[22px] font-heading font-bold text-[#1a1c21] mb-3">

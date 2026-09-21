@@ -11,7 +11,7 @@ export function HelpPage() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 font-sans relative overflow-hidden">
-      <SEO title="Help Center | CS Cinemas" />
+      <SEO title="Help Center | RIO PARTY HOUSE" />
       
       <div className="container mx-auto px-6 md:px-12 max-w-4xl relative z-10">
         <motion.div 

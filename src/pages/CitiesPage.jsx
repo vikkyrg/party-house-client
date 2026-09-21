@@ -75,7 +75,7 @@ export function CitiesPage() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 relative overflow-hidden font-sans">
-      <SEO title="Our Locations | CS Cinemas" />
+      <SEO title="Our Locations | RIO PARTY HOUSE" />
 
       {/* Background Film Strip SVG (Top Right) */}
       <div className="absolute top-0 right-0 pointer-events-none overflow-hidden w-[600px] h-[600px] z-0 opacity-40">

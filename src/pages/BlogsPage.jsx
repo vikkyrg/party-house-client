@@ -34,7 +34,7 @@ export function BlogsPage() {
           </div>
           
           <h1 className="text-[40px] md:text-[56px] font-heading text-[#1a1c21] font-extrabold leading-[1.1] mb-4">
-            CS Cinemas – <span className="text-[#a54c13]">Blogs</span>
+            RIO PARTY HOUSE – <span className="text-[#a54c13]">Blogs</span>
           </h1>
           
           <p className="text-[14px] md:text-[15px] font-medium text-[#6b5c52] max-w-2xl leading-[1.6]">

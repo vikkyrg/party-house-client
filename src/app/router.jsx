@@ -104,6 +104,10 @@ const router = createBrowserRouter([
         element: <FaqPage />,
       },
       {
+        path: 'faqs',
+        element: <FaqPage />,
+      },
+      {
         path: 'terms',
         element: <TermsPage />,
       },
@@ -148,20 +152,16 @@ const router = createBrowserRouter([
         element: <FoundersPage />,
       },
       {
-        path: 'franchise',
-        element: <PlaceholderPage title="Franchise" />,
-      },
-      {
         path: 'list-venue',
         element: <ListYourVenuePage />,
       },
       {
-        path: 'refund-policy',
-        element: <PlaceholderPage title="Refund Policy" />,
+        path: 'list-your-venue',
+        element: <ListYourVenuePage />,
       },
       {
-        path: 'waitlist',
-        element: <PlaceholderPage title="Join Waitlist" />,
+        path: 'refund-policy',
+        element: <PlaceholderPage title="Cancellation & Refund Policy" />,
       },
       
       {

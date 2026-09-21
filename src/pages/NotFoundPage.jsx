@@ -6,7 +6,7 @@ import { SEO } from '../components/common/SEO';
 export function NotFoundPage() {
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden font-sans">
-      <SEO title="Page Not Found | CS Cinemas" />
+      <SEO title="Page Not Found | RIO PARTY HOUSE" />
       
       {/* Background glow behind content */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white rounded-full blur-[100px] pointer-events-none opacity-80" />

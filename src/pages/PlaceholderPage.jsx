@@ -2,12 +2,10 @@ import { Link } from 'react-router-dom';
 
 export function PlaceholderPage({ title }) {
   const contentMap = {
-    'About Us': 'CS Cinemas is dedicated to redefining how you celebrate your special moments. We believe that life\'s greatest milestones deserve to be celebrated on the big screen. From private theatre bookings to customized event planning, we offer a cinematic experience unlike any other.',
-    'Founders': 'Our visionary founders started CS Cinemas with a simple goal: to make luxury private theatre experiences accessible to everyone. With decades of combined experience in hospitality and entertainment, they have built a platform that turns ordinary birthdays into extraordinary memories.',
-    'Franchise': 'Partner with CS Cinemas and bring the magic of private theatre celebrations to your city! We are rapidly expanding and looking for passionate franchise partners who want to own a piece of the next big trend in experiential entertainment.',
-    'List Your Venue': 'Do you own a premium private theatre or event space? Partner with CS Cinemas to maximize your bookings. Our platform connects thousands of users looking to celebrate birthdays, anniversaries, and corporate events with the best venues in town.',
+    'About Us': 'RIO PARTY HOUSE is dedicated to redefining how you celebrate your special moments. We believe that life\'s greatest milestones deserve to be celebrated on the big screen. From private theatre bookings to customized event planning, we offer a cinematic experience unlike any other.',
+    'Founders': 'Our visionary founders started RIO PARTY HOUSE with a simple goal: to make luxury private theatre experiences accessible to everyone. With decades of combined experience in hospitality and entertainment, they have built a platform that turns ordinary birthdays into extraordinary memories.',
+    'List Your Venue': 'Do you own a premium private theatre or event space? Partner with RIO PARTY HOUSE to maximize your bookings. Our platform connects thousands of users looking to celebrate birthdays, anniversaries, and corporate events with the best venues in town.',
     'Refund Policy': 'We strive to provide a seamless booking experience. Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Cancellations within 48 hours may be subject to a cancellation fee. Please contact support for any disputes.',
-    'Join Waitlist': 'Our new features and exclusive venues are launching soon! Join our waitlist to get early access to our premium bookings, special discounts, and VIP event planning services before they open to the general public.',
   };
 
   const textContent = contentMap[title] || 'This section is currently being updated with exciting new information. Please check back soon to learn more about our services and offerings.';
@@ -29,7 +27,7 @@ export function PlaceholderPage({ title }) {
         <div className="flex items-center justify-center gap-3 mb-6">
           <div className="h-[1px] w-8 bg-[#c2a290]"></div>
           <span className="font-sans text-[11px] font-bold tracking-[0.2em] uppercase text-[#9e6223]">
-            CS CINEMAS
+            RIO PARTY HOUSE
           </span>
           <div className="h-[1px] w-8 bg-[#c2a290]"></div>
         </div>
