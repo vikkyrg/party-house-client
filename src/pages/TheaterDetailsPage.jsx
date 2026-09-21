@@ -27,29 +27,28 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
     if (isAvailable) onSelect(slot);
   };
   return (
-    <button
-      type="button"
-      onClick={goToBooking}
-      disabled={!isAvailable}
-      className={`inline-flex min-h-[42px] items-center justify-center rounded-[8px] border px-3 py-1.5 text-center text-[11px] font-medium leading-tight transition ${
-        selected
-          ? 'border-[#208653] bg-[#208653] text-white shadow-sm'
-          : isBooked
-          ? 'cursor-not-allowed border-[#c7c7c7] bg-[#e5e5e5] text-[#888888]'
-          : isChecking
-          ? 'cursor-wait border-[#d9d9d9] bg-[#f7f7f7] text-[#222222]'
-          : 'cursor-pointer border-[#c9c9c9] bg-white text-[#111111] hover:border-[#a9651c] hover:bg-[#fffaf5]'
-      }`}
-    >
-      <span className="flex items-center gap-1">
-        {selected && '✓ '}
-        <span className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
-          <span>{slot.startTime || slot.time?.split(' - ')[0]}</span>
-          <span className="hidden sm:inline">–</span>
-          <span>{slot.endTime || slot.time?.split(' - ')[1]}</span>
-        </span>
-      </span>
-    </button>
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        onClick={goToBooking}
+        disabled={!isAvailable}
+        className={`inline-flex h-[28px] items-center justify-center rounded-[6px] border px-2.5 py-0.5 text-center text-[10px] font-medium transition-colors ${
+          selected
+            ? 'border-[#208653] bg-[#208653] text-white shadow-sm'
+            : isBooked
+            ? 'cursor-not-allowed border-[#e0e0e0] bg-[#f5f5f5] text-[#a0a0a0] opacity-80'
+            : isChecking
+            ? 'cursor-wait border-[#e0e0e0] bg-[#fafafa] text-[#666666]'
+            : 'cursor-pointer border-[#d0d0d0] bg-white text-[#333333] hover:border-[#a9651c] hover:bg-[#fffaf5]'
+        }`}
+      >
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          {selected && <Check className="h-3 w-3" />}
+          <span>{slot.startTime || slot.time?.split(' - ')[0]} – {slot.endTime || slot.time?.split(' - ')[1]}</span>
+        </div>
+      </button>
+      {slot.discount && <span className="text-[8px] font-bold leading-none text-[#208653]">{slot.discount}</span>}
+    </div>
   );
 }
 
@@ -84,7 +83,7 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#665951]"><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Couple: {room.couple ?? 2}</span><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Maximum Members: {room.maximumMembers}</span></div>
       {displayedFeatures.length > 0 && <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-[#5f5148]">{displayedFeatures.map((feature) => <span key={feature} className="flex items-center gap-1"><Check className="h-3 w-3 text-[#8c5211]" />{feature}</span>)}</div>}
       {room.description && <p className="mt-3 line-clamp-2 min-h-[30px] text-[10px] leading-4 text-[#75685f]">{room.description}</p>}
-      <div className="mt-3"><p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-lg bg-[#fff9d9] p-2 text-[10px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-lg bg-[#f5eee8] p-2 text-[10px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-lg bg-red-50 p-2 text-[10px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-2">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[10px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-3 flex flex-wrap gap-3 text-[10px] text-[#76685e]"><span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 rounded-full bg-white ring-1 ring-[#b9a0c6]" />Available</span><span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 rounded-full bg-[#d8d3ce]" />Sold out</span></div></div>
+      <div className="mt-3"><p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
       <div className="mt-auto flex items-end justify-between gap-2 border-t border-[#ead9ca] pt-3"><div><p className="text-[18px] font-extrabold text-[#17171c]">₹{room.price ?? 0}</p><p className="text-[9px] text-[#75685f]">For up to {room.maximumMembers} people</p></div><button type="button" disabled={!selected || !date || !selectedSlot} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button></div>
     </div>
   </article>;
