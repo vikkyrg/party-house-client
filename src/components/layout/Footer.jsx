@@ -3,7 +3,7 @@ import {
   MapPin, Calendar, Heart, Shield, HelpCircle, 
   Headphones, MessageSquare, Ticket, Mail, Lock, 
   Film, Users, Send, ArrowUp,
-  Monitor
+  Monitor, Sparkles, Images
 } from 'lucide-react';
 
 export function Footer() {
@@ -86,15 +86,32 @@ export function Footer() {
           {/* Middle Columns - Links */}
           <div className="xl:w-[42%] flex justify-center gap-10 sm:gap-16 xl:gap-14 pt-2">
             {/* Explore */}
-            <div className="flex-1 max-w-[140px]">
+            <div className="flex-1 max-w-[160px]">
               <h4 className="text-[11px] font-sans font-bold tracking-[0.15em] uppercase text-[#8c5211] mb-6 flex flex-col gap-3">
                 EXPLORE
                 <span className="w-6 h-[2px] bg-[#b88c60] rounded-full"></span>
               </h4>
               <ul className="space-y-4 text-[13px] font-sans font-medium text-[#6b5c52]">
-                <li><Link to="/theaters" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><Monitor className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Theaters</Link></li>
-                <li><Link to="/cities" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><MapPin className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Locations</Link></li>
-                <li><Link to="/events" onClick={scrollToTop} className="hover:text-primary transition-colors flex items-center gap-3"><Calendar className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Occasions</Link></li>
+                <li>
+                  <Link to="/theaters" onClick={scrollToTop} className="block w-full rounded-md hover:text-primary transition-colors">
+                    <span className="flex items-center gap-3"><Monitor className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Theaters</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/events" onClick={scrollToTop} className="block w-full rounded-md hover:text-primary transition-colors">
+                    <span className="flex items-center gap-3"><Calendar className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Occasions</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/services" onClick={scrollToTop} className="block w-full rounded-md hover:text-primary transition-colors">
+                    <span className="flex items-center gap-3"><Sparkles className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Our Services</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/gallery" onClick={scrollToTop} className="block w-full rounded-md hover:text-primary transition-colors">
+                    <span className="flex items-center gap-3"><Images className="w-[18px] h-[18px] text-[#8c5211] opacity-70 stroke-[1.5]" /> Gallery</span>
+                  </Link>
+                </li>
               </ul>
             </div>
 
