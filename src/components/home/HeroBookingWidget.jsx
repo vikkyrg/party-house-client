@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, ChevronDown, Phone } from 'lucide-react';
@@ -25,6 +25,30 @@ export function HeroBookingWidget() {
     queryFn: () => theaterService.getTheaters(),
   });
   const theaters = theatersResponse?.data || [];
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const dateInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleDateClick = () => {
+    if (dateInputRef.current) {
+      try {
+        dateInputRef.current.showPicker();
+      } catch (e) {
+        dateInputRef.current.focus();
+      }
+    }
+  };
 
   const handleBookNow = () => {
     if (!selectedTheater) {
@@ -56,30 +80,50 @@ export function HeroBookingWidget() {
     >
       <div className="p-4 md:p-6">
         <div className="space-y-3">
-          <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
-            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
+          <div 
+            ref={dropdownRef}
+            className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211] cursor-pointer"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2 cursor-pointer pointer-events-none">
               THEATER
             </label>
-            <div className="relative w-full">
-              <select
-                value={selectedTheater}
-                onChange={(event) => {
-                  setSelectedTheater(event.target.value);
-                  setValidationError('');
-                }}
-                className="w-full appearance-none bg-transparent text-[14px] font-bold text-[#1a1c21] focus:outline-none cursor-pointer"
-              >
-                <option value="">Select a theater</option>
-                {theaters.map((theater) => (
-                  <option key={theater._id} value={theater._id}>{theater.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] pointer-events-none" />
+            <div className="relative w-full h-[21px] flex items-center">
+              <span className={`text-[14px] font-bold ${selectedTheater ? 'text-[#1a1c21]' : 'text-[#1a1c21]/60'}`}>
+                {selectedTheater ? theaters.find(t => t._id === selectedTheater)?.name : 'Select a theater'}
+              </span>
+              <ChevronDown className={`absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
+            
+            {isDropdownOpen && (
+              <div className="absolute top-[105%] left-0 w-full bg-white border border-[#eaddd0] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-50 max-h-[220px] overflow-y-auto py-1">
+                {theaters.length === 0 ? (
+                  <div className="px-4 py-3 text-[13px] text-[#6b5c52]">Loading theaters...</div>
+                ) : (
+                  theaters.map((theater) => (
+                    <div 
+                      key={theater._id}
+                      className={`px-4 py-2.5 text-[14px] font-bold cursor-pointer transition-colors hover:bg-[#fffaf5] hover:text-[#8c5211] ${selectedTheater === theater._id ? 'bg-[#fffaf5] text-[#8c5211]' : 'text-[#1a1c21]'}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTheater(theater._id);
+                        setValidationError('');
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      {theater.name}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211]">
-            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2">
+          <div 
+            className="relative border border-[#eaddd0] rounded-xl px-4 py-2.5 flex flex-col hover:border-[#8c5211] transition-colors focus-within:border-[#8c5211] cursor-pointer"
+            onClick={handleDateClick}
+          >
+            <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2 cursor-pointer pointer-events-none">
               <Calendar className="w-3 h-3" /> DATE
             </label>
             <div className="relative w-full h-[21px] flex items-center">
@@ -93,6 +137,7 @@ export function HeroBookingWidget() {
               
               {/* Native Input Layer */}
               <input
+                ref={dateInputRef}
                 type="date"
                 value={selectedDate}
                 min={getTodayDate()}
@@ -100,6 +145,7 @@ export function HeroBookingWidget() {
                   setSelectedDate(event.target.value);
                   setValidationError('');
                 }}
+                onClick={(e) => e.stopPropagation()}
                 aria-label="Select booking date"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
