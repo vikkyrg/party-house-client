@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Star, Heart, CheckCircle2, LayoutGrid } from 'lucide-react';
 import { contentService } from '../../services/contentService';
-import { getImageUrl } from '../../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 import { CinemaSectionBackdrop } from './CinemaSectionBackdrop';
 
 export function WhyChooseUsSection() {
@@ -122,11 +122,12 @@ export function WhyChooseUsSection() {
                     key={currentIndex}
                     src={getImageUrl(activeImages[currentIndex].image)}
                     alt={activeImages[currentIndex].title || "RIO PARTY HOUSE Celebration"}
+                    onError={handleImageError}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.8, ease: "easeInOut" }}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover object-center"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-[#f9f6f0]">

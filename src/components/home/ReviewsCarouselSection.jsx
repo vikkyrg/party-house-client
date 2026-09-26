@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Play, ExternalLink } from 'lucide-react';
 import { contentService } from '../../services/contentService';
-import { getImageUrl } from '../../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 import { CinemaSectionBackdrop } from './CinemaSectionBackdrop';
 
 export function ReviewsCarouselSection() {
@@ -149,7 +149,7 @@ export function ReviewsCarouselSection() {
             style={{ transform: `translateX(-${currentIndex * (100 / cardsToShow)}%)` }}
           >
             {reviews.map((review, idx) => (
-              <div key={review._id || idx} className="w-full md:w-1/2 lg:w-1/3 shrink-0 px-4 h-[440px]">
+              <div key={review._id || idx} className="w-full md:w-1/2 lg:w-1/3 shrink-0 px-4 min-h-[440px]">
                 <div className="bg-[#fffaf5] rounded-[1.5rem] shadow-[0_4px_20px_rgba(75,43,20,0.06)] border border-[#ead9ca] flex flex-col overflow-hidden text-left h-full transition-shadow hover:shadow-[0_10px_30px_rgba(169,101,28,0.14)]">
                   
                   {/* Media Section */}
@@ -162,7 +162,8 @@ export function ReviewsCarouselSection() {
                         <img 
                           src={getImageUrl(review.mediaUrl || review.images?.[0]?.url)} 
                           alt="Customer Review" 
-                          className="block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-90 group-hover:opacity-100" 
+                          onError={handleImageError}
+                          className="block w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out opacity-90 group-hover:opacity-100" 
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-[#302522] group-hover:bg-[#49362f] transition-colors">
@@ -238,6 +239,7 @@ export function ReviewsCarouselSection() {
                 <img 
                   src={getImageUrl(activeMedia.url)} 
                   alt="Review Full" 
+                  onError={handleImageError}
                   className="max-w-full max-h-[90vh] object-contain rounded-lg"
                 />
               )}

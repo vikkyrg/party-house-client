@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { contentService } from '../services/contentService';
 import { ImagePreviewModal } from '../components/common/ImagePreviewModal';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function GalleryPage() {
@@ -103,7 +104,7 @@ export function GalleryPage() {
             ))}
           </div>
         ) : (
-          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <motion.div layout className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-8 space-y-8">
             <AnimatePresence>
               {filteredItems.map((item, index) => (
                 <motion.div
@@ -113,13 +114,14 @@ export function GalleryPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
                   key={item._id}
-                  className="aspect-square relative rounded-[24px] overflow-hidden cursor-pointer group shadow-[0_15px_35px_rgba(0,0,0,0.1)] border-4 border-white"
-                  onClick={() => setPreviewImage(item.image)}
+                  className="relative rounded-[24px] overflow-hidden cursor-pointer group shadow-[0_15px_35px_rgba(0,0,0,0.1)] border-4 border-white bg-[#f4e7da] break-inside-avoid"
+                  onClick={() => setPreviewImage(getImageUrl(item.image))}
                 >
                   <img 
-                    src={item.image} 
+                    src={getImageUrl(item.image)} 
                     alt={item.title || 'Gallery Image'} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    onError={handleImageError}
+                    className="w-full h-auto object-cover object-center group-hover:scale-110 transition-transform duration-700 block"
                   />
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">

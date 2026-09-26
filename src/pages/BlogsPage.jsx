@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { contentService } from '../services/contentService';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -65,11 +66,12 @@ export function BlogsPage() {
                   transition={{ delay: index * 0.1 }}
                   className="bg-white rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-4 border-white overflow-hidden hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-shadow flex flex-col h-full group"
                 >
-                  <div className="h-56 w-full overflow-hidden relative">
+                  <div className="w-full overflow-hidden relative bg-[#f4e7da]">
                     <img 
-                      src={story.image} 
+                      src={getImageUrl(story.image)} 
                       alt={story.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      onError={handleImageError}
+                      className="w-full h-auto object-cover object-center group-hover:scale-105 transition-transform duration-700 block"
                     />
                   </div>
                   <div className="p-8 flex flex-col flex-1 bg-white">

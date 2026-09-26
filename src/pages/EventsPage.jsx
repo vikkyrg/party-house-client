@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { contentService } from '../services/contentService';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
@@ -85,48 +85,32 @@ export function EventsPage() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="grid md:grid-cols-12 gap-6 md:gap-8 auto-rows-[300px]"
+            className="columns-1 md:columns-2 lg:columns-3 gap-6 md:gap-8 space-y-6 md:space-y-8"
           >
             {occasions.map((occasion, index) => {
-              // Algorithmic grid placement
-              let colSpan = 'md:col-span-4';
-              let rowSpan = 'row-span-1';
-              
-              if (index % 5 === 0) {
-                // Large item
-                colSpan = 'md:col-span-8';
-                rowSpan = 'row-span-2';
-              } else if (index % 5 === 1) {
-                // Tall item
-                colSpan = 'md:col-span-4';
-                rowSpan = 'row-span-2';
-              } else if (index % 5 === 2) {
-                // Wide item
-                colSpan = 'md:col-span-8';
-              }
-
               return (
                 <motion.div 
                   key={occasion._id}
                   variants={itemVariants}
-                  className={`${colSpan} ${rowSpan} group relative overflow-hidden bg-surface`}
+                  className="group relative overflow-hidden bg-surface rounded-2xl break-inside-avoid"
                 >
                   {getImageUrl(occasion.image) ? (
                     <img 
                       src={getImageUrl(occasion.image)} 
                       alt={occasion.name} 
-                      className="w-full h-full object-cover opacity-100 group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+                      onError={handleImageError}
+                      className="w-full h-auto object-cover opacity-100 group-hover:scale-110 transition-transform duration-[1.5s] ease-out block"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-white/10 group-hover:scale-105 transition-transform duration-[1.5s] ease-out bg-surface-strong">
+                    <div className="w-full aspect-[4/3] flex flex-col items-center justify-center text-white/10 group-hover:scale-105 transition-transform duration-[1.5s] ease-out bg-surface-strong block">
                       <ImageIcon className="w-16 h-16 mb-4" />
                     </div>
                   )}
                   
                   {/* Bottom shadow overlay for text legibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors duration-700 pointer-events-none" />
                   
-                  <div className="absolute bottom-0 left-0 p-8 w-full flex flex-col justify-end h-full">
+                  <div className="absolute bottom-0 left-0 p-8 w-full flex flex-col justify-end pointer-events-none">
                     <h3 className="text-2xl md:text-3xl font-heading text-white mb-3 group-hover:text-primary transition-colors duration-500">{occasion.name}</h3>
                     
                     {occasion.description && (
@@ -137,7 +121,7 @@ export function EventsPage() {
                     
                     <Link 
                       to="/theaters" 
-                      className="mt-6 inline-flex items-center gap-2 text-sm font-sans font-bold text-white hover:text-white/80 transition-all w-fit opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 duration-500"
+                      className="mt-6 inline-flex items-center gap-2 text-sm font-sans font-bold text-white hover:text-white/80 transition-all w-fit opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 duration-500 pointer-events-auto"
                     >
                       Plan this event <ArrowRight className="w-4 h-4" />
                     </Link>

@@ -1,3 +1,12 @@
+export const DEFAULT_PLACEHOLDER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300' fill='%23f1f5f9'><rect width='400' height='300' fill='%23f8fafc'/><path d='M160 110a20 20 0 100-40 20 20 0 000 40zM90 230l50-60 40 40 60-80 70 100H90z' fill='%23cbd5e1'/></svg>";
+
+export const handleImageError = (e) => {
+  if (e?.currentTarget) {
+    e.currentTarget.src = DEFAULT_PLACEHOLDER;
+    e.currentTarget.onerror = null;
+  }
+};
+
 export const getImageUrl = (img) => {
   if (!img) return null;
   const url = typeof img === 'string' ? img : (img.url || img.data);
@@ -24,3 +33,4 @@ export const getImageUrl = (img) => {
   
   return url;
 };
+

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { handleImageError } from '../../utils/imageUtils';
 import { 
   MapPin, Calendar, Heart, Shield, HelpCircle, 
   Headphones, MessageSquare, Ticket, Mail, Lock, 
@@ -38,7 +39,7 @@ export function Footer() {
           {/* Left Column - Branding */}
           <div className="xl:w-[33%] flex flex-col relative pr-4">
             <Link to="/" onClick={scrollToTop} className="inline-flex items-center gap-0 mb-8">
-              <img src="/logo.png" alt="Rio Party House" className="h-[74px] w-[87px] object-contain" />
+              <img src="/logo.png" alt="Rio Party House" onError={handleImageError} className="h-[74px] w-[87px] object-contain" />
               <div className="-ml-4 flex w-[140px] flex-col items-center justify-center leading-none">
                 <span className="block text-center text-[28px] font-heading font-black tracking-[0.18em] leading-none text-[#ad641b]">RIO</span>
                 <span className="mt-2.5 block whitespace-nowrap text-center text-[12px] font-heading font-extrabold tracking-[0.16em] leading-none text-[#17243d]">PARTY HOUSE</span>

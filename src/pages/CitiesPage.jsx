@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight, Search, Grid, List, Monitor } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { theaterService } from '../services/theaterService';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
@@ -192,7 +192,8 @@ export function CitiesPage() {
                       <img 
                         src={getImageUrl(city.image)} 
                         alt={city.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        onError={handleImageError}
+                        className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                       />
                       
                       {/* Top Left Badge */}

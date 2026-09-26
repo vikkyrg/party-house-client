@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { HeroBookingWidget } from '../components/home/HeroBookingWidget';
 import { WhyChooseUsSection } from '../components/home/WhyChooseUsSection';
 import { ServicesCarouselSection } from '../components/home/ServicesCarouselSection';
@@ -68,13 +68,15 @@ export function HomePage() {
                 transition={{ duration: 1.5 }}
                 src={getImageUrl(banners[currentBannerIndex]?.image)} 
                 alt="Private Theater" 
-                className="hero-background-image w-full h-full object-cover"
+                onError={handleImageError}
+                className="hero-background-image w-full h-full object-cover object-center"
               />
             ) : (
               <img 
                 src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop" 
                 alt="Private Theater" 
-                className="hero-background-image w-full h-full object-cover"
+                onError={handleImageError}
+                className="hero-background-image w-full h-full object-cover object-center"
               />
             )}
           </AnimatePresence>
@@ -214,8 +216,8 @@ export function HomePage() {
                     </div>
                     
                     {/* Image Circle */}
-                    <div className="w-40 h-40 mx-auto rounded-full overflow-hidden mb-8 mt-4 group-hover:scale-105 transition-transform duration-500 relative bg-[#F9F6F0]">
-                      <img src={step.image} alt={step.title} className="w-full h-full object-cover mix-blend-multiply" />
+                    <div className="w-40 h-40 mx-auto rounded-full overflow-hidden mb-8 mt-4 group-hover:scale-105 transition-transform duration-500 relative bg-[#F9F6F0] flex items-center justify-center">
+                      <img src={step.image} alt={step.title} onError={handleImageError} className="w-full h-full object-contain p-2 mix-blend-multiply" />
                     </div>
                     
                     <h3 className="text-2xl font-heading text-[#1a1c21] font-black mb-4">{step.title}</h3>
@@ -274,7 +276,7 @@ export function HomePage() {
                   
                   {/* Image Section */}
                   <div className="relative h-[220px] w-full overflow-hidden shrink-0 bg-[#0F1014]">
-                    <img src={getImageUrl(item.image)} alt={item.name} className="block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-80" />
+                    <img src={getImageUrl(item.image)} alt={item.name} onError={handleImageError} className="block w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out opacity-80" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F1014] via-[#0F1014]/40 to-transparent" />
                   </div>
                   

@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { contentService } from '../services/contentService';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -117,8 +118,8 @@ export function StoryDetailPage() {
                 </p>
                 
                 {hasImage && (
-                  <div className="w-full rounded-[24px] overflow-hidden shadow-lg border-4 border-white bg-[#f0e6dd] mt-6">
-                    <img src={section.image} alt={section.title || 'Section Image'} className="w-full h-auto max-h-[500px] object-cover" />
+                  <div className="w-full rounded-[24px] overflow-hidden shadow-lg border-4 border-white bg-[#f0e6dd] mt-6 flex justify-center">
+                    <img src={getImageUrl(section.image)} alt={section.title || 'Section Image'} onError={handleImageError} className="w-full h-auto max-h-[500px] object-contain" />
                   </div>
                 )}
               </div>

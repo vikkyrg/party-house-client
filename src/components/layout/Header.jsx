@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import { handleImageError } from '../../utils/imageUtils';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -83,7 +84,7 @@ export function Header() {
           {/* BRAND */}
           <div className="flex items-center shrink-0">
             <Link to="/" onClick={handleBrandClick} className="flex items-center gap-0 shrink-0 group">
-              <img src="/logo.png" alt="Rio Party House" className="h-[74px] w-[87px] object-contain transition-transform duration-300 group-hover:scale-105" />
+              <img src="/logo.png" alt="Rio Party House" onError={handleImageError} className="h-[74px] w-[87px] object-contain transition-transform duration-300 group-hover:scale-105" />
               <div className="flex -ml-3 w-[108px] flex-col items-center justify-center leading-none sm:-ml-4 sm:w-[140px]">
                 <span className="block text-center text-[22px] font-heading font-black tracking-[0.14em] leading-none text-[#ad641b] sm:text-[28px] sm:tracking-[0.18em]">RIO</span>
                 <span className="mt-2 block whitespace-nowrap text-center text-[9px] font-heading font-extrabold tracking-[0.12em] leading-none text-[#17243d] sm:mt-2.5 sm:text-[12px] sm:tracking-[0.16em]">PARTY HOUSE</span>
@@ -132,7 +133,7 @@ export function Header() {
                         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">Currently available in</h4>
                         <Link to="/cities?location=bengaluru" onClick={scrollToTop} className="group/loc flex flex-col gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="h-32 w-full rounded-md overflow-hidden bg-gray-200 relative">
-                            <img src="https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&q=80" alt="Bengaluru" className="w-full h-full object-cover group-hover/loc:scale-105 transition-transform duration-500" />
+                            <img src="https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&q=80" alt="Bengaluru" onError={handleImageError} className="w-full h-full object-cover object-center group-hover/loc:scale-105 transition-transform duration-500" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div className="absolute bottom-3 left-3 flex items-center gap-1 text-white font-bold">
                               <MapPin className="w-4 h-4" /> Bengaluru
@@ -228,7 +229,7 @@ export function Header() {
                         {link.dropdownId === 'location' && (
                            <Link to="/cities?location=bengaluru" onClick={scrollToTop} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                              <div className="w-12 h-12 rounded-md overflow-hidden">
-                               <img src="https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=200&q=80" alt="Bengaluru" className="w-full h-full object-cover" />
+                               <img src="https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=200&q=80" alt="Bengaluru" onError={handleImageError} className="w-full h-full object-cover object-center" />
                              </div>
                              <div>
                                <p className="font-bold text-sm text-[#181533]">Bengaluru</p>

@@ -19,7 +19,7 @@ export function ImagePreviewModal({ isOpen, imageUrl, onClose, altText = "Previe
         >
           <X className="w-6 h-6" />
         </button>
-        
+
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getImageUrl } from '../../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 
 export function TheaterCard({ 
   theater, 
@@ -47,7 +47,8 @@ export function TheaterCard({
         <img 
           src={getImageUrl(images[currentImageIndex])} 
           alt={theater.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          onError={handleImageError}
+          className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         />
         
         {/* City Badge */}

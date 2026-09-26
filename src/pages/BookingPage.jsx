@@ -13,7 +13,7 @@ import { handleApiError } from '../lib/apiClient';
 import { Check, ArrowLeft, ArrowRight, ShieldCheck, MapPin, Calendar, Clock, Edit } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
 import { calculateBookingTotal } from '../utils/bookingCalculator';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCakes } from '../hooks/useCakes';
 
 const STEPS = [
@@ -303,7 +303,7 @@ export function BookingPage() {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4 p-3 md:p-4 bg-[#fffaf5] border border-[#ead9ca] rounded-[18px] shadow-[0_4px_18px_rgba(75,43,20,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
              <div className="flex items-center gap-3 min-w-0">
                {roomImage ? (
-                 <img src={roomImage} alt={room?.name || theater?.name} className="h-14 w-20 shrink-0 rounded-lg object-cover border border-[#ead9ca]" />
+                 <img src={roomImage} alt={room?.name || theater?.name} onError={handleImageError} className="h-14 w-20 shrink-0 rounded-lg object-cover object-center border border-[#ead9ca]" />
                ) : (
                  <div className="h-14 w-20 shrink-0 rounded-lg bg-[#f4e7da] border border-[#ead9ca]" aria-hidden="true" />
                )}
@@ -409,7 +409,7 @@ export function BookingPage() {
                               : 'border-[#ecdcd1] hover:shadow-lg'
                           }`}
                         >
-                          <img src={getImageUrl(type.image)} alt={type.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          <img src={getImageUrl(type.image)} alt={type.name} onError={handleImageError} className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                           <div className="absolute bottom-0 left-0 w-full p-4">
                             <span className="text-lg font-bold text-white block drop-shadow-md">{type.name}</span>
@@ -469,8 +469,8 @@ export function BookingPage() {
 
                           return (
                             <div key={cake._id} className={`relative flex flex-col items-center justify-between rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#a9651c] bg-[#f9f2eb] shadow-md ring-1 ring-[#a9651c]' : 'border-[#ead9ca] bg-[#fffaf5] hover:border-[#a9651c] hover:shadow-sm'}`}>
-                              <div className="h-28 w-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-4 mx-auto">
-                                {getImageUrl(cake.image) ? <img src={getImageUrl(cake.image)} alt={cake.name} className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[#f4e7da]" />}
+                              <div className="h-28 w-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-4 mx-auto flex items-center justify-center">
+                                {getImageUrl(cake.image) ? <img src={getImageUrl(cake.image)} alt={cake.name} onError={handleImageError} className="h-full w-full object-contain p-1" /> : <div className="h-full w-full bg-[#f4e7da]" />}
                               </div>
                               <p className="text-[15px] font-bold text-[#1a1c21] mb-1">{cake.name}</p>
                               <p className="text-[12px] text-[#6b5c52] mb-3 line-clamp-2">{cake.description}</p>
@@ -546,8 +546,8 @@ export function BookingPage() {
                                   onClick={() => handleAddonToggle(addon._id)}
                                   className={`relative flex flex-col items-center justify-center rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb] shadow-md ring-1 ring-[#8c5211]' : 'border-[#ecdcd1] bg-white hover:border-[#8c5211] hover:shadow-sm'}`}
                                 >
-                                  <div className="h-28 w-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-4 mx-auto">
-                                    <img src={getImageUrl(addon.image) || '/placeholder.png'} alt={addon.name} className="h-full w-full object-cover" />
+                                  <div className="h-28 w-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-4 mx-auto flex items-center justify-center">
+                                    <img src={getImageUrl(addon.image) || '/placeholder.png'} alt={addon.name} onError={handleImageError} className="h-full w-full object-contain p-1" />
                                   </div>
                                   <p className="text-[15px] font-bold text-[#1a1c21] mb-1">{addon.name}</p>
                                   <p className="text-[14px] text-[#8c5211] font-bold">₹{displayPrice}</p>
@@ -661,7 +661,7 @@ export function BookingPage() {
             <p className="text-[11px] text-[#6b5c52] mb-3">Here’s a quick look at your booking.</p>
             <div className="flex items-center gap-3 rounded-xl border border-[#ead9ca] bg-white p-2.5 mb-4">
               {theaterImage ? (
-                <img src={theaterImage} alt={theater?.name} className="h-12 w-16 rounded-lg object-cover" />
+                <img src={theaterImage} alt={theater?.name} onError={handleImageError} className="h-12 w-16 rounded-lg object-cover object-center" />
               ) : (
                 <div className="h-12 w-16 rounded-lg bg-[#f4e7da]" aria-hidden="true" />
               )}

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { contentService } from '../../services/contentService';
-import { getImageUrl } from '../../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 import { CinemaSectionBackdrop } from './CinemaSectionBackdrop';
 
 export function ServicesCarouselSection() {
@@ -99,9 +99,9 @@ export function ServicesCarouselSection() {
                     <div className="relative bg-[#fffaf5] rounded-[1.5rem] shadow-[0_4px_20px_rgba(75,43,20,0.06)] border border-[#ead9ca] flex flex-col overflow-hidden text-left h-full transition-transform group-hover:-translate-y-1 duration-300 group-hover:shadow-[0_10px_30px_rgba(169,101,28,0.14)]">
                       
                       {/* Image Section */}
-                      <div className="relative h-[235px] w-full overflow-hidden shrink-0 bg-[#f4e7da]">
+                      <div className="relative h-[235px] w-full overflow-hidden shrink-0 bg-[#f4e7da] flex items-center justify-center">
                         {getImageUrl(item.image) ? (
-                          <img src={getImageUrl(item.image)} alt={item.title} className="block w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+                          <img src={getImageUrl(item.image)} alt={item.title} onError={handleImageError} className="block w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700 ease-out" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[#b28a68]">
                             <ImageIcon className="w-10 h-10" aria-hidden="true" />
