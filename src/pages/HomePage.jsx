@@ -57,7 +57,7 @@ export function HomePage() {
         
         {/* Full-width background image */}
         <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 z-10" />
+          <div className="absolute inset-0 bg-black/30 z-10" />
           <AnimatePresence mode="wait">
             {banners.length > 0 ? (
               <motion.img 
@@ -90,10 +90,25 @@ export function HomePage() {
             transition={{ duration: 1.0, ease: "easeOut" }}
             className="text-center mb-8 w-full px-2"
           >
-            <h1 className="text-4xl md:text-5xl lg:text-[64px] font-heading text-white font-black leading-[1.15] mb-4 tracking-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-[64px] font-heading text-white font-black leading-[1.15] tracking-tight">
               India's Best Private Theatre Venue <br className="hidden md:block" />
-              for <span className="text-[#f2b7a5]">Celebrations</span>
+              for <span className="text-[#F4A99A]">Celebrations</span>
             </h1>
+            
+            <div className="flex items-center justify-center gap-3 my-6 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+              <div className="h-[1px] w-12 md:w-24 bg-gradient-to-r from-transparent to-[#FAD48B] opacity-100"></div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#FAD48B] flex-shrink-0">
+                <path d="M12 2C12 2 12.5 9.5 22 12C12.5 14.5 12 22 12 22C12 22 11.5 14.5 2 12C11.5 9.5 12 2 12 2Z" fill="currentColor"/>
+              </svg>
+              <h2 className="text-white text-lg md:text-2xl font-serif tracking-wide px-1" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}>
+                Where Every <span className="text-[#FAD48B] font-semibold">Celebration</span> Feels Special
+              </h2>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#FAD48B] flex-shrink-0">
+                <path d="M12 2C12 2 12.5 9.5 22 12C12.5 14.5 12 22 12 22C12 22 11.5 14.5 2 12C11.5 9.5 12 2 12 2Z" fill="currentColor"/>
+              </svg>
+              <div className="h-[1px] w-12 md:w-24 bg-gradient-to-l from-transparent to-[#FAD48B] opacity-100"></div>
+            </div>
+
             <p className="text-[16px] md:text-xl text-white/90 font-sans font-medium">
               Book Your Perfect Celebration: Birthdays, Anniversaries, Date Nights & More!
             </p>

@@ -76,9 +76,9 @@ export function HeroBookingWidget() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.6 }}
-      className="w-full max-w-[800px] mx-auto mt-6 bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden text-left font-sans border border-[#f0e6dd]"
+      className="w-full max-w-[800px] mx-auto mt-6 bg-white/95 backdrop-blur-md rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden text-left font-sans border border-[#e8ceb5]"
     >
-      <div className="p-4 md:p-6">
+      <div className="p-5 md:p-8">
         <div className="space-y-3">
           <div 
             ref={dropdownRef}
