@@ -62,10 +62,8 @@ export const setupInterceptors = (store) => {
         isRefreshing = true;
 
         try {
-          const { data } = await axios.post(`${env.API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
+          const { data } = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
           const newAccessToken = data.data.accessToken;
-          
-          store.getState().setTokens(newAccessToken);
           
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -74,7 +72,10 @@ export const setupInterceptors = (store) => {
           return apiClient(originalRequest);
         } catch (refreshError) {
           processQueue(refreshError, null);
-          store.getState().logout();
+          const state = store.getState();
+          if (state.logout) state.logout();
+          else if (state.setAuth) state.setAuth(null);
+          else if (state.clearGuestDetails) state.clearGuestDetails();
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

@@ -352,7 +352,7 @@ export function BookingPage() {
                   <div className="space-y-8">
                     <div>
                       <h2 className="mb-2 text-[22px] font-bold text-[#17171c] font-heading">Guest details</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Couple: {room?.couple} · Maximum Members: {room?.maximumMembers} · ₹{room?.price} / Hr</p>
+                      <p className="text-[14px] text-[#6b5c52]">{room?.couple ? `Couple: ${room.couple} · ` : ''}Maximum Members: {room?.maximumMembers} · ₹{room?.price} / Hr</p>
                     </div>
 
                     <div className="space-y-5">
@@ -676,7 +676,7 @@ export function BookingPage() {
               <div className="space-y-1 border-b border-dashed border-[#ecdcd1] pb-3">
                 <div className="flex justify-between"><span className="text-[#6b5c52]">Theater</span><span className="font-bold text-[#1a1c21]">{theater?.name}</span></div>
                 <div className="flex justify-between"><span className="text-[#6b5c52]">Room</span><span className="font-bold text-[#1a1c21]">{room?.name}</span></div>
-                <div className="flex justify-between"><span className="text-[#6b5c52]">Couple</span><span className="font-bold text-[#1a1c21]">{room?.couple}</span></div>
+                {room?.couple ? <div className="flex justify-between"><span className="text-[#6b5c52]">Couple</span><span className="font-bold text-[#1a1c21]">{room?.couple}</span></div> : null}
                 <div className="flex justify-between"><span className="text-[#6b5c52]">Maximum Members</span><span className="font-bold text-[#1a1c21]">{room?.maximumMembers}</span></div>
               </div>
               <div className="flex justify-between items-center">

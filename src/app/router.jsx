@@ -61,7 +61,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'theaters',
-        element: <TheaterListingPage />,
+        element: <TheaterDetailsPage />,
       },
       {
         path: 'theaters/:theaterId',

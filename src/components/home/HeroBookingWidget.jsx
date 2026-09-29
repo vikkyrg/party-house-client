@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, ChevronDown, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { theaterService } from '../../services/theaterService';
+import { roomService } from '../../services/roomService';
 import { buildTheaterBookingUrl } from '../../utils/bookingFlow';
 
 const getTodayDate = () => {
@@ -16,15 +16,15 @@ const getTodayDate = () => {
 
 export function HeroBookingWidget() {
   const navigate = useNavigate();
-  const [selectedTheater, setSelectedTheater] = useState('');
+  const [selectedRoom, setSelectedRoom] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [validationError, setValidationError] = useState('');
 
-  const { data: theatersResponse } = useQuery({
-    queryKey: ['theaters'],
-    queryFn: () => theaterService.getTheaters(),
+  const { data: roomsResponse } = useQuery({
+    queryKey: ['rooms', 'all'],
+    queryFn: () => roomService.getAllRooms(),
   });
-  const theaters = theatersResponse?.data || [];
+  const rooms = roomsResponse?.data || [];
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -51,8 +51,8 @@ export function HeroBookingWidget() {
   };
 
   const handleBookNow = () => {
-    if (!selectedTheater) {
-      setValidationError('Please select a theater.');
+    if (!selectedRoom) {
+      setValidationError('Please select a room.');
       return;
     }
 
@@ -62,9 +62,16 @@ export function HeroBookingWidget() {
     }
 
     setValidationError('');
-    navigate(buildTheaterBookingUrl(selectedTheater, {
-      date: selectedDate,
-    }));
+    
+    // Find selected room to get its theaterId if available
+    const room = rooms.find(r => r._id === selectedRoom);
+    const theaterId = room?.theater?._id || room?.theater || '';
+    
+    // Build query with roomId and date
+    let query = `roomId=${selectedRoom}&date=${selectedDate}`;
+    const url = theaterId ? `/theaters/${theaterId}?${query}` : `/theaters?${query}`;
+    
+    navigate(url);
   };
 
   const handleBookOnCall = () => {
@@ -86,32 +93,32 @@ export function HeroBookingWidget() {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
             <label className="text-[10px] font-bold tracking-widest uppercase text-[#8c5211] mb-0.5 flex items-center gap-2 cursor-pointer pointer-events-none">
-              THEATER
+              ROOM
             </label>
             <div className="relative w-full h-[21px] flex items-center">
-              <span className={`text-[14px] font-bold ${selectedTheater ? 'text-[#1a1c21]' : 'text-[#1a1c21]/60'}`}>
-                {selectedTheater ? theaters.find(t => t._id === selectedTheater)?.name : 'Select a theater'}
+              <span className={`text-[14px] font-bold ${selectedRoom ? 'text-[#1a1c21]' : 'text-[#1a1c21]/60'}`}>
+                {selectedRoom ? rooms.find(r => r._id === selectedRoom)?.name : 'Select a room'}
               </span>
               <ChevronDown className={`absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8c5211] transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
             
             {isDropdownOpen && (
               <div className="absolute top-[105%] left-0 w-full bg-white border border-[#eaddd0] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-50 max-h-[220px] overflow-y-auto py-1">
-                {theaters.length === 0 ? (
-                  <div className="px-4 py-3 text-[13px] text-[#6b5c52]">Loading theaters...</div>
+                {rooms.length === 0 ? (
+                  <div className="px-4 py-3 text-[13px] text-[#6b5c52]">Loading rooms...</div>
                 ) : (
-                  theaters.map((theater) => (
+                  rooms.map((room) => (
                     <div 
-                      key={theater._id}
-                      className={`px-4 py-2.5 text-[14px] font-bold cursor-pointer transition-colors hover:bg-[#fffaf5] hover:text-[#8c5211] ${selectedTheater === theater._id ? 'bg-[#fffaf5] text-[#8c5211]' : 'text-[#1a1c21]'}`}
+                      key={room._id}
+                      className={`px-4 py-2.5 text-[14px] font-bold cursor-pointer transition-colors hover:bg-[#fffaf5] hover:text-[#8c5211] ${selectedRoom === room._id ? 'bg-[#fffaf5] text-[#8c5211]' : 'text-[#1a1c21]'}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedTheater(theater._id);
+                        setSelectedRoom(room._id);
                         setValidationError('');
                         setIsDropdownOpen(false);
                       }}
                     >
-                      {theater.name}
+                      {room.name} {room.theater?.name ? `(${room.theater.name})` : ''}
                     </div>
                   ))
                 )}
@@ -148,6 +155,7 @@ export function HeroBookingWidget() {
                 onClick={(e) => e.stopPropagation()}
                 aria-label="Select booking date"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+
               />
             </div>
           </div>

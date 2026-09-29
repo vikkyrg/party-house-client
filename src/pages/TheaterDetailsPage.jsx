@@ -80,7 +80,7 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
     </div>
     <div className="flex flex-1 flex-col p-3">
       <div className="flex items-start justify-between gap-2"><div><h3 className="text-[18px] font-extrabold text-[#17171c]">{room.name}</h3>{selected && <p className="mt-1 text-[10px] font-bold text-[#9b5417]">✓ Selected room</p>}</div></div>
-      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#665951]"><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Couple: {room.couple ?? 2}</span><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Maximum Members: {room.maximumMembers}</span></div>
+      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#665951]">{room.couple ? <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Couple: {room.couple}</span> : null}<span className="flex items-center gap-1"><Users className="h-3 w-3" /> Maximum Members: {room.maximumMembers}</span></div>
       {displayedFeatures.length > 0 && <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-[#5f5148]">{displayedFeatures.map((feature) => <span key={feature} className="flex items-center gap-1"><Check className="h-3 w-3 text-[#8c5211]" />{feature}</span>)}</div>}
       {room.description && <p className="mt-3 line-clamp-2 min-h-[30px] text-[10px] leading-4 text-[#75685f]">{room.description}</p>}
       <div className="mt-3"><p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
@@ -95,11 +95,12 @@ export function TheaterDetailsPage() {
   const [searchParams] = useSearchParams();
   const bookingQuery = readBookingQuery(searchParams);
   const preselectedDate = location.state?.selectedDate || bookingQuery.date || '';
+  const preselectedRoomId = searchParams.get('roomId') || null;
   const hasPreselectedBooking = Boolean(preselectedDate);
 
   const [theater, setTheater] = useState(null);
   const [rooms, setRooms] = useState([]);
-  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [selectedRoomId, setSelectedRoomId] = useState(preselectedRoomId);
   const [date, setDate] = useState(preselectedDate);
   const [roomAvailability, setRoomAvailability] = useState({});
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -112,9 +113,9 @@ export function TheaterDetailsPage() {
 
   useEffect(() => {
     setDate(preselectedDate);
-    setSelectedRoomId(null);
+    setSelectedRoomId(preselectedRoomId);
     setSelectedTimeSlot(null);
-  }, [preselectedDate]);
+  }, [preselectedDate, preselectedRoomId]);
 
   useEffect(() => {
     setSelectedTimeSlot(null);
@@ -128,11 +129,44 @@ export function TheaterDetailsPage() {
   }, [date, rooms]);
 
   useEffect(() => {
-    Promise.all([theaterService.getTheaterById(theaterId), roomService.getRooms(theaterId)])
-      .then(([theaterResponse, roomsResponse]) => { setTheater(theaterResponse.data); setRooms(roomsResponse.data || []); setSelectedRoomId(null); setSelectedTimeSlot(null); })
-      .catch(setError)
-      .finally(() => setLoading(false));
+    setLoading(true);
+    setError(null);
+    if (theaterId) {
+      Promise.all([theaterService.getTheaterById(theaterId), roomService.getRooms(theaterId)])
+        .then(([theaterResponse, roomsResponse]) => {
+          setTheater(theaterResponse.data);
+          setRooms(roomsResponse.data || []);
+          setSelectedRoomId(preselectedRoomId || null);
+          setSelectedTimeSlot(null);
+        })
+        .catch(setError)
+        .finally(() => setLoading(false));
+    } else {
+      theaterService.getTheaters()
+        .then(async (theatersResponse) => {
+          const theaters = theatersResponse.data || (Array.isArray(theatersResponse) ? theatersResponse : []);
+          const firstTheater = theaters[0];
+          setTheater(firstTheater || { name: 'Our Rooms', description: 'Book exclusive private theater rooms for birthday parties, anniversaries, and special events.' });
+          try {
+            const roomsResponse = await roomService.getAllRooms();
+            setRooms(roomsResponse.data || []);
+          } catch (roomsErr) {
+            setError(roomsErr);
+          }
+        })
+        .catch(async () => {
+          try {
+            const roomsResponse = await roomService.getAllRooms();
+            setTheater({ name: 'Our Rooms', description: 'Book exclusive private theater rooms for birthday parties, anniversaries, and special events.' });
+            setRooms(roomsResponse.data || []);
+          } catch (err) {
+            setError(err);
+          }
+        })
+        .finally(() => setLoading(false));
+    }
   }, [theaterId]);
+
 
   const images = useMemo(() => {
     const sourceImages = theater?.images || [];
@@ -166,14 +200,21 @@ export function TheaterDetailsPage() {
     }
   };
   const bookRoom = (room, slot) => {
-    window.location.assign(`/book/${theaterId}?roomId=${room._id}&date=${date}&slot=${encodeURIComponent(slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
+    const tId = theaterId || (room.theater?._id ? room.theater._id : room.theater);
+    window.location.assign(`/book/${tId}?roomId=${room._id}&date=${date}&slot=${encodeURIComponent(slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
   };
-  const sortedRooms = useMemo(() => [...rooms].sort((first, second) => {
-    if (sortBy === 'price-low') return (first.price || 0) - (second.price || 0);
-    if (sortBy === 'price-high') return (second.price || 0) - (first.price || 0);
-    if (sortBy === 'members') return (second.maximumMembers || 0) - (first.maximumMembers || 0);
-    return (first.sortOrder || 0) - (second.sortOrder || 0) || first.name.localeCompare(second.name);
-  }), [rooms, sortBy]);
+  const sortedRooms = useMemo(() => {
+    let filteredRooms = [...rooms];
+    if (preselectedRoomId) {
+      filteredRooms = filteredRooms.filter(r => r._id === preselectedRoomId);
+    }
+    return filteredRooms.sort((first, second) => {
+      if (sortBy === 'price-low') return (first.price || 0) - (second.price || 0);
+      if (sortBy === 'price-high') return (second.price || 0) - (first.price || 0);
+      if (sortBy === 'members') return (second.maximumMembers || 0) - (first.maximumMembers || 0);
+      return (first.sortOrder || 0) - (second.sortOrder || 0) || first.name.localeCompare(second.name);
+    });
+  }, [rooms, sortBy, preselectedRoomId]);
   const theaterFeatures = (theater?.amenities || []).filter(Boolean).slice(0, 5);
 
   if (loading) return <LoadingState message="Preparing rooms..." />;
@@ -182,14 +223,8 @@ export function TheaterDetailsPage() {
   return <div className="min-h-screen bg-[#fcf5eb] px-4 pb-20 pt-24 text-[#6b5c52] sm:px-5">
     <SEO title={`${theater?.name || 'Theater'} Rooms | RIO Party House`} />
     <div className="mx-auto max-w-[1240px]">
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.4fr)]">
-        <div className="min-h-[260px] overflow-hidden rounded-[18px] lg:min-h-[300px]">
-          <div className="relative min-h-[260px] overflow-hidden rounded-[12px] bg-[#eadfce] lg:min-h-[300px]"><img src={currentImage} alt={theater.name} onError={handleImageError} className="h-full w-full object-cover object-center" /><span className="absolute bottom-3 left-3 rounded-full bg-black/65 px-2 py-1 text-[10px] font-bold text-white">▣ {images.length ? galleryIndex + 1 : 0} / {images.length}</span>{images.length > 1 && <><button type="button" onClick={() => setGalleryIndex((galleryIndex + images.length - 1) % images.length)} className="absolute left-3 top-1/2 rounded-full bg-black/45 p-2 text-white"><ChevronLeft className="h-4 w-4" /></button><button type="button" onClick={() => setGalleryIndex((galleryIndex + 1) % images.length)} className="absolute right-3 top-1/2 rounded-full bg-black/45 p-2 text-white"><ChevronRight className="h-4 w-4" /></button></>}</div>
-        </div>
-        <div className="rounded-[18px] bg-[#fcf5eb] py-1 lg:px-2"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#b38c71]">Private cinema</p><h1 className="mt-1 text-3xl font-extrabold leading-tight text-[#080b28] sm:text-4xl">{theater.name}</h1><p className="mt-2 flex items-center gap-1.5 text-xs"><MapPin className="h-4 w-4 text-[#8c5211]" />{theater.location?.name || theater.address || 'Location unavailable'}</p><p className="mt-4 max-w-2xl text-xs leading-5 text-[#65574f]">{theater.description}</p>{theaterFeatures.length > 0 && <div className="mt-5 flex flex-wrap justify-between gap-4">{theaterFeatures.map((feature) => <Feature key={feature} label={feature} />)}</div>}</div>
-      </section>
 
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-extrabold text-[#17171c]">{rooms.length} Rooms Available</h2><p className="mt-1 text-xs text-[#76685e]">{hasPreselectedBooking ? 'Selected date is already applied.' : 'Choose a room, date and available time slot'}</p></div><div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs font-bold text-[#594d46]"><Calendar className="h-4 w-4 text-[#8c5211]" /> Date <input type="date" min={new Date().toISOString().slice(0, 10)} value={date} onChange={handleDateChange} className="rounded-lg border border-[#d9c5b3] bg-white px-3 py-2 text-xs" /></label><label className="flex items-center gap-2 text-xs font-bold text-[#594d46]">Sort by <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-lg border border-[#d9c5b3] bg-white px-3 py-2 text-xs"><option value="recommended">Recommended</option><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option><option value="members">Maximum Members</option></select></label></div></div>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-extrabold text-[#17171c]">{sortedRooms.length} {sortedRooms.length === 1 ? 'Room' : 'Rooms'} Available</h2><p className="mt-1 text-xs text-[#76685e]">{hasPreselectedBooking ? 'Selected date is already applied.' : 'Choose a room, date and available time slot'}</p></div><div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs font-bold text-[#594d46]"><Calendar className="h-4 w-4 text-[#8c5211]" /> Date <input type="date" min={new Date().toISOString().slice(0, 10)} value={date} onChange={handleDateChange} className="rounded-lg border border-[#d9c5b3] bg-white px-3 py-2 text-xs" /></label><label className="flex items-center gap-2 text-xs font-bold text-[#594d46]">Sort by <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-lg border border-[#d9c5b3] bg-white px-3 py-2 text-xs"><option value="recommended">Recommended</option><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option><option value="members">Maximum Members</option></select></label></div></div>
       {hasPreselectedBooking && (
         <div className="mt-4 rounded-2xl border border-[#ead9ca] bg-[#fffaf5] p-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c5211]">Selected</p>
