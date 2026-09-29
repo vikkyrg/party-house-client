@@ -5,7 +5,7 @@ export function PlaceholderPage({ title }) {
     'About Us': 'RIO PARTY HOUSE is dedicated to redefining how you celebrate your special moments. We believe that life\'s greatest milestones deserve to be celebrated on the big screen. From private theatre bookings to customized event planning, we offer a cinematic experience unlike any other.',
     'Founders': 'Our visionary founders started RIO PARTY HOUSE with a simple goal: to make luxury private theatre experiences accessible to everyone. With decades of combined experience in hospitality and entertainment, they have built a platform that turns ordinary birthdays into extraordinary memories.',
     'List Your Venue': 'Do you own a premium private theatre or event space? Partner with RIO PARTY HOUSE to maximize your bookings. Our platform connects thousands of users looking to celebrate birthdays, anniversaries, and corporate events with the best venues in town.',
-    'Refund Policy': 'We strive to provide a seamless booking experience. Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Cancellations within 48 hours may be subject to a cancellation fee. Please contact support for any disputes.',
+    'Cancellation & Refund Policy': 'If you need to cancel your booking, you are eligible for a full refund if the cancellation is made within 72 hours of your initial booking. Please contact our support team to process your cancellation and refund.',
   };
 
   const textContent = contentMap[title] || 'This section is currently being updated with exciting new information. Please check back soon to learn more about our services and offerings.';
