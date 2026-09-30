@@ -53,6 +53,7 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
 
 function RoomCard({ room, theater, date, availability, selected, selectedSlot, onChooseDate, onSelectRoom, onSelectSlot, onBook }) {
   const [roomImageIndex, setRoomImageIndex] = useState(0);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const isAvailabilityLoading = Boolean(availability?.loading);
   const availabilityFailed = Boolean(availability?.error);
   const configuredSlots = (room.slots || []).filter((slot) => slot.isActive !== false).map((slot) => ({ ...slot, time: `${slot.startTime} - ${slot.endTime}` }));
@@ -80,8 +81,31 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
     <div className="flex flex-1 flex-col p-3">
       <div className="flex items-start justify-between gap-2"><div><h3 className="text-[18px] font-extrabold text-[#17171c]">{room.name}</h3>{selected && <p className="mt-1 text-[10px] font-bold text-[#9b5417]">✓ Selected room</p>}</div></div>
       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#665951]">{room.couple ? <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Couple: {room.couple}</span> : null}<span className="flex items-center gap-1"><Users className="h-3 w-3" /> Maximum Members: {room.maximumMembers}</span><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Family Friend</span></div>
+      {(room.location || room.googleMapLink) && (
+        <div className="mt-1.5 flex items-start gap-1 text-[10px] text-[#665951]">
+          <MapPin className="h-3 w-3 shrink-0 mt-0.5 text-[#8c5211]" />
+          {room.googleMapLink ? (
+            <a href={room.googleMapLink} target="_blank" rel="noreferrer" className="hover:text-[#8c5211] hover:underline" onClick={(e) => e.stopPropagation()}>
+              {room.location || 'View on Google Maps'}
+            </a>
+          ) : (
+            <span>{room.location}</span>
+          )}
+        </div>
+      )}
       {displayedFeatures.length > 0 && <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-[#5f5148]">{displayedFeatures.map((feature) => <span key={feature} className="flex items-center gap-1"><Check className="h-3 w-3 text-[#8c5211]" />{feature}</span>)}</div>}
-      {room.description && <p className="mt-3 line-clamp-2 min-h-[30px] text-[10px] leading-4 text-[#75685f]">{room.description}</p>}
+      {room.description && (
+        <p 
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDescriptionExpanded(!isDescriptionExpanded);
+          }}
+          className={`mt-3 min-h-[30px] text-[10px] leading-4 text-[#75685f] cursor-pointer transition-all ${isDescriptionExpanded ? '' : 'line-clamp-2'}`}
+          title={isDescriptionExpanded ? "Click to show less" : "Click to expand"}
+        >
+          {room.description}
+        </p>
+      )}
       <div className="mt-3"><p className="mb-3 text-[10px] font-medium text-[#208653]">No Free Cancellation • Complimentary Cake • Fog Entry & More</p><p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
       <div className="mt-auto flex items-end justify-between gap-2 border-t border-[#ead9ca] pt-3"><div><p className="text-[18px] font-extrabold text-[#17171c]">₹{room.price ?? 0}</p><p className="text-[9px] text-[#75685f]">For up to {room.maximumMembers} people</p></div><button type="button" disabled={!selected || !date || !selectedSlot} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button></div>
     </div>
