@@ -118,7 +118,7 @@ export function HeroBookingWidget() {
                         setIsDropdownOpen(false);
                       }}
                     >
-                      {room.name} {room.theater?.name ? `(${room.theater.name})` : ''}
+                      {room.name}
                     </div>
                   ))
                 )}
