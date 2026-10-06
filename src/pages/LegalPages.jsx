@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, ArrowDown, ArrowUp } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowDown, ArrowUp, CheckCircle, Clock, AlertCircle, CreditCard, HelpCircle } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { useQuery } from '@tanstack/react-query';
 import { contentService } from '../services/contentService';
@@ -216,6 +216,70 @@ export function PrivacyPage() {
 
           <h2 className="text-[20px] font-bold text-[#1a1c21] mt-8 mb-4">11. Contact Information</h2>
           <p className="text-[15px] font-medium text-[#6b5c52] leading-[1.7] mb-8">For privacy questions or requests, please contact the official RIO PARTY HOUSE support or contact details available on the website.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function RefundPolicyPage() {
+  return (
+    <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 relative font-sans">
+      <div className="container mx-auto px-6 md:px-12 max-w-4xl relative z-10">
+        <h1 className="text-[40px] md:text-[48px] font-heading text-[#1a1c21] font-extrabold mb-8 text-center">Cancellation & Refund Policy</h1>
+        
+        <div className="bg-white p-8 md:p-12 rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-[#f0e6dd]">
+          
+          <div className="mb-10">
+            <h2 className="text-[20px] font-bold text-[#1a1c21] mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-[#8c5211]" /> 1. Full Refund Eligibility
+            </h2>
+            <p className="text-[15px] font-medium text-[#6b5c52] leading-[1.7]">
+              Customers are eligible for a <span className="font-bold text-[#8c5211]">100% full refund</span> if they cancel their booking <span className="font-bold text-[#8c5211]">within 72 hours</span> from the time the booking was made.
+            </p>
+          </div>
+
+          <div className="mb-10 p-6 bg-[#fcf9f5] rounded-[16px] border border-[#f0e6dd]">
+            <h2 className="text-[18px] font-bold text-[#1a1c21] mb-3 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[#8c5211]" /> 2. Example
+            </h2>
+            <p className="text-[15px] font-medium text-[#6b5c52] leading-[1.7]">
+              If a booking is made on Monday at 10:00 AM, the customer can cancel the booking until Thursday at 10:00 AM to receive a full refund.
+            </p>
+          </div>
+
+          <div className="mb-10">
+            <h2 className="text-[20px] font-bold text-[#1a1c21] mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-[#8c5211]" /> 3. After 72 Hours
+            </h2>
+            <p className="text-[15px] font-medium text-[#6b5c52] leading-[1.7]">
+              Cancellations made after the 72-hour period are not eligible for a full refund and will be subject to the applicable cancellation/refund terms.
+            </p>
+          </div>
+
+          <div className="mb-10">
+            <h2 className="text-[20px] font-bold text-[#1a1c21] mb-4 flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-[#8c5211]" /> 4. Refund Processing
+            </h2>
+            <p className="text-[15px] font-medium text-[#6b5c52] leading-[1.7]">
+              Once an eligible cancellation is confirmed, the refund will be processed to the original payment method used for the booking. The time taken for the refund to appear in the customer's account may depend on the payment provider or bank.
+            </p>
+          </div>
+
+          <div className="mt-12 pt-8 border-t border-[#f0e6dd] flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h2 className="text-[20px] font-bold text-[#1a1c21] mb-2 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-[#8c5211]" /> 5. Need Help?
+              </h2>
+              <p className="text-[15px] font-medium text-[#6b5c52]">
+                If you have any questions regarding cancellation or refunds, please contact our support team.
+              </p>
+            </div>
+            <Link to="/contact" className="shrink-0 px-8 py-3 bg-[#1a1c21] text-white rounded-full font-bold hover:bg-[#8c5211] transition-colors shadow-md">
+              Contact Support
+            </Link>
+          </div>
+
         </div>
       </div>
     </div>

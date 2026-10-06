@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, X } from 'lucide-react';
+import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, X, Gift } from 'lucide-react';
 import { theaterService } from '../services/theaterService';
 import { roomService } from '../services/roomService';
 import { LoadingState } from '../components/common/LoadingState';
@@ -8,6 +8,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { readBookingQuery } from '../utils/bookingFlow';
+import { isWeekendDay, getRoomPriceForDate } from '../utils/dateUtils';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
 
@@ -61,6 +62,12 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
   const roomImages = [room.image, ...(room.galleryImages || [])].filter(Boolean).filter((image, index, images) => (getImageUrl(image) || image) && images.findIndex((candidate) => (getImageUrl(candidate) || candidate) === (getImageUrl(image) || image)) === index);
   const roomImage = roomImages[roomImageIndex] ? getImageUrl(roomImages[roomImageIndex]) : null;
   const displayedFeatures = [...(room.features || []), ...(room.amenities || [])].filter(Boolean).slice(0, 4);
+  
+  const isWeekend = isWeekendDay(date);
+  const currentPrice = getRoomPriceForDate(room, date);
+  const weekdayPrice = room.weekdayPrice ?? room.price ?? 0;
+  const weekendPrice = room.weekendPrice ?? room.price ?? 0;
+
   const book = () => {
     if (!date) return onChooseDate();
     if (!selectedSlot) return onSelectSlot(null);
@@ -108,8 +115,18 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
           {room.description}
         </p>
       )}
-      <div className="mt-3"><p className="mb-3 text-[10px] font-medium text-[#208653]">No Free Cancellation • Complimentary Cake • Fog Entry & More</p><p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
-      <div className="mt-auto flex items-end justify-between gap-2 border-t border-[#ead9ca] pt-3"><div><p className="text-[18px] font-extrabold text-[#17171c]">₹{room.price ?? 0}</p><p className="text-[9px] text-[#75685f]">For up to {room.maximumMembers} people</p></div><button type="button" disabled={!selected || !date || !selectedSlot} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button></div>
+      <div className="mt-3"><div className="mb-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-[#5f5148]"><span className="flex items-center gap-1"><Gift className="h-3 w-3" /> Add Cake, Fog entry etc in next step</span> <span className="text-[#a89f91]">•</span> <span className="flex items-center gap-1 text-[#208653]"><Check className="h-3 w-3" /> Free Cancellation*</span></div><p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
+      <div className="mt-auto flex flex-col gap-3 border-t border-[#ead9ca] pt-3">
+        <div className="flex items-baseline justify-between">
+          <div>
+            <span className="text-[22px] font-extrabold text-[#17171c]">₹{currentPrice}/hr</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-[#75685f]">For up to {room.maximumMembers} people</p>
+          <button type="button" disabled={!selected || !date || !selectedSlot} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button>
+        </div>
+      </div>
     </div>
   </article>;
 }
@@ -192,7 +209,6 @@ export function TheaterDetailsPage() {
     }
   }, [theaterId]);
 
-
   const images = useMemo(() => {
     const sourceImages = theater?.images || [];
     const seen = new Set();
@@ -203,7 +219,7 @@ export function TheaterDetailsPage() {
       return true;
     });
   }, [theater]);
-  const currentImage = getImageUrl(images[galleryIndex]) || fallbackImage;
+
   const chooseDate = () => { if (!date) setDatePrompt(true); };
   const selectRoom = (roomId) => {
     setSelectedRoomId(roomId);
@@ -216,6 +232,7 @@ export function TheaterDetailsPage() {
     }
     setSelectedTimeSlot(slot);
   };
+
   const handleDateChange = (event) => {
     const nextDate = event.target.value;
     setDate(nextDate);
@@ -224,23 +241,25 @@ export function TheaterDetailsPage() {
       setSelectedTimeSlot(null);
     }
   };
+
   const bookRoom = (room, slot) => {
     const tId = theaterId || (room.theater?._id ? room.theater._id : room.theater);
     window.location.assign(`/book/${tId}?roomId=${room._id}&date=${date}&slot=${encodeURIComponent(slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
   };
+
   const sortedRooms = useMemo(() => {
     let filteredRooms = [...rooms];
     if (preselectedRoomId) {
       filteredRooms = filteredRooms.filter(r => r._id === preselectedRoomId);
     }
     return filteredRooms.sort((first, second) => {
-      if (sortBy === 'price-low') return (first.price || 0) - (second.price || 0);
-      if (sortBy === 'price-high') return (second.price || 0) - (first.price || 0);
+      const getPrice = (r) => getRoomPriceForDate(r, date);
+      if (sortBy === 'price-low') return getPrice(first) - getPrice(second);
+      if (sortBy === 'price-high') return getPrice(second) - getPrice(first);
       if (sortBy === 'members') return (second.maximumMembers || 0) - (first.maximumMembers || 0);
       return (first.sortOrder || 0) - (second.sortOrder || 0) || first.name.localeCompare(second.name);
     });
-  }, [rooms, sortBy, preselectedRoomId]);
-  const theaterFeatures = (theater?.amenities || []).filter(Boolean).slice(0, 5);
+  }, [rooms, sortBy, preselectedRoomId, date]);
 
   if (loading) return <LoadingState message="Preparing rooms..." />;
   if (error) return <ErrorState error={error} />;
@@ -249,20 +268,104 @@ export function TheaterDetailsPage() {
     <SEO title={`${theater?.name || 'Theater'} Rooms | RIO Party House`} />
     <div className="mx-auto max-w-[1240px]">
 
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-extrabold text-[#17171c]">{sortedRooms.length} {sortedRooms.length === 1 ? 'Room' : 'Rooms'} Available</h2><p className="mt-1 text-xs text-[#76685e]">{hasPreselectedBooking ? 'Selected date is already applied.' : 'Choose a room, date and available time slot'}</p></div><div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs font-bold text-[#594d46]"><Calendar className="h-4 w-4 text-[#8c5211]" /> Date <input type="date" min={new Date().toISOString().slice(0, 10)} value={date} onChange={handleDateChange} className="rounded-lg border border-[#d9c5b3] bg-white px-3 py-2 text-xs" /></label><label className="flex items-center gap-2 text-xs font-bold text-[#594d46]">Sort by <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="rounded-lg border border-[#d9c5b3] bg-white px-3 py-2 text-xs"><option value="recommended">Recommended</option><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option><option value="members">Maximum Members</option></select></label></div></div>
+      {/* FILTER & HEADER BAR */}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-extrabold text-[#17171c]">{sortedRooms.length} {sortedRooms.length === 1 ? 'Room' : 'Rooms'} Available</h2>
+          <p className="mt-1 text-xs text-[#76685e]">{hasPreselectedBooking ? 'Selected date is already applied.' : 'Choose a room, select a date and available time slot'}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Date Picker Input */}
+          <label className="flex items-center gap-2 text-xs font-bold text-[#594d46]">
+            <Calendar className="h-4 w-4 text-[#8c5211]" /> Select Date 
+            <input 
+              type="date" 
+              min={new Date().toISOString().slice(0, 10)} 
+              value={date} 
+              onChange={handleDateChange} 
+              className="rounded-xl border border-[#d9c5b3] bg-white px-3 py-2 text-xs font-bold text-[#17171c] shadow-sm focus:border-[#9b5417] focus:outline-none" 
+            />
+          </label>
+
+          {/* Sort By Dropdown */}
+          <label className="flex items-center gap-2 text-xs font-bold text-[#594d46]">
+            Sort by 
+            <select 
+              value={sortBy} 
+              onChange={(event) => setSortBy(event.target.value)} 
+              className="rounded-xl border border-[#d9c5b3] bg-white px-3 py-2 text-xs font-bold text-[#17171c] shadow-sm focus:border-[#9b5417] focus:outline-none"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="members">Maximum Members</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       {hasPreselectedBooking && (
         <div className="mt-4 rounded-2xl border border-[#ead9ca] bg-[#fffaf5] p-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c5211]">Selected</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8c5211]">Selected Date</p>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm font-bold text-[#17171c]">
             <span>{new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
           </div>
         </div>
       )}
+
       {!selectedRoomId && rooms.length > 0 && <p className="mt-4 rounded-xl bg-[#fff9d9] p-3 text-xs font-medium text-[#80651a]">Select a room to view available time slots.</p>}
       {selectedRoomId && !date && <p className="mt-4 rounded-xl bg-[#fff9d9] p-3 text-xs font-medium text-[#80651a]">Select a date to view available time slots.</p>}
-      {rooms.length === 0 ? <div className="mt-5 rounded-2xl border border-[#ead9ca] bg-[#fffaf5] p-8">No rooms are available for this theater yet.</div> : <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{sortedRooms.map((room) => <RoomCard key={room._id} room={room} theater={theater} date={date} availability={roomAvailability[room._id]} selected={selectedRoomId === room._id} selectedSlot={selectedRoomId === room._id ? selectedTimeSlot : null} onChooseDate={chooseDate} onSelectRoom={selectRoom} onSelectSlot={(slot) => { selectRoom(room._id); chooseSlot(slot); }} onBook={bookRoom} />)}</div>}
+      
+      {rooms.length === 0 ? (
+        <div className="mt-5 rounded-2xl border border-[#ead9ca] bg-[#fffaf5] p-8">No rooms are available for this theater yet.</div>
+      ) : (
+        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {sortedRooms.map((room) => (
+            <RoomCard 
+              key={room._id} 
+              room={room} 
+              theater={theater} 
+              date={date} 
+              availability={roomAvailability[room._id]} 
+              selected={selectedRoomId === room._id} 
+              selectedSlot={selectedRoomId === room._id ? selectedTimeSlot : null} 
+              onChooseDate={chooseDate} 
+              onSelectRoom={selectRoom} 
+              onSelectSlot={(slot) => { selectRoom(room._id); chooseSlot(slot); }} 
+              onBook={bookRoom} 
+            />
+          ))}
+        </div>
+      )}
+
       <Link to="/theaters" className="mt-8 inline-block text-sm font-bold text-[#8c5211]">Back to theaters</Link>
     </div>
-    {(datePrompt || slotPrompt) && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" role="dialog" aria-modal="true"><div className="w-full max-w-sm rounded-2xl bg-[#fffaf5] p-6 shadow-xl"><div className="flex items-start justify-between"><div><h2 className="text-lg font-extrabold text-[#17171c]">{datePrompt ? 'Choose a date first' : 'Choose a time slot first'}</h2><p className="mt-1 text-sm text-[#6b5c52]">{datePrompt ? 'Select a date to check room availability.' : 'Select an available time slot before booking.'}</p></div><button type="button" onClick={() => { setDatePrompt(false); setSlotPrompt(false); }} aria-label="Close"><X className="h-5 w-5" /></button></div>{datePrompt && <input autoFocus type="date" min={new Date().toISOString().slice(0, 10)} onChange={(event) => { setDate(event.target.value); setDatePrompt(false); }} className="mt-5 w-full rounded-xl border border-[#d9c5b3] bg-white px-4 py-3 text-sm" />}</div></div>}
+
+    {(datePrompt || slotPrompt) && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" role="dialog" aria-modal="true">
+        <div className="w-full max-w-sm rounded-2xl bg-[#fffaf5] p-6 shadow-xl">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-extrabold text-[#17171c]">{datePrompt ? 'Choose a date first' : 'Choose a time slot first'}</h2>
+              <p className="mt-1 text-sm text-[#6b5c52]">{datePrompt ? 'Select a date to check room availability.' : 'Select an available time slot before booking.'}</p>
+            </div>
+            <button type="button" onClick={() => { setDatePrompt(false); setSlotPrompt(false); }} aria-label="Close"><X className="h-5 w-5" /></button>
+          </div>
+          {datePrompt && (
+            <input 
+              autoFocus 
+              type="date" 
+              min={new Date().toISOString().slice(0, 10)} 
+              onChange={(event) => { 
+                handleDateChange(event); 
+                setDatePrompt(false); 
+              }} 
+              className="mt-5 w-full rounded-xl border border-[#d9c5b3] bg-white px-4 py-3 text-sm" 
+            />
+          )}
+        </div>
+      </div>
+    )}
   </div>;
 }

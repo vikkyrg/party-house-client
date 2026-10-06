@@ -6,7 +6,7 @@ import { TheaterDetailsPage } from '../pages/TheaterDetailsPage';
 import { BookingPage } from '../pages/BookingPage';
 import { BookingSuccessPage, BookingFailurePage } from '../pages/BookingStatusPages';
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { FaqPage, TermsPage, PrivacyPage } from '../pages/LegalPages';
+import { FaqPage, TermsPage, PrivacyPage, RefundPolicyPage } from '../pages/LegalPages';
 import { ContactPage } from '../pages/ContactPage';
 import { EventsPage } from '../pages/EventsPage';
 import { EventDetailsPage } from '../pages/EventDetailsPage';
@@ -161,7 +161,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'refund-policy',
-        element: <PlaceholderPage title="Cancellation & Refund Policy" />,
+        element: <RefundPolicyPage />,
       },
       
       {

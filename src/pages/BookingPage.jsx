@@ -15,6 +15,7 @@ import { SEO } from '../components/common/SEO';
 import { calculateBookingTotal } from '../utils/bookingCalculator';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCakes } from '../hooks/useCakes';
+import { isWeekendDay, getRoomPriceForDate } from '../utils/dateUtils';
 
 const STEPS = [
   { id: 'details', title: 'Guest Details' },
@@ -111,6 +112,8 @@ export function BookingPage() {
 
 
 
+  const isWeekend = isWeekendDay(selectedDate);
+  
   const {
     theaterPrice,
     cakePrice,
@@ -120,14 +123,18 @@ export function BookingPage() {
     balanceAmount,
     processedCake,
     processedAddons
-  } = useMemo(() => calculateBookingTotal(
-    room ? { ...theater, price: room.price } : theater,
-    eventTypes.find(e => e._id === selectedEventType), 
-    selectedCake,
-    cakesList,
-    selectedAddons, 
-    addons
-  ), [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons]);
+  } = useMemo(() => {
+    const currentPrice = getRoomPriceForDate(room, selectedDate);
+      
+    return calculateBookingTotal(
+      room ? { ...theater, price: currentPrice } : theater,
+      eventTypes.find(e => e._id === selectedEventType), 
+      selectedCake,
+      cakesList,
+      selectedAddons, 
+      addons
+    );
+  }, [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons, selectedDate]);
 
   const validateStep = () => {
     if (currentStep === 1) { // Guest Details
@@ -352,7 +359,9 @@ export function BookingPage() {
                   <div className="space-y-8">
                     <div>
                       <h2 className="mb-2 text-[22px] font-bold text-[#17171c] font-heading">Guest details</h2>
-                      <p className="text-[14px] text-[#6b5c52]">{room?.couple ? `Couple: ${room.couple} · ` : ''}Maximum Members: {room?.maximumMembers} · ₹{room?.price} / Hr</p>
+                      <p className="text-[14px] text-[#6b5c52]">
+                        {room?.couple ? `Couple: ${room.couple} · ` : ''}Maximum Members: {room?.maximumMembers} · ₹{getRoomPriceForDate(room, selectedDate)} / Hr
+                      </p>
                     </div>
 
                     <div className="space-y-5">
@@ -680,7 +689,9 @@ export function BookingPage() {
                 <div className="flex justify-between"><span className="text-[#6b5c52]">Maximum Members</span><span className="font-bold text-[#1a1c21]">{room?.maximumMembers}</span></div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[#6b5c52]">Room Price</span>
+                <div>
+                  <span className="text-[#6b5c52] font-medium">Room Price</span>
+                </div>
                 <span className="font-bold text-[#1a1c21]">₹{theaterPrice}</span>
               </div>
               
