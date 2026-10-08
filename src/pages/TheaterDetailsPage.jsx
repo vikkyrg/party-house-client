@@ -8,7 +8,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { readBookingQuery } from '../utils/bookingFlow';
-import { isWeekendDay, getRoomPriceForDate } from '../utils/dateUtils';
+import { getRoomPriceForDuration } from '../utils/dateUtils';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
 
@@ -42,10 +42,15 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
                 : 'cursor-pointer border-[#d0d0d0] bg-white text-[#333333] hover:border-[#a9651c] hover:bg-[#fffaf5]'
           }`}
       >
-        <div className="flex items-center gap-1 whitespace-nowrap">
+        <div className="flex items-center gap-1 whitespace-nowrap text-[10px] font-bold">
           {selected && <Check className="h-3 w-3" />}
-          <span>{slot.startTime || slot.time?.split(' - ')[0]} – {slot.endTime || slot.time?.split(' - ')[1]}</span>
+          <span>{slot.displayTime || (slot.startTime ? `${slot.startTime} – ${slot.endTime}` : slot.time)}</span>
         </div>
+        {slot.duration && (
+          <div className={`mt-0.5 text-[9px] font-medium ${selected ? 'text-[#a8e6c7]' : 'text-[#75685f]'}`}>
+            {slot.duration} Hour{slot.duration > 1 ? 's' : ''}
+          </div>
+        )}
       </button>
       {slot.discount && <span className="text-[8px] font-bold leading-none text-[#208653]">{slot.discount}</span>}
     </div>
@@ -58,20 +63,45 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
   const isAvailabilityLoading = Boolean(availability?.loading);
   const availabilityFailed = Boolean(availability?.error);
   const configuredSlots = (room.slots || []).filter((slot) => slot.isActive !== false).map((slot) => ({ ...slot, time: `${slot.startTime} - ${slot.endTime}` }));
-  const slots = availability?.data?.slots || configuredSlots;
+  const allSlots = availability?.data?.slots || configuredSlots;
+  
+  const getSlotDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return 2;
+    const parseTime = (timeStr) => {
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return 0;
+      let h = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      const ampm = match[3].toUpperCase();
+      if (h === 12) h = 0;
+      if (ampm === 'PM') h += 12;
+      return h + m / 60;
+    };
+    let start = parseTime(startTime);
+    let end = parseTime(endTime);
+    if (end < start) end += 24;
+    return Math.round(end - start) || 2;
+  };
+
+  const slots = allSlots.map(slot => {
+    const originalTime = slot.time || `${slot.startTime} - ${slot.endTime}`;
+    let [start, end] = originalTime.split(' - ');
+    if (originalTime.includes(' – ')) [start, end] = originalTime.split(' – ');
+    const calculatedDuration = getSlotDuration(start?.trim(), end?.trim());
+    return { ...slot, displayTime: `${start?.trim()} – ${end?.trim()}`, originalTime, duration: calculatedDuration };
+  });
+
   const roomImages = [room.image, ...(room.galleryImages || [])].filter(Boolean).filter((image, index, images) => (getImageUrl(image) || image) && images.findIndex((candidate) => (getImageUrl(candidate) || candidate) === (getImageUrl(image) || image)) === index);
   const roomImage = roomImages[roomImageIndex] ? getImageUrl(roomImages[roomImageIndex]) : null;
   const displayedFeatures = [...(room.features || []), ...(room.amenities || [])].filter(Boolean).slice(0, 4);
   
-  const isWeekend = isWeekendDay(date);
-  const currentPrice = getRoomPriceForDate(room, date);
-  const weekdayPrice = room.weekdayPrice ?? room.price ?? 0;
-  const weekendPrice = room.weekendPrice ?? room.price ?? 0;
+  const selectedDuration = selectedSlot ? (selectedSlot.duration || getSlotDuration(selectedSlot.originalTime?.split(' - ')[0], selectedSlot.originalTime?.split(' - ')[1])) : null;
+  const currentPrice = selectedDuration ? getRoomPriceForDuration(room, selectedDuration) : 0;
 
   const book = () => {
     if (!date) return onChooseDate();
     if (!selectedSlot) return onSelectSlot(null);
-    onBook(room, selectedSlot);
+    onBook(room, selectedSlot, selectedDuration || 2);
   };
 
   const handleCardClick = (event) => {
@@ -115,16 +145,36 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
           {room.description}
         </p>
       )}
-      <div className="mt-3"><div className="mb-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-[#5f5148]"><span className="flex items-center gap-1"><Gift className="h-3 w-3" /> Add Cake, Fog entry etc in next step</span> <span className="text-[#a89f91]">•</span> <span className="flex items-center gap-1 text-[#208653]"><Check className="h-3 w-3" /> Free Cancellation*</span></div><p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>{!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.time || `${slot.startTime} - ${slot.endTime}`; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
+      <div className="mt-3"><div className="mb-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-[#5f5148]"><span className="flex items-center gap-1"><Gift className="h-3 w-3" /> Add Cake, Fog entry etc in next step</span> <span className="text-[#a89f91]">•</span> <span className="flex items-center gap-1 text-[#208653]"><Check className="h-3 w-3" /> Free Cancellation*</span></div>
+      
+
+
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>
+      
+      {!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.originalTime; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.originalTime || selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured.</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
       <div className="mt-auto flex flex-col gap-3 border-t border-[#ead9ca] pt-3">
-        <div className="flex items-baseline justify-between">
-          <div>
-            <span className="text-[22px] font-extrabold text-[#17171c]">₹{currentPrice}/hr</span>
+        {selectedSlot ? (
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-1">
+              <span className="text-[12px] font-bold text-[#208653]">✓ {selectedSlot.displayTime || selectedSlot.originalTime}</span>
+              <span className="text-[11px] font-medium text-[#75685f]">Duration: {selectedDuration} Hour{selectedDuration > 1 ? 's' : ''}</span>
+              {currentPrice > 0 ? (
+                <span className="mt-1 text-[22px] font-extrabold text-[#17171c]">₹{currentPrice}</span>
+              ) : (
+                <span className="mt-1 text-[16px] font-extrabold text-red-600">Price unavailable</span>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <span className="text-[12px] font-medium italic text-[#85756b]">Price shown after selecting a time slot</span>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-[#75685f]">For up to {room.maximumMembers} people</p>
-          <button type="button" disabled={!selected || !date || !selectedSlot} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button>
+          <button type="button" disabled={!selected || !date || !selectedSlot || currentPrice === 0 || currentPrice === undefined} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button>
         </div>
       </div>
     </div>
@@ -242,9 +292,9 @@ export function TheaterDetailsPage() {
     }
   };
 
-  const bookRoom = (room, slot) => {
+  const bookRoom = (room, slot, duration) => {
     const tId = theaterId || (room.theater?._id ? room.theater._id : room.theater);
-    window.location.assign(`/book/${tId}?roomId=${room._id}&date=${date}&slot=${encodeURIComponent(slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
+    window.location.assign(`/book/${tId}?roomId=${room._id}&date=${date}&duration=${duration}&slot=${encodeURIComponent(slot.originalTime || slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
   };
 
   const sortedRooms = useMemo(() => {
@@ -253,7 +303,7 @@ export function TheaterDetailsPage() {
       filteredRooms = filteredRooms.filter(r => r._id === preselectedRoomId);
     }
     return filteredRooms.sort((first, second) => {
-      const getPrice = (r) => getRoomPriceForDate(r, date);
+      const getPrice = (r) => getRoomPriceForDuration(r, 2); // Default to 2 hours for sorting
       if (sortBy === 'price-low') return getPrice(first) - getPrice(second);
       if (sortBy === 'price-high') return getPrice(second) - getPrice(first);
       if (sortBy === 'members') return (second.maximumMembers || 0) - (first.maximumMembers || 0);

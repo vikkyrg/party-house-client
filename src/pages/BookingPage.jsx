@@ -15,7 +15,7 @@ import { SEO } from '../components/common/SEO';
 import { calculateBookingTotal } from '../utils/bookingCalculator';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCakes } from '../hooks/useCakes';
-import { isWeekendDay, getRoomPriceForDate } from '../utils/dateUtils';
+import { getRoomPriceForDuration } from '../utils/dateUtils';
 
 const STEPS = [
   { id: 'details', title: 'Guest Details' },
@@ -45,9 +45,13 @@ export function BookingPage() {
   const selectedDate = searchParams.get('date');
   const selectedTimeSlot = searchParams.get('slot');
   const selectedTimeSlotId = searchParams.get('slotId');
-    const roomId = searchParams.get('roomId');
-    const [room, setRoom] = useState(null);
+  const durationStr = searchParams.get('duration');
+  const duration = parseInt(durationStr, 10) || 2;
+  const roomId = searchParams.get('roomId');
+  const [room, setRoom] = useState(null);
   
+  const displayTimeSlot = selectedTimeSlot;
+
   const [selectedEventType, setSelectedEventType] = useState('');
   const [selectedCake, setSelectedCake] = useState(null); // { cakeId, size }
   const [cakeCategory, setCakeCategory] = useState('standard');
@@ -112,7 +116,7 @@ export function BookingPage() {
 
 
 
-  const isWeekend = isWeekendDay(selectedDate);
+
   
   const {
     theaterPrice,
@@ -124,7 +128,7 @@ export function BookingPage() {
     processedCake,
     processedAddons
   } = useMemo(() => {
-    const currentPrice = getRoomPriceForDate(room, selectedDate);
+    const currentPrice = getRoomPriceForDuration(room, duration);
       
     return calculateBookingTotal(
       room ? { ...theater, price: currentPrice } : theater,
@@ -196,6 +200,7 @@ export function BookingPage() {
         roomId,
         date: selectedDate,
         bookingDate: selectedDate,
+        duration,
         timeSlot: selectedTimeSlot,
         timeSlotId: selectedTimeSlotId || undefined,
         eventTypeId: selectedEventType,
@@ -360,7 +365,7 @@ export function BookingPage() {
                     <div>
                       <h2 className="mb-2 text-[22px] font-bold text-[#17171c] font-heading">Guest details</h2>
                       <p className="text-[14px] text-[#6b5c52]">
-                        {room?.couple ? `Couple: ${room.couple} · ` : ''}Maximum Members: {room?.maximumMembers} · ₹{getRoomPriceForDate(room, selectedDate)} / Hr
+                        {room?.couple ? `Couple: ${room.couple} · ` : ''}Maximum Members: {room?.maximumMembers} · ₹{getRoomPriceForDuration(room, duration)} / {duration} Hour{duration > 1 ? 's' : ''}
                       </p>
                     </div>
 
@@ -478,8 +483,8 @@ export function BookingPage() {
 
                           return (
                             <div key={cake._id} className={`relative flex flex-col items-center justify-between rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#a9651c] bg-[#f9f2eb] shadow-md ring-1 ring-[#a9651c]' : 'border-[#ead9ca] bg-[#fffaf5] hover:border-[#a9651c] hover:shadow-sm'}`}>
-                              <div className="h-28 w-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-4 mx-auto flex items-center justify-center">
-                                {getImageUrl(cake.image) ? <img src={getImageUrl(cake.image)} alt={cake.name} onError={handleImageError} className="h-full w-full object-contain p-1" /> : <div className="h-full w-full bg-[#f4e7da]" />}
+                              <div className="h-28 w-28 shrink-0 mb-4 mx-auto flex items-center justify-center">
+                                {getImageUrl(cake.image) ? <img src={getImageUrl(cake.image)} alt={cake.name} onError={handleImageError} className="h-full w-full object-contain" /> : <div className="h-full w-full rounded-xl bg-[#f4e7da]" />}
                               </div>
                               <p className="text-[15px] font-bold text-[#1a1c21] mb-1">{cake.name}</p>
                               <p className="text-[12px] text-[#6b5c52] mb-3 line-clamp-2">{cake.description}</p>
@@ -527,10 +532,10 @@ export function BookingPage() {
                   <div className="space-y-10">
                     <div>
                       <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Finishing Touches</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Add cakes, decorations, and gifts.</p>
+                      <p className="text-[14px] text-[#6b5c52]">Add cakes and special services.</p>
                     </div>
 
-                    {['Extra Decoration', 'Choose Gifts', 'Special Services'].map(cat => {
+                    {['Special Services'].map(cat => {
                       const catAddons = groupedAddons[cat] || [];
                       if (catAddons.length === 0) return (
                         <div key={cat} className="space-y-4">
@@ -555,8 +560,8 @@ export function BookingPage() {
                                   onClick={() => handleAddonToggle(addon._id)}
                                   className={`relative flex flex-col items-center justify-center rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb] shadow-md ring-1 ring-[#8c5211]' : 'border-[#ecdcd1] bg-white hover:border-[#8c5211] hover:shadow-sm'}`}
                                 >
-                                  <div className="h-28 w-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 mb-4 mx-auto flex items-center justify-center">
-                                    <img src={getImageUrl(addon.image) || '/placeholder.png'} alt={addon.name} onError={handleImageError} className="h-full w-full object-contain p-1" />
+                                  <div className="h-28 w-28 shrink-0 mb-4 mx-auto flex items-center justify-center">
+                                    <img src={getImageUrl(addon.image) || '/placeholder.png'} alt={addon.name} onError={handleImageError} className="h-full w-full object-contain" />
                                   </div>
                                   <p className="text-[15px] font-bold text-[#1a1c21] mb-1">{addon.name}</p>
                                   <p className="text-[14px] text-[#8c5211] font-bold">₹{displayPrice}</p>
@@ -588,8 +593,8 @@ export function BookingPage() {
                       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                         <div>
                           <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Date & time</p>
-                          <p className="text-[20px] font-bold text-[#1a1c21]">{selectedDate} <span className="mx-2 text-[#8c5211]">|</span> {selectedTimeSlot}</p>
-                          <p className="mt-2 font-medium text-[#6b5c52]">{theater?.name}</p>
+                          <p className="text-[20px] font-bold text-[#1a1c21]">{selectedDate} <span className="mx-2 text-[#8c5211]">|</span> {displayTimeSlot}</p>
+                          <p className="mt-2 font-medium text-[#6b5c52]">{theater?.name} ({duration} Hour{duration > 1 ? 's' : ''})</p>
                         </div>
                         <div className="inline-flex items-center gap-2 rounded-full bg-[#f9f2eb] px-3 py-1.5 text-[13px] font-bold text-[#8c5211] border border-[#ecdcd1]">
                           <ShieldCheck className="h-4 w-4" /> Secure booking
@@ -677,7 +682,7 @@ export function BookingPage() {
               <div className="min-w-0">
                 <p className="text-[12px] font-bold text-[#17171c] truncate">{theater?.name}</p>
                 <p className="text-[10px] text-[#6b5c52] truncate">{room?.name} · {theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</p>
-                <p className="text-[10px] text-[#a9651c] font-bold mt-1">{selectedDate} · {selectedTimeSlot}</p>
+                <p className="text-[10px] text-[#a9651c] font-bold mt-1">{selectedDate} · {displayTimeSlot} · {duration} Hour{duration > 1 ? 's' : ''}</p>
               </div>
             </div>
             
@@ -690,7 +695,7 @@ export function BookingPage() {
               </div>
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-[#6b5c52] font-medium">Room Price</span>
+                  <span className="text-[#6b5c52] font-medium">Room Price ({duration} Hour{duration > 1 ? 's' : ''})</span>
                 </div>
                 <span className="font-bold text-[#1a1c21]">₹{theaterPrice}</span>
               </div>

@@ -92,7 +92,7 @@ Data required from backend:
 - City list
 - Location list
 - Event types
-- Availability status and price per hour
+- Availability status and price per 2-hour slot
 
 Empty state: “No venues found” with clear filter reset action.
 Error state: Inline error panel with retry.
