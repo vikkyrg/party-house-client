@@ -51,7 +51,7 @@ export function ContactPage() {
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1a1c21] mb-1">Email</h3>
                   <p className="text-[13px] font-medium text-[#6b5c52] mb-2">Official support email</p>
-                  <p className="text-[14px] font-bold text-[#8c5211]">[OFFICIAL EMAIL]</p>
+                  <p className="text-[14px] font-bold text-[#8c5211]">riopartyhouse@gmail.com</p>
                 </div>
               </div>
 
@@ -62,7 +62,7 @@ export function ContactPage() {
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1a1c21] mb-1">Customer Support</h3>
                   <p className="text-[13px] font-medium text-[#6b5c52] mb-2">Available during business hours</p>
-                  <p className="text-[14px] font-bold text-[#8c5211]">[PHONE NUMBER]</p>
+                  <p className="text-[14px] font-bold text-[#8c5211]">8147897771</p>
                 </div>
               </div>
 
