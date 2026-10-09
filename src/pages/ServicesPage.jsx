@@ -111,14 +111,14 @@ export function ServicesPage() {
                 >
                   {/* Image Section */}
                   <div 
-                    className="w-full md:w-[45%] rounded-[24px] overflow-hidden cursor-pointer relative group shadow-[0_20px_40px_rgba(0,0,0,0.12)] border-4 border-white shrink-0 bg-[#f4e7da] flex items-center justify-center"
+                    className="w-full md:w-[45%] rounded-[24px] overflow-hidden cursor-pointer relative group shadow-[0_20px_40px_rgba(0,0,0,0.12)] shrink-0 flex items-center justify-center"
                     onClick={() => setPreviewImage(getImageUrl(service.image))}
                   >
                     <img 
                       src={getImageUrl(service.image)} 
                       alt={service.title} 
                       onError={handleImageError}
-                      className="w-full h-auto object-contain p-2 group-hover:scale-105 transition-transform duration-700"
+                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                       <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-[#1a1c21] text-sm font-bold px-5 py-2.5 rounded-full transition-opacity shadow-md">
