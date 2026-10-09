@@ -389,7 +389,6 @@ export function TheaterDetailsPage() {
         </div>
       )}
 
-      <Link to="/theaters" className="mt-8 inline-block text-sm font-bold text-[#8c5211]">Back to theaters</Link>
     </div>
 
     {(datePrompt || slotPrompt) && (
