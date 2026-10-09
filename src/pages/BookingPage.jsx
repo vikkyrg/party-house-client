@@ -441,84 +441,113 @@ export function BookingPage() {
 
                 {/* STEP 3: CAKES */}
                 {currentStep === 3 && (
-                  <div className="space-y-10">
-                    <div>
-                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select Cake</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Choose a cake for your celebration (optional).</p>
-                    </div>
-
-                    <div className="flex gap-2 rounded-xl border border-[#ead9ca] bg-[#f9f2eb] p-1">
-                      {[['standard', 'Standard Cakes'], ['premium', 'Premium Cakes']].map(([category, label]) => (
-                        <button
-                          key={category}
-                          type="button"
-                          onClick={() => setCakeCategory(category)}
-                          className={`flex-1 rounded-lg px-4 py-2.5 text-[12px] font-bold transition-colors ${cakeCategory === category ? 'bg-[#a9651c] text-white shadow-sm' : 'text-[#6b5c52] hover:bg-[#fffaf5]'}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                  <div className="space-y-8">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div>
+                        <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Select Cake</h2>
+                        <p className="text-[14px] text-[#6b5c52]">Choose a cake for your celebration (optional).</p>
+                      </div>
+                      
+                      <div className="inline-flex items-center rounded-full border border-[#ead9ca] bg-[#fffaf5] p-1 shadow-sm">
+                        {[['standard', 'Standard Cakes'], ['premium', 'Premium Cakes']].map(([category, label]) => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => setCakeCategory(category)}
+                            className={`relative rounded-full px-5 py-2 text-[13px] font-bold transition-all duration-300 ${cakeCategory === category ? 'text-white' : 'text-[#8c5211] hover:text-[#a9651c]'}`}
+                          >
+                            {cakeCategory === category && (
+                              <motion.div layoutId="cakeCategoryBg" className="absolute inset-0 rounded-full bg-[#a9651c] shadow-md" />
+                            )}
+                            <span className="relative z-10">{label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setSelectedCake(null)}
-                      className={`w-full rounded-2xl border p-4 text-left transition-all ${!selectedCake ? 'border-[#a9651c] bg-[#f9f2eb] ring-1 ring-[#a9651c]' : 'border-[#ead9ca] bg-[#fffaf5] hover:border-[#a9651c]'}`}
+                      className={`group relative flex w-full items-center justify-between overflow-hidden rounded-2xl border px-4 py-3 text-left transition-all duration-300 ${!selectedCake ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_2px_rgba(169,101,28,0.2)]' : 'border-[#ead9ca] bg-white hover:border-[#a9651c] hover:bg-[#fffaf5]'}`}
                     >
-                      <span className="block text-[15px] font-bold text-[#17171c]">No Cake</span>
-                      <span className="text-[12px] text-[#6b5c52]">Skip cake selection</span>
+                      <div className="flex items-center gap-3 relative z-10">
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${!selectedCake ? 'bg-[#a9651c]/10 text-[#a9651c]' : 'bg-[#fcf5eb] text-[#8c5211]'}`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                          </svg>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
+                          <span className="text-[14px] font-bold text-[#1a1c21]">No Cake</span>
+                          <span className="text-[12px] text-[#6b5c52]">Skip cake selection</span>
+                        </div>
+                      </div>
+                      <div className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${!selectedCake ? 'border-[#a9651c] bg-[#a9651c]' : 'border-[#ead9ca] bg-transparent group-hover:border-[#a9651c]'}`}>
+                        {!selectedCake && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                      </div>
                     </button>
 
                     {!visibleCakes.length ? (
-                      <div className="rounded-[22px] border border-[#ecdcd1] bg-white p-6 text-center">
-                        <p className="text-[14px] text-[#6b5c52]">No {cakeCategory} cakes available.</p>
+                      <div className="rounded-[24px] border border-dashed border-[#ecdcd1] bg-[#faf8f5] p-10 text-center">
+                        <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-[#fcf5eb] flex items-center justify-center text-[#a9651c]">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <p className="text-[15px] font-bold text-[#1a1c21] mb-1">No {cakeCategory} cakes available</p>
+                        <p className="text-[13px] text-[#6b5c52]">Please check back later or try another category.</p>
                       </div>
                     ) : (
-                      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {visibleCakes.map(cake => {
                           const isSelected = selectedCake?.cakeId === cake._id;
                           const cakeSizes = cake.sizes || [];
-                          const currentSize = isSelected ? selectedCake.size : cakeSizes[0]?.name;
-                          const displayPrice = cakeSizes.find(s => s.name === currentSize)?.price || 0;
-
+                          
                           return (
-                            <div key={cake._id} className={`relative flex flex-col items-center justify-between rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#a9651c] bg-[#f9f2eb] shadow-md ring-1 ring-[#a9651c]' : 'border-[#ead9ca] bg-[#fffaf5] hover:border-[#a9651c] hover:shadow-sm'}`}>
-                              <div className="h-28 w-28 shrink-0 mb-4 mx-auto flex items-center justify-center">
-                                {getImageUrl(cake.image) ? <img src={getImageUrl(cake.image)} alt={cake.name} onError={handleImageError} className="h-full w-full object-contain" /> : <div className="h-full w-full rounded-xl bg-[#f4e7da]" />}
-                              </div>
-                              <p className="text-[15px] font-bold text-[#1a1c21] mb-1">{cake.name}</p>
-                              <p className="text-[12px] text-[#6b5c52] mb-3 line-clamp-2">{cake.description}</p>
+                            <div key={cake._id} className={`group relative flex flex-col overflow-hidden rounded-[20px] border transition-all duration-300 ${isSelected ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_1px_rgba(169,101,28,0.3)] z-10' : 'border-[#ead9ca] bg-white hover:border-[#a9651c]/60 hover:shadow-md'}`}>
                               
-                              <div className="w-full space-y-2 mt-auto">
-                                <div className="grid grid-cols-2 gap-2">
-                                  {cakeSizes.map(size => (
-                                    <button
-                                      key={size.name}
-                                      type="button"
-                                      onClick={() => setSelectedCake({ cakeId: cake._id, category: cake.category || 'standard', name: cake.name, size: size.name, price: size.price, image: cake.image })}
-                                      className={`text-[12px] rounded-lg border px-2 py-1.5 font-medium transition-all ${isSelected && selectedCake.size === size.name ? 'border-[#a9651c] bg-[#a9651c] text-white' : 'border-[#ead9ca] bg-[#fffaf5] text-[#17171c] hover:border-[#a9651c]'}`}
-                                    >
-                                      {size.label}
-                                      <br/>
-                                      ₹{size.price}
-                                    </button>
-                                  ))}
-                                </div>
+                              <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+                                {getImageUrl(cake.image) ? (
+                                  <img src={getImageUrl(cake.image)} alt={cake.name} onError={handleImageError} className="h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-105" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-[#c2b4a7]">No Image</div>
+                                )}
+                                
                                 {isSelected && (
-                                  <button
-                                    onClick={() => setSelectedCake(null)}
-                                    className="text-[12px] text-red-500 hover:underline mt-2 block w-full"
-                                  >
-                                    Remove
-                                  </button>
+                                  <div className="absolute top-3 right-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#a9651c] shadow-sm">
+                                    <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                                  </div>
                                 )}
                               </div>
-                              
-                              {isSelected && (
-                                <div className="absolute top-3 right-3 bg-[#8c5211] text-white rounded-full p-1 shadow-md">
-                                  <Check className="h-4 w-4" />
+
+                              <div className="flex flex-1 flex-col p-4 pt-2 border-t border-[#f4e7da]/50">
+                                <div className="mb-4">
+                                  <h3 className="text-[15px] font-bold text-[#1a1c21] leading-tight mb-1 line-clamp-1">{cake.name}</h3>
+                                  {cake.description && (
+                                    <p className="text-[12px] text-[#6b5c52] line-clamp-2 leading-relaxed">{cake.description}</p>
+                                  )}
                                 </div>
-                              )}
+                                
+                                <div className="mt-auto space-y-2">
+                                  <div className="flex flex-wrap gap-2">
+                                    {cakeSizes.map(size => {
+                                      const isSizeSelected = isSelected && selectedCake.size === size.name;
+                                      return (
+                                        <button
+                                          key={size.name}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedCake({ cakeId: cake._id, category: cake.category || 'standard', name: cake.name, size: size.name, price: size.price, image: cake.image });
+                                          }}
+                                          className={`flex-1 min-w-[100px] whitespace-nowrap rounded-lg border px-3 py-2 text-[12px] font-bold transition-all duration-200 ${isSizeSelected ? 'border-[#a9651c] bg-[#a9651c] text-white shadow-sm' : 'border-[#ead9ca] bg-[#faf8f5] text-[#1a1c21] hover:border-[#a9651c] hover:bg-white'}`}
+                                        >
+                                          {size.label} · ₹{size.price}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
