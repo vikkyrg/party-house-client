@@ -60,6 +60,7 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
 function RoomCard({ room, theater, date, availability, selected, selectedSlot, onChooseDate, onSelectRoom, onSelectSlot, onBook }) {
   const [roomImageIndex, setRoomImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [selectedDurationFilter, setSelectedDurationFilter] = useState(2);
   const isAvailabilityLoading = Boolean(availability?.loading);
   const availabilityFailed = Boolean(availability?.error);
   const configuredSlots = (room.slots || []).filter((slot) => slot.isActive !== false).map((slot) => ({ ...slot, time: `${slot.startTime} - ${slot.endTime}` }));
@@ -95,7 +96,7 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
   const roomImage = roomImages[roomImageIndex] ? getImageUrl(roomImages[roomImageIndex]) : null;
   const displayedFeatures = [...(room.features || []), ...(room.amenities || [])].filter(Boolean).slice(0, 4);
   
-  const selectedDuration = selectedSlot ? (selectedSlot.duration || getSlotDuration(selectedSlot.originalTime?.split(' - ')[0], selectedSlot.originalTime?.split(' - ')[1])) : null;
+  const selectedDuration = selectedSlot ? (selectedSlot.duration || getSlotDuration(selectedSlot.originalTime?.split(' - ')[0], selectedSlot.originalTime?.split(' - ')[1])) : selectedDurationFilter;
   const currentPrice = selectedDuration ? getRoomPriceForDuration(room, selectedDuration) : 0;
 
   const book = () => {
@@ -149,9 +150,55 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
       
 
 
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Duration</p>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {[1, 2, 3].map((duration) => (
+          <button
+            key={duration}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedDurationFilter(duration);
+              if (selectedSlot && selectedSlot.duration !== duration) {
+                onSelectSlot(null);
+              }
+            }}
+            className={`rounded-[6px] px-3 py-1.5 text-[10px] font-bold transition-colors ${
+              selectedDurationFilter === duration
+                ? 'bg-[#9b5417] text-white shadow-sm'
+                : 'border border-[#d0d0d0] bg-white text-[#5f5148] hover:border-[#a9651c] hover:bg-[#fffaf5]'
+            }`}
+          >
+            {duration} Hour{duration > 1 ? 's' : ''}
+          </button>
+        ))}
+      </div>
+
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>
       
-      {!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}{date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}{date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}<div className="flex flex-wrap items-start gap-1.5">{slots.length ? slots.map((slot, index) => { const slotTime = slot.originalTime; const slotId = slot.id || slot._id; const selectedId = selectedSlot?.id || selectedSlot?._id; const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.originalTime || selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`)); return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />; }) : <span className="text-[9px] text-[#85756b]">No time slots configured.</span>}</div><div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]"><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span><span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span></div></div>
+      {!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}
+      {date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}
+      {date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}
+      
+      <div className="flex flex-wrap items-start gap-1.5">
+        {slots.filter(s => s.duration === selectedDurationFilter).length ? (
+          slots.filter(s => s.duration === selectedDurationFilter).map((slot, index) => {
+            const slotTime = slot.originalTime;
+            const slotId = slot.id || slot._id;
+            const selectedId = selectedSlot?.id || selectedSlot?._id;
+            const isSelected = Boolean(selectedSlot) && (slotId && selectedId ? slotId === selectedId : slotTime === (selectedSlot.originalTime || selectedSlot.time || `${selectedSlot.startTime} - ${selectedSlot.endTime}`));
+            return <RoomSlot key={slotId || slotTime || index} slot={slot} date={date} selected={isSelected} onChoose={onChooseDate} onSelect={onSelectSlot} />;
+          })
+        ) : (
+          <span className="text-[9px] text-[#85756b]">No {selectedDurationFilter}-hour slots available for this date.</span>
+        )}
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]">
+        <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span>
+        <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span>
+        <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span>
+      </div>
+    </div>
       <div className="mt-auto flex flex-col gap-3 border-t border-[#ead9ca] pt-3">
         {selectedSlot ? (
           <div className="flex items-start justify-between">
