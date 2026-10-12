@@ -354,7 +354,7 @@ export function TheaterDetailsPage() {
       if (sortBy === 'price-low') return getPrice(first) - getPrice(second);
       if (sortBy === 'price-high') return getPrice(second) - getPrice(first);
       if (sortBy === 'members') return (second.maximumMembers || 0) - (first.maximumMembers || 0);
-      return (first.sortOrder || 0) - (second.sortOrder || 0) || first.name.localeCompare(second.name);
+      return first.name.localeCompare(second.name);
     });
   }, [rooms, sortBy, preselectedRoomId, date]);
 

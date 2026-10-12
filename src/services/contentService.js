@@ -6,6 +6,11 @@ export const contentService = {
     return data;
   },
   
+  getEventTypeBySlugOrId: async (slugOrId) => {
+    const { data } = await apiClient.get(`/event-types/${slugOrId}`);
+    return data;
+  },
+  
   getAddons: async () => {
     const { data } = await apiClient.get('/addons');
     return data;
