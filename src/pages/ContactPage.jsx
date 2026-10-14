@@ -1,7 +1,95 @@
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { SEO } from '../components/common/SEO';
-import { Mail, Phone, MapPin, User, MessageSquare, ChevronDown, Clock, Shield, Heart, Ticket, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, User, MessageSquare, ChevronDown, Clock, Shield, Heart, Ticket, Send, Loader2 } from 'lucide-react';
+import { contentService } from '../services/contentService';
+import { handleApiError } from '../lib/apiClient';
 
 export function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    // Validate fields
+    if (!formData.name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (!formData.phone.trim()) {
+      toast.error('Please enter your phone number');
+      return;
+    }
+    if (!formData.subject.trim()) {
+      toast.error('Please select a topic or enter a subject');
+      return;
+    }
+    if (!formData.message.trim()) {
+      toast.error('Please enter your message');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await contentService.submitContactMessage({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      });
+
+      if (response.success) {
+        toast.success(response.message || 'Your message has been sent successfully!');
+        setSubmitSuccess(true);
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+        });
+      } else {
+        const msg = response.message || 'Failed to send message. Please try again.';
+        setErrorMessage(msg);
+        toast.error(msg);
+      }
+    } catch (err) {
+      const msg = handleApiError(err) || 'Failed to send message. Please try again later.';
+      setErrorMessage(msg);
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FCF5EB] pt-32 pb-24 relative overflow-hidden font-sans">
       <SEO title="Contact Us | RIO PARTY HOUSE" description="Contact RIO PARTY HOUSE for questions about theater bookings, celebrations, private room experiences, and venue partnerships." />
@@ -98,57 +186,124 @@ export function ContactPage() {
           <div className="w-full max-w-[440px] lg:mx-auto">
             <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-[#f0e6dd]">
               <h2 className="text-[28px] font-heading text-[#1a1c21] font-bold mb-2 tracking-tight">Send Message</h2>
-              <p className="text-[12px] font-medium text-[#6b5c52] mb-8">The form is available for enquiries. It is kept in the existing UI without claiming delivery if no backend endpoint is configured.</p>
+              <p className="text-[12px] font-medium text-[#6b5c52] mb-6">Have an inquiry or question? Send us a message and our team will get back to you shortly.</p>
 
-              <form className="space-y-6">
+              {submitSuccess && (
+                <div className="mb-6 p-4 rounded-[16px] bg-emerald-50 border border-emerald-200 text-emerald-800 text-[13px] font-medium">
+                  ✓ Thank you! Your message has been sent successfully. We will contact you soon.
+                </div>
+              )}
+
+              {errorMessage && (
+                <div className="mb-6 p-4 rounded-[16px] bg-red-50 border border-red-200 text-red-800 text-[13px] font-medium">
+                  {errorMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Name</label>
+                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Name *</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><User className="w-4 h-4 text-[#a6998f]" /></div>
-                    <input type="text" placeholder="Your name" className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f]" />
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Your name"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f] disabled:opacity-60"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Email</label>
+                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Email *</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Mail className="w-4 h-4 text-[#a6998f]" /></div>
-                    <input type="email" placeholder="you@example.com" className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f]" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f] disabled:opacity-60"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Phone</label>
+                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Phone *</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Phone className="w-4 h-4 text-[#a6998f]" /></div>
-                    <input type="tel" placeholder="Your phone number" className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f]" />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Your phone number"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f] disabled:opacity-60"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Subject</label>
+                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Subject *</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><Mail className="w-4 h-4 text-[#a6998f]" /></div>
-                    <select defaultValue="" className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-10 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] appearance-none cursor-pointer">
+                    <select
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      required
+                      disabled={isSubmitting}
+                      className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-10 py-3 text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] appearance-none cursor-pointer disabled:opacity-60"
+                    >
                       <option value="" disabled className="text-[#a6998f]">Select a topic</option>
-                      <option value="booking">Private Booking</option>
-                      <option value="venue">Venue Partnership</option>
-                      <option value="support">General Support</option>
+                      <option value="Private Booking">Private Booking</option>
+                      <option value="Venue Partnership">Venue Partnership</option>
+                      <option value="General Support">General Support</option>
+                      <option value="Other Inquiry">Other Inquiry</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><ChevronDown className="w-4 h-4 text-[#1a1c21]" /></div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Message</label>
+                  <label className="block text-[12px] font-bold text-[#1a1c21] mb-2">Message *</label>
                   <div className="relative">
                     <div className="absolute top-3.5 left-4 pointer-events-none"><MessageSquare className="w-4 h-4 text-[#a6998f]" /></div>
-                    <textarea placeholder="How can we help you?" className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 h-[100px] text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f] resize-none"></textarea>
+                    <textarea
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      placeholder="How can we help you?"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full bg-white border border-[#ecdcd1] rounded-[16px] pl-11 pr-4 py-3 h-[100px] text-[13px] font-medium text-[#1a1c21] focus:outline-none focus:border-[#8c5211] placeholder:text-[#a6998f] resize-none disabled:opacity-60"
+                    ></textarea>
                   </div>
                 </div>
 
-                <button type="button" className="w-full h-12 mt-4 bg-[#9e6223] hover:bg-[#7a4b1b] text-white font-bold text-[13px] rounded-[16px] transition-colors flex items-center justify-center gap-2">
-                  <Send className="w-4 h-4" /> Send Message
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-12 mt-4 bg-[#9e6223] hover:bg-[#7a4b1b] text-white font-bold text-[13px] rounded-[16px] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" /> Send Message
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -158,3 +313,4 @@ export function ContactPage() {
     </div>
   );
 }
+

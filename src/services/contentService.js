@@ -50,5 +50,11 @@ export const contentService = {
   getPublicReviews: async () => {
     const { data } = await apiClient.get('/reviews/public');
     return data;
+  },
+
+  submitContactMessage: async (formData) => {
+    const { data } = await apiClient.post('/contact', formData);
+    return data;
   }
 };
+
