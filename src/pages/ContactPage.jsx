@@ -150,7 +150,7 @@ export function ContactPage() {
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1a1c21] mb-1">Customer Support</h3>
                   <p className="text-[13px] font-medium text-[#6b5c52] mb-2">Available during business hours</p>
-                  <p className="text-[14px] font-bold text-[#8c5211]">8147897771</p>
+                  <p className="text-[14px] font-bold text-[#8c5211]">+91 81478 97771</p>
                 </div>
               </div>
 
@@ -160,7 +160,12 @@ export function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1a1c21] mb-1">Business Address</h3>
-                  <p className="text-[13px] font-medium text-[#6b5c52] mb-2 leading-relaxed">[BUSINESS ADDRESS]</p>
+                  <p className="text-[13px] font-medium text-[#6b5c52] mb-1 leading-relaxed">
+                    #7, Dinnur Main Road, Ganesh Block, RT Nagar, Bangalore - 560032.
+                  </p>
+                  <p className="text-[13px] font-medium text-[#8c5211] leading-relaxed">
+                    Suzuki showroom building 3rd floor.
+                  </p>
                 </div>
               </div>
 

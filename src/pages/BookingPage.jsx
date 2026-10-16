@@ -10,7 +10,8 @@ import { useAuthStore } from '../store/authStore';
 import { LoadingState } from '../components/common/LoadingState';
 import { BookingStepper } from '../components/booking/BookingStepper';
 import { handleApiError } from '../lib/apiClient';
-import { Check, ArrowLeft, ArrowRight, ShieldCheck, MapPin, Calendar, Clock, Edit } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, ShieldCheck, MapPin, Calendar, Clock, Edit, AlertCircle, Users, Sparkles, Cake as CakeIcon, Gift } from 'lucide-react';
+import { PaymentModal } from '../components/booking/PaymentModal';
 import { SEO } from '../components/common/SEO';
 import { calculateBookingTotal } from '../utils/bookingCalculator';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
@@ -71,6 +72,8 @@ export function BookingPage() {
   const visibleCakes = cakesList.filter((cake) => (cake.category || 'standard') === cakeCategory && cake.isActive !== false);
 
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState(null);
   
   useEffect(() => {
 
@@ -142,8 +145,17 @@ export function BookingPage() {
 
   const validateStep = () => {
     if (currentStep === 1) { // Guest Details
-      if (!customerDetails.name || !customerDetails.phone) {
-        setError('Please provide your name and phone number.');
+      if (!customerDetails.name?.trim()) {
+        setError('Please provide your full name.');
+        return false;
+      }
+      const rawPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
+      if (!rawPhone || !/^\d{10}$/.test(rawPhone)) {
+        setError('Please enter a valid 10-digit mobile number (e.g. 9876543210).');
+        return false;
+      }
+      if (!customerDetails.email?.trim()) {
+        setError('Please provide your email address for the booking receipt.');
         return false;
       }
       if (Number(customerDetails.members) > Number(room?.maximumMembers)) {
@@ -194,6 +206,8 @@ export function BookingPage() {
         }
       }
 
+      const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
+
       const payload = {
         theaterId,
         locationId: theater?.location?._id || theater?.location,
@@ -212,48 +226,18 @@ export function BookingPage() {
           id, 
           quantity: selection.quantity || 1
         })),
-        customerDetails
+        customerDetails: {
+          ...customerDetails,
+          phone: cleanedPhone || customerDetails.phone,
+        }
       };
       
       const bookingRes = await bookingService.createBooking(payload);
       if (bookingRes.success) {
-        const bookingId = bookingRes.data._id;
-        
-        const orderRes = await paymentService.createOrder(bookingId);
-        if (orderRes.success) {
-          const { orderId, amount, currency, key } = orderRes.data;
-          
-          const options = {
-            key: key || import.meta.env.VITE_RAZORPAY_KEY_ID,
-            amount: amount,
-            currency: currency,
-            name: 'RIO PARTY HOUSE',
-            description: `Advance Payment for ${theater?.name}`,
-            order_id: orderId,
-            handler: async function (response) {
-              try {
-                await paymentService.verifyPayment({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature,
-                  bookingId
-                });
-                navigate(`/booking/success/${bookingId}`);
-              } catch (err) {
-                navigate('/booking/failure');
-              }
-            },
-            prefill: {
-              name: customerDetails.name,
-              email: customerDetails.email,
-              contact: customerDetails.phone
-            },
-            theme: { color: '#eab308' }
-          };
-          
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        }
+        const bookingRecord = bookingRes.data;
+        setCreatedBooking(bookingRecord);
+        // Open professional QR payment modal
+        setIsPaymentModalOpen(true);
       }
     } catch (err) {
       setError(handleApiError(err));
@@ -277,7 +261,7 @@ export function BookingPage() {
   const roomImage = room?.image ? getImageUrl(room.image) : theaterImage;
 
   return (
-    <div className="min-h-screen bg-[#fcf5eb] pb-16 pt-24 relative overflow-hidden font-sans flex flex-col">
+    <div className="min-h-screen bg-[#fcf5eb] pb-16 pt-24 relative overflow-x-clip font-sans flex flex-col">
       <SEO title="Complete Booking | RIO PARTY HOUSE" />
 
       {/* Subtle cinema backdrop kept behind the booking interface. */}
@@ -306,7 +290,7 @@ export function BookingPage() {
         </div>
       </div>
       
-      <div className="container relative z-10 mx-auto max-w-[1200px] px-4 md:px-6 flex flex-col lg:flex-row gap-5">
+      <div className="container relative z-10 mx-auto max-w-[1340px] px-4 md:px-6 flex flex-col lg:flex-row items-start gap-6">
         
         {/* Main Content Area */}
         <div className="flex-1">
@@ -377,8 +361,20 @@ export function BookingPage() {
 
                       <div className="grid gap-5 md:grid-cols-2">
                         <div>
-                          <label className="mb-2 block text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Phone Number *</label>
-                          <input type="tel" value={customerDetails.phone} onChange={(e) => setCustomerDetails((prev) => ({ ...prev, phone: e.target.value }))} placeholder="10-digit number" className="h-11 w-full rounded-full border border-[#ead9ca] bg-[#f9f6f0] px-4 text-[13px] text-[#17171c] font-medium outline-none transition focus:border-[#a9651c] focus:ring-1 focus:ring-[#a9651c]/20 placeholder:text-[#a6998f]" />
+                          <label className="mb-2 block text-[11px] font-bold text-[#17171c] uppercase tracking-wide">
+                            Phone Number (10 Digits) *
+                          </label>
+                          <input
+                            type="tel"
+                            maxLength={10}
+                            value={customerDetails.phone}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              setCustomerDetails((prev) => ({ ...prev, phone: val }));
+                            }}
+                            placeholder="e.g. 9876543210"
+                            className="h-11 w-full rounded-full border border-[#ead9ca] bg-[#f9f6f0] px-4 text-[13px] text-[#17171c] font-medium outline-none transition focus:border-[#a9651c] focus:ring-1 focus:ring-[#a9651c]/20 placeholder:text-[#a6998f]"
+                          />
                         </div>
                         <div>
                           <label className="mb-2 block text-[11px] font-bold text-[#17171c] uppercase tracking-wide">Email Address</label>
@@ -612,63 +608,143 @@ export function BookingPage() {
 
                 {/* STEP 5: REVIEW */}
                 {currentStep === 5 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6">
                     <div>
-                      <h2 className="mb-2 text-[24px] font-bold text-[#1a1c21] font-heading">Review & Confirm</h2>
-                      <p className="text-[14px] text-[#6b5c52]">Check your booking details carefully.</p>
+                      <h2 className="mb-1 text-[24px] font-bold text-[#1a1c21] font-heading">Review & Confirm</h2>
+                      <p className="text-[13px] text-[#6b5c52]">Check your booking details carefully before proceeding to payment.</p>
                     </div>
 
-                    <div className="space-y-6 rounded-[26px] border border-[#ecdcd1] bg-[#FCF5EB] p-6 shadow-sm">
-                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                        <div>
-                          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Date & time</p>
-                          <p className="text-[20px] font-bold text-[#1a1c21]">{selectedDate} <span className="mx-2 text-[#8c5211]">|</span> {displayTimeSlot}</p>
-                          <p className="mt-2 font-medium text-[#6b5c52]">{theater?.name} ({duration} Hour{duration > 1 ? 's' : ''})</p>
-                        </div>
-                        <div className="inline-flex items-center gap-2 rounded-full bg-[#f9f2eb] px-3 py-1.5 text-[13px] font-bold text-[#8c5211] border border-[#ecdcd1]">
-                          <ShieldCheck className="h-4 w-4" /> Secure booking
+                    <div className="space-y-5 rounded-[26px] border border-[#ecdcd1] bg-[#FCF5EB] p-5 md:p-6 shadow-sm">
+                      {/* Date & Time Header Card */}
+                      <div className="rounded-[20px] bg-white border border-[#ecdcd1] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-[#8c5211]" />
+                              <span className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Date & Time Slot</span>
+                            </div>
+                            <p className="text-[18px] md:text-[20px] font-bold text-[#1a1c21]">
+                              {selectedDate} <span className="mx-2 text-[#8c5211]">|</span> {displayTimeSlot}
+                            </p>
+                            <p className="mt-1 text-[13px] font-medium text-[#6b5c52]">
+                              {theater?.name} · <span className="text-[#8c5211] font-semibold">{room?.name}</span> ({duration} Hour{duration > 1 ? 's' : ''})
+                            </p>
+                          </div>
+                          <div className="inline-flex items-center gap-1.5 self-start sm:self-center rounded-full bg-[#fcf8f3] px-3.5 py-1.5 text-[12px] font-bold text-[#8c5211] border border-[#ecdcd1]">
+                            <ShieldCheck className="h-4 w-4 text-[#8c5211]" /> Secure booking
+                          </div>
                         </div>
                       </div>
 
-                      <div className="h-px bg-[#ecdcd1]" />
+                      {/* Organized Details Grid */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {/* Guest Details Card */}
+                        <div className="rounded-[18px] bg-white border border-[#ecdcd1] p-4 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Users className="h-3.5 w-3.5 text-[#8c5211]" />
+                              <span className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Guest Details</span>
+                            </div>
+                            <p className="text-[15px] font-bold text-[#1a1c21]">{customerDetails.name}</p>
+                            <p className="text-[13px] text-[#6b5c52] mt-0.5">{customerDetails.phone}</p>
+                            {customerDetails.email && (
+                              <p className="text-[12px] text-[#8c5211] truncate mt-0.5">{customerDetails.email}</p>
+                            )}
+                          </div>
+                          <div className="mt-3 pt-2.5 border-t border-[#f4e7da] flex items-center justify-between text-[12px] text-[#6b5c52]">
+                            <span>Party Size</span>
+                            <span className="font-bold text-[#1a1c21]">{customerDetails.members} Members, {customerDetails.kids} Kids</span>
+                          </div>
+                        </div>
 
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211] mb-2">Guest Details</p>
-                          <p className="font-bold text-[#1a1c21]">{customerDetails.name}</p>
-                          <p className="text-sm text-[#6b5c52]">{customerDetails.phone}</p>
-                          <p className="text-sm text-[#6b5c52]">{customerDetails.members} Members, {customerDetails.kids} Kids</p>
+                        {/* Occasion Card */}
+                        <div className="rounded-[18px] bg-white border border-[#ecdcd1] p-4 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="h-3.5 w-3.5 text-[#8c5211]" />
+                              <span className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Occasion</span>
+                            </div>
+                            <p className="text-[16px] font-bold text-[#1a1c21]">
+                              {eventTypes.find(e => e._id === selectedEventType)?.name || 'Celebration'}
+                            </p>
+                            <p className="text-[12px] text-[#6b5c52] mt-1">Special private theater arrangement included.</p>
+                          </div>
+                          <div className="mt-3 pt-2.5 border-t border-[#f4e7da] flex items-center justify-between text-[12px] text-[#6b5c52]">
+                            <span>Status</span>
+                            <span className="font-bold text-[#8c5211]">Selected</span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211] mb-2">Occasion</p>
-                          <p className="font-bold text-[#1a1c21]">{eventTypes.find(e => e._id === selectedEventType)?.name}</p>
-                        </div>
+
+                        {/* Cake Card (if selected) */}
                         {processedCake && (
-                          <div>
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211] mb-2">Cake</p>
-                            <p className="font-bold text-[#1a1c21]">{processedCake.name}</p>
-                            <p className="text-sm text-[#6b5c52]">{processedCake.sizeLabel}</p>
+                          <div className="rounded-[18px] bg-white border border-[#ecdcd1] p-4 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <CakeIcon className="h-3.5 w-3.5 text-[#8c5211]" />
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Celebration Cake</span>
+                              </div>
+                              <p className="text-[15px] font-bold text-[#1a1c21]">{processedCake.name}</p>
+                              <p className="text-[12px] text-[#6b5c52] mt-0.5">{processedCake.sizeLabel}</p>
+                            </div>
+                            <div className="mt-3 pt-2.5 border-t border-[#f4e7da] flex items-center justify-between text-[12px] text-[#6b5c52]">
+                              <span>Price</span>
+                              <span className="font-bold text-[#1a1c21]">₹{processedCake.total}</span>
+                            </div>
                           </div>
                         )}
+
+                        {/* Add-ons Card (if selected) */}
                         {processedAddons.length > 0 && (
-                          <div>
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211] mb-2">Add-ons</p>
-                            {processedAddons.map(addon => (
-                              <div key={addon._id} className="mb-2">
-                                <p className="font-bold text-[#1a1c21]">{addon.name}</p>
-                                <p className="text-sm text-[#6b5c52]">₹{addon.finalPrice}</p>
+                          <div className="rounded-[18px] bg-white border border-[#ecdcd1] p-4 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Gift className="h-3.5 w-3.5 text-[#8c5211]" />
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Custom Add-ons</span>
                               </div>
-                            ))}
+                              <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                                {processedAddons.map(addon => (
+                                  <div key={addon._id} className="flex justify-between items-center text-[13px]">
+                                    <span className="font-medium text-[#1a1c21] truncate max-w-[150px]">{addon.name}</span>
+                                    <span className="font-semibold text-[#8c5211]">₹{addon.finalPrice}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-2.5 border-t border-[#f4e7da] flex items-center justify-between text-[12px] text-[#6b5c52]">
+                              <span>Total Add-ons</span>
+                              <span className="font-bold text-[#1a1c21]">₹{addOnsTotal}</span>
+                            </div>
                           </div>
                         )}
                       </div>
-                      
-                      <div className="h-px bg-[#ecdcd1]" />
 
-                      <div>
-                        <label className="flex items-start gap-3 cursor-pointer mt-4">
-                          <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} className="mt-1 h-4 w-4 rounded border-[#ecdcd1] text-[#9e6223] focus:ring-[#9e6223]" />
-                          <span className="text-[13px] text-[#6b5c52]">I agree to the <a href="/terms" target="_blank" className="text-[#9e6223] underline">Terms & Conditions</a> and cancellation policy.</span>
+                      {/* Refund Policy Card */}
+                      <div className="rounded-[18px] bg-[#fff8ee] border border-[#f3d9b5] p-4 md:p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[#fde9cf] flex items-center justify-center shrink-0 mt-0.5">
+                            <AlertCircle className="w-4 h-4 text-[#9e6223]" />
+                          </div>
+                          <div>
+                            <h4 className="text-[14px] font-bold text-[#1a1c21] mb-1">Refund Policy</h4>
+                            <p className="text-[13px] leading-relaxed text-[#6b5c52]">
+                              Advance amount is <strong className="text-[#1a1c21]">fully refundable</strong> if slot is cancelled at least <span className="font-semibold text-[#9e6223]">72 hrs before the slot time</span>. If your slot is less than 72 hrs away from time of payment, then advance is <span className="font-semibold text-[#b91c1c]">non-refundable</span>.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Terms agreement checkbox */}
+                      <div className="pt-1">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={termsAccepted}
+                            onChange={e => setTermsAccepted(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-[#ecdcd1] text-[#9e6223] focus:ring-[#9e6223]"
+                          />
+                          <span className="text-[13px] text-[#6b5c52] leading-tight">
+                            I have reviewed the booking details, refund policy, and agree to the <a href="/terms" target="_blank" className="text-[#9e6223] underline font-semibold">Terms & Conditions</a> and cancellation policy.
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -689,7 +765,16 @@ export function BookingPage() {
                   Continue <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               ) : (
-                <button onClick={handleCreateBooking} disabled={submitting} className="h-11 flex items-center justify-center rounded-full bg-[#a9651c] px-10 text-white hover:bg-[#8e5217] font-bold text-[13px] transition-colors shadow-sm">
+                <button
+                  type="button"
+                  onClick={handleCreateBooking}
+                  disabled={submitting || !termsAccepted}
+                  className={`h-11 flex items-center justify-center rounded-full px-10 font-bold text-[13px] transition-all shadow-sm ${
+                    !termsAccepted || submitting
+                      ? 'bg-[#d6ccc2] text-[#857a70] cursor-not-allowed border border-[#c4b8ac]'
+                      : 'bg-[#a9651c] text-white hover:bg-[#8e5217] cursor-pointer'
+                  }`}
+                >
                   {submitting ? 'Processing...' : `Pay Advance ₹${advanceAmount}`}
                 </button>
               )}
@@ -697,11 +782,11 @@ export function BookingPage() {
           </div>
         </div>
         
-        {/* Sticky Booking Summary on Desktop */}
-        <div className="lg:w-[300px] shrink-0">
-          <div className="sticky top-24 bg-[#fffaf5] rounded-[18px] border border-[#ead9ca] p-4 shadow-[0_8px_25px_rgba(75,43,20,0.06)] overflow-hidden">
-            <h3 className="text-[17px] font-bold font-heading text-[#17171c] mb-3">Booking Summary</h3>
-            <p className="text-[11px] text-[#6b5c52] mb-3">Here’s a quick look at your booking.</p>
+        {/* Sticky Booking Summary on Desktop, full-width block on mobile */}
+        <div className="w-full lg:w-[350px] xl:w-[370px] shrink-0 self-start lg:sticky top-24 z-20">
+          <div className="bg-[#fffaf5] rounded-[22px] border border-[#ead9ca] p-5 shadow-[0_10px_30px_rgba(75,43,20,0.07)] max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <h3 className="text-[18px] font-bold font-heading text-[#17171c] mb-2">Booking Summary</h3>
+            <p className="text-[12px] text-[#6b5c52] mb-3">Here’s a quick look at your booking.</p>
             <div className="flex items-center gap-3 rounded-xl border border-[#ead9ca] bg-white p-2.5 mb-4">
               {theaterImage ? (
                 <img src={theaterImage} alt={theater?.name} onError={handleImageError} className="h-12 w-16 rounded-lg object-cover object-center" />
@@ -769,6 +854,22 @@ export function BookingPage() {
         </div>
         
       </div>
+
+      {/* Responsive QR Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        booking={createdBooking}
+        theaterName={theater?.name}
+        roomName={room?.name}
+        bookingDate={selectedDate}
+        timeSlot={displayTimeSlot}
+        advanceAmount={advanceAmount}
+        onPaymentSuccess={(id) => {
+          setIsPaymentModalOpen(false);
+          navigate(`/booking/success/${id || createdBooking?._id}`);
+        }}
+      />
     </div>
   );
 }

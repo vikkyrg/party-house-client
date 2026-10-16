@@ -20,6 +20,8 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
   const isBooked = date && slot.available === false;
   const isChecking = date && slot.available === undefined;
   const isAvailable = !isBooked && !isChecking;
+  const reasonText = slot.reason || 'Booked';
+
   const goToBooking = () => {
     if (!date) {
       onChoose();
@@ -27,16 +29,18 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
     }
     if (isAvailable) onSelect(slot);
   };
+
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1" title={isBooked ? `${reasonText} for this date` : undefined}>
       <button
         type="button"
         onClick={goToBooking}
         disabled={!isAvailable}
+        aria-label={isBooked ? `${slot.displayTime || slot.time} (Unavailable - ${reasonText})` : (slot.displayTime || slot.time)}
         className={`inline-flex h-[28px] items-center justify-center rounded-[6px] border px-2.5 py-0.5 text-center text-[10px] font-medium transition-colors ${selected
-            ? 'border-[#208653] bg-[#208653] text-white shadow-sm'
+            ? 'border-[#208653] bg-[#208653] text-white shadow-sm ring-2 ring-[#a8e6c7]'
             : isBooked
-              ? 'cursor-not-allowed border-[#e0e0e0] bg-[#f5f5f5] text-[#a0a0a0] opacity-80'
+              ? 'cursor-not-allowed border-[#e5e5e5] bg-[#ececec] text-[#8e8e8e] line-through opacity-75'
               : isChecking
                 ? 'cursor-wait border-[#e0e0e0] bg-[#fafafa] text-[#666666]'
                 : 'cursor-pointer border-[#d0d0d0] bg-white text-[#333333] hover:border-[#a9651c] hover:bg-[#fffaf5]'
@@ -46,18 +50,17 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
           {selected && <Check className="h-3 w-3" />}
           <span>{slot.displayTime || (slot.startTime ? `${slot.startTime} – ${slot.endTime}` : slot.time)}</span>
         </div>
-        {slot.duration && (
-          <div className={`mt-0.5 text-[9px] font-medium ${selected ? 'text-[#a8e6c7]' : 'text-[#75685f]'}`}>
-            {slot.duration} Hour{slot.duration > 1 ? 's' : ''}
-          </div>
-        )}
       </button>
-      {slot.discount && <span className="text-[8px] font-bold leading-none text-[#208653]">{slot.discount}</span>}
+      {isBooked ? (
+        <span className="text-[7.5px] font-semibold text-rose-600 uppercase tracking-tight">Sold out</span>
+      ) : slot.discount ? (
+        <span className="text-[8px] font-bold leading-none text-[#208653]">{slot.discount}</span>
+      ) : null}
     </div>
   );
 }
 
-function RoomCard({ room, theater, date, availability, selected, selectedSlot, onChooseDate, onSelectRoom, onSelectSlot, onBook }) {
+function RoomCard({ room, theater, date, availability, selected, selectedSlot, onChooseDate, onSelectRoom, onSelectSlot, onBook, onRetryAvailability }) {
   const [roomImageIndex, setRoomImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedDurationFilter, setSelectedDurationFilter] = useState(2);
@@ -177,8 +180,24 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>
       
       {!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}
-      {date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking availability...</p>}
-      {date && availabilityFailed && <p className="mb-2 rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">Unable to load availability.</p>}
+      {date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking real-time availability...</p>}
+      {date && availabilityFailed && (
+        <div className="mb-2 flex items-center justify-between rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">
+          <span>Unable to load availability.</span>
+          {onRetryAvailability && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRetryAvailability(room._id);
+              }}
+              className="ml-2 font-bold underline hover:text-red-800"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
       
       <div className="flex flex-wrap items-start gap-1.5">
         {slots.filter(s => s.duration === selectedDurationFilter).length ? (
@@ -256,15 +275,67 @@ export function TheaterDetailsPage() {
     setSelectedTimeSlot(null);
   }, [preselectedDate, preselectedRoomId]);
 
+  const fetchAvailabilityForRoom = (roomId, targetDate) => {
+    if (!targetDate) return;
+    setRoomAvailability((prev) => ({
+      ...prev,
+      [roomId]: { loading: true },
+    }));
+
+    roomService
+      .getAvailability(roomId, targetDate)
+      .then((res) => {
+        setDate((currentDate) => {
+          if (currentDate === targetDate) {
+            setRoomAvailability((prev) => ({
+              ...prev,
+              [roomId]: res,
+            }));
+          }
+          return currentDate;
+        });
+      })
+      .catch(() => {
+        setDate((currentDate) => {
+          if (currentDate === targetDate) {
+            setRoomAvailability((prev) => ({
+              ...prev,
+              [roomId]: { error: true },
+            }));
+          }
+          return currentDate;
+        });
+      });
+  };
+
   useEffect(() => {
     setSelectedTimeSlot(null);
-    if (!date || !rooms.length) { setRoomAvailability({}); return; }
+    if (!date || !rooms.length) {
+      setRoomAvailability({});
+      return;
+    }
+
+    let isSubscribed = true;
     const loadingState = Object.fromEntries(rooms.map((room) => [room._id, { loading: true }]));
     setRoomAvailability(loadingState);
-    Promise.all(rooms.map((room) => roomService.getAvailability(room._id, date)
-      .then((response) => [room._id, response])
-      .catch(() => [room._id, { error: true }])))
-      .then((entries) => setRoomAvailability(Object.fromEntries(entries)));
+
+    const activeDate = date;
+    Promise.all(
+      rooms.map((room) =>
+        roomService
+          .getAvailability(room._id, activeDate)
+          .then((response) => [room._id, response])
+          .catch(() => [room._id, { error: true }])
+      )
+    ).then((entries) => {
+      if (isSubscribed) {
+        setRoomAvailability(Object.fromEntries(entries));
+      }
+    });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [date, rooms]);
 
   useEffect(() => {
@@ -431,6 +502,7 @@ export function TheaterDetailsPage() {
               onSelectRoom={selectRoom} 
               onSelectSlot={(slot) => { selectRoom(room._id); chooseSlot(slot); }} 
               onBook={bookRoom} 
+              onRetryAvailability={(rId) => fetchAvailabilityForRoom(rId, date)}
             />
           ))}
         </div>

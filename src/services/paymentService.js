@@ -1,13 +1,13 @@
 import { apiClient } from '../lib/apiClient';
 
 export const paymentService = {
-  createOrder: async (bookingId) => {
-    const { data } = await apiClient.post('/payment/create-order', { bookingId });
+  submitUpi: async ({ bookingId, upiTransactionId }) => {
+    const { data } = await apiClient.post('/payment/submit-upi', { bookingId, upiTransactionId });
     return data;
   },
-  
-  verifyPayment: async (paymentData) => {
-    const { data } = await apiClient.post('/payment/verify', paymentData);
+
+  checkStatus: async (bookingId) => {
+    const { data } = await apiClient.get(`/payment/status/${bookingId}`);
     return data;
-  }
+  },
 };
