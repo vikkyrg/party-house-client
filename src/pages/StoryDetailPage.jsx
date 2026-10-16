@@ -127,14 +127,7 @@ export function StoryDetailPage() {
           })}
         </div>
 
-        {/* Footer CTA */}
-        <div className="mt-32 pt-20 border-t border-[#eaddd0] text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl font-heading font-extrabold text-[#1a1c21] mb-4">Ready to Create Your Own Story?</h2>
-          <p className="text-[#6b5c52] mb-8 font-medium">Book a premium theatre today and celebrate your special moments in cinematic style.</p>
-          <Link to="/cities" className="inline-block px-10 py-4 bg-[#1a1c21] text-white rounded-full font-bold hover:bg-[#8c5211] transition-colors shadow-lg">
-            Book Your Theatre
-          </Link>
-        </div>
+
 
       </div>
     </div>
