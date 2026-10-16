@@ -45,16 +45,16 @@ export function FoundersPage() {
                     <stop offset="100%" stopColor="#d7b88e" />
                   </linearGradient>
                 </defs>
-                <rect width="240" height="240" fill="url(#avatarBg)"/>
+                <rect width="240" height="240" fill="url(#avatarBg)" />
                 <circle cx="120" cy="88" r="38" fill="#e9d5b8" />
                 <path d="M75 192c12-28 35-42 45-42s33 14 45 42" fill="#c79a6e" />
-                <path d="M95 70c8-22 18-34 25-34 15 0 28 10 31 32-8-6-20-8-31-8-10 0-18 3-25 10Z" fill="#b88963" opacity="0.92"/>
-                <path d="M118 74c14 1 27 11 35 26-12 4-27 6-42 6-15 0-28-2-40-6 7-17 21-27 47-26Z" fill="#d9b48d" opacity="0.8"/>
+                <path d="M95 70c8-22 18-34 25-34 15 0 28 10 31 32-8-6-20-8-31-8-10 0-18 3-25 10Z" fill="#b88963" opacity="0.92" />
+                <path d="M118 74c14 1 27 11 35 26-12 4-27 6-42 6-15 0-28-2-40-6 7-17 21-27 47-26Z" fill="#d9b48d" opacity="0.8" />
               </svg>
             </div>
 
             <h2 className="text-[28px] md:text-[34px] font-heading font-extrabold text-[#1a1c21] tracking-tight">
-              Arjun Kumar
+              Shailaja Govindraj
             </h2>
             <p className="mt-2 text-[14px] md:text-[16px] font-bold uppercase tracking-[0.18em] text-[#9e6223]">
               Founder &amp; Director
@@ -63,7 +63,7 @@ export function FoundersPage() {
 
           <div className="mt-8 max-w-2xl mx-auto text-left">
             <p className="text-[16px] md:text-[18px] font-medium text-[#6b5c52] leading-[1.8]">
-              Arjun Kumar founded RIO PARTY HOUSE with a vision to create comfortable and memorable private celebration experiences. With a focus on customer experience, thoughtful spaces, and simple booking, he continues to build RIO PARTY HOUSE as a destination for birthdays, anniversaries, date nights, private movie experiences, and special occasions.
+              Shailaja Govindraj founded RIO PARTY HOUSE with a vision to create comfortable and memorable private celebration experiences. With a focus on customer experience, thoughtful spaces, and simple booking, he continues to build RIO PARTY HOUSE as a destination for birthdays, anniversaries, date nights, private movie experiences, and special occasions.
             </p>
           </div>
         </div>

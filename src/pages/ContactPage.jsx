@@ -175,7 +175,7 @@ export function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1a1c21] mb-1">Business Hours</h3>
-                  <p className="text-[13px] font-medium text-[#6b5c52] mb-2 leading-relaxed">[BUSINESS HOURS]</p>
+                  <p className="text-[13px] font-medium text-[#6b5c52] mb-2 leading-relaxed">10AM to 6PM</p>
                 </div>
               </div>
             </div>
