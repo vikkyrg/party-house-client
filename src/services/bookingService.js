@@ -9,8 +9,12 @@ export const bookingService = {
   },
 
   createBooking: async (payload) => {
-    // Requires Auth Token which is handled by interceptor or passed manually
     const { data } = await apiClient.post('/bookings', payload);
+    return data;
+  },
+
+  createBulkBooking: async (payload) => {
+    const { data } = await apiClient.post('/bookings/bulk', payload);
     return data;
   },
 

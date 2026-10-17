@@ -57,7 +57,7 @@ export function BookingPage() {
   const [selectedCake, setSelectedCake] = useState(null); // { cakeId, size }
   const [cakeCategory, setCakeCategory] = useState('standard');
   const [selectedAddons, setSelectedAddons] = useState({}); 
-  
+
   const [customerDetails, setCustomerDetails] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -76,7 +76,6 @@ export function BookingPage() {
   const [createdBooking, setCreatedBooking] = useState(null);
   
   useEffect(() => {
-
     if (!roomId || !selectedDate || !selectedTimeSlot) {
       // If accessed without date/slot, redirect to theater details to force selection
       navigate(`/theaters/${theaterId}`);
@@ -93,7 +92,7 @@ export function BookingPage() {
         ]);
         
         if (theaterRes.success) setTheater(theaterRes.data);
-        if (roomRes.success) setRoom(roomRes.data);
+        if (roomRes?.success && roomRes.data) setRoom(roomRes.data);
         if (eventsRes.success) setEventTypes(eventsRes.data);
         if (addonsRes.success) setAddons(addonsRes.data);
       } catch (err) {
@@ -115,11 +114,7 @@ export function BookingPage() {
       }
       return next;
     });
-  };
-
-
-
-
+  }; 
   
   const {
     theaterPrice,
@@ -141,7 +136,7 @@ export function BookingPage() {
       selectedAddons, 
       addons
     );
-  }, [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons, selectedDate]);
+  }, [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons, selectedDate, duration]);
 
   const validateStep = () => {
     if (currentStep === 1) { // Guest Details
@@ -196,7 +191,12 @@ export function BookingPage() {
     setSubmitting(true);
     setError(null);
     try {
-      // Real-time re-check availability before booking
+      const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
+
+
+
+      // Single Booking flow
+      // Real-time re-check availability before single booking
       const availRes = await bookingService.checkAvailability(theaterId, selectedDate, roomId);
       if (availRes.success) {
         if (!availRes.data.availableSlots.includes(selectedTimeSlot)) {
@@ -205,8 +205,6 @@ export function BookingPage() {
            return;
         }
       }
-
-      const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
 
       const payload = {
         theaterId,
@@ -297,31 +295,28 @@ export function BookingPage() {
           
           {/* Booking Context Header */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4 p-3 md:p-4 bg-[#fffaf5] border border-[#ead9ca] rounded-[18px] shadow-[0_4px_18px_rgba(75,43,20,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-             <div className="flex items-center gap-3 min-w-0">
-               {roomImage ? (
-                 <img src={roomImage} alt={room?.name || theater?.name} onError={handleImageError} className="h-14 w-20 shrink-0 rounded-lg object-cover object-center border border-[#ead9ca]" />
-               ) : (
-                 <div className="h-14 w-20 shrink-0 rounded-lg bg-[#f4e7da] border border-[#ead9ca]" aria-hidden="true" />
-               )}
-               <div className="min-w-0">
-                 <h2 className="text-[17px] font-heading font-extrabold text-[#17171c] truncate">
-                   {theater?.name} · {room?.name}
-                 </h2>
-                 <div className="text-[11px] font-bold text-[#8c5211] mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</span>
-                 <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'})}</span>
-                 <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {selectedTimeSlot}</span>
-                 </div>
-               </div>
-             </div>
-             <div className="flex gap-2 w-full sm:w-auto">
-               <button onClick={() => navigate(`/theaters?city=${theater?.city?._id || theater?.city}&date=${selectedDate}`)} className="px-3.5 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[11px] font-bold rounded-full transition border border-[#ead9ca] flex items-center justify-center gap-1.5 w-full sm:w-auto whitespace-nowrap">
-                 Change Theater
-               </button>
-               <button onClick={() => navigate(`/theaters?city=${theater?.city?._id || theater?.city}&location=${theaterId}&date=${selectedDate}`)} className="px-3.5 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[11px] font-bold rounded-full transition border border-[#ead9ca] flex items-center justify-center gap-1.5 w-full sm:w-auto whitespace-nowrap">
-                 Change Time
-               </button>
-             </div>
+              <div className="flex items-center gap-3 min-w-0">
+                {roomImage ? (
+                  <img src={roomImage} alt={room?.name || theater?.name} onError={handleImageError} className="h-14 w-20 shrink-0 rounded-lg object-cover object-center border border-[#ead9ca]" />
+                ) : (
+                  <div className="h-14 w-20 shrink-0 rounded-lg bg-[#f4e7da] border border-[#ead9ca]" aria-hidden="true" />
+                )}
+                <div className="min-w-0">
+                  <h2 className="text-[17px] font-heading font-extrabold text-[#17171c] truncate">
+                    {theater?.name} · {room?.name}
+                  </h2>
+                  <div className="text-[11px] font-bold text-[#8c5211] mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {theater?.city?.name || 'Bengaluru'} · {theater?.name}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {selectedTimeSlot}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button onClick={() => navigate(`/theaters/${theaterId}`)} className="px-3.5 py-2 bg-[#f9f2eb] hover:bg-[#f4e6d9] text-[#8c5211] text-[11px] font-bold rounded-full transition border border-[#ead9ca] flex items-center justify-center gap-1.5 w-full sm:w-auto whitespace-nowrap">
+                  Change Theater / Time
+                </button>
+              </div>
           </motion.div>
 
           <div className="mb-6">
@@ -795,8 +790,12 @@ export function BookingPage() {
               )}
               <div className="min-w-0">
                 <p className="text-[12px] font-bold text-[#17171c] truncate">{theater?.name}</p>
-                <p className="text-[10px] text-[#6b5c52] truncate">{room?.name} · {theater?.city?.name || 'Bengaluru'} · {theater?.location?.name || 'Premium'}</p>
-                <p className="text-[10px] text-[#a9651c] font-bold mt-1">{selectedDate} · {displayTimeSlot} · {duration} Hour{duration > 1 ? 's' : ''}</p>
+                <p className="text-[10px] text-[#6b5c52] truncate">
+                  {room?.name} · {theater?.city?.name || 'Bengaluru'}
+                </p>
+                <p className="text-[10px] text-[#a9651c] font-bold mt-1">
+                  {selectedDate} · {displayTimeSlot}
+                </p>
               </div>
             </div>
             

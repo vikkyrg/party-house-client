@@ -20,7 +20,8 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
   const isBooked = date && slot.available === false;
   const isChecking = date && slot.available === undefined;
   const isAvailable = !isBooked && !isChecking;
-  const reasonText = slot.reason || 'Booked';
+  const isHeld = Boolean(slot.isTemporarilyHeld || slot.slotState === 'held' || (slot.reason && slot.reason.toLowerCase().includes('temporarily')));
+  const reasonText = slot.reason || (isHeld ? 'Temporarily reserved — try again shortly' : 'Sold out');
 
   const goToBooking = () => {
     if (!date) {
@@ -31,16 +32,18 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-1" title={isBooked ? `${reasonText} for this date` : undefined}>
+    <div className="flex flex-col items-center gap-1" title={isBooked ? `${reasonText}` : undefined}>
       <button
         type="button"
         onClick={goToBooking}
         disabled={!isAvailable}
-        aria-label={isBooked ? `${slot.displayTime || slot.time} (Unavailable - ${reasonText})` : (slot.displayTime || slot.time)}
+        aria-label={isBooked ? `${slot.displayTime || slot.time} (${isHeld ? 'Temporarily Reserved' : 'Sold Out'} - ${reasonText})` : (slot.displayTime || slot.time)}
         className={`inline-flex h-[28px] items-center justify-center rounded-[6px] border px-2.5 py-0.5 text-center text-[10px] font-medium transition-colors ${selected
             ? 'border-[#208653] bg-[#208653] text-white shadow-sm ring-2 ring-[#a8e6c7]'
             : isBooked
-              ? 'cursor-not-allowed border-[#e5e5e5] bg-[#ececec] text-[#8e8e8e] line-through opacity-75'
+              ? isHeld
+                ? 'cursor-not-allowed border-[#f5d7b5] bg-[#fff3e6] text-[#a06326] opacity-90'
+                : 'cursor-not-allowed border-[#e5e5e5] bg-[#ececec] text-[#8e8e8e] line-through opacity-75'
               : isChecking
                 ? 'cursor-wait border-[#e0e0e0] bg-[#fafafa] text-[#666666]'
                 : 'cursor-pointer border-[#d0d0d0] bg-white text-[#333333] hover:border-[#a9651c] hover:bg-[#fffaf5]'
@@ -52,7 +55,13 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
         </div>
       </button>
       {isBooked ? (
-        <span className="text-[7.5px] font-semibold text-rose-600 uppercase tracking-tight">Sold out</span>
+        isHeld ? (
+          <span className="text-[7.5px] font-semibold text-amber-700 tracking-tight" title="Hold expires shortly if unpaid">
+            Held
+          </span>
+        ) : (
+          <span className="text-[7.5px] font-semibold text-rose-600 uppercase tracking-tight">Sold out</span>
+        )
       ) : slot.discount ? (
         <span className="text-[8px] font-bold leading-none text-[#208653]">{slot.discount}</span>
       ) : null}
@@ -215,6 +224,7 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
       <div className="mt-2.5 flex flex-wrap gap-2.5 text-[9px] text-[#665951]">
         <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#d0d0d0] bg-white" />Available</span>
         <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#208653]" />Selected</span>
+        <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full border border-[#f5d7b5] bg-[#fff3e6]" />Temporarily reserved</span>
         <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full bg-[#e5e5e5]" />Sold out</span>
       </div>
     </div>
@@ -238,9 +248,16 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] text-[#75685f]">For up to {room.maximumMembers} people</p>
-          <button type="button" disabled={!selected || !date || !selectedSlot || currentPrice === 0 || currentPrice === undefined} onClick={book} className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45">Book Now <span className="ml-1">→</span></button>
+          <button
+            type="button"
+            disabled={!selected || !date || !selectedSlot || currentPrice === 0 || currentPrice === undefined}
+            onClick={book}
+            className="rounded-full bg-[#9b5417] px-4 py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#7e4210] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            Book Now <span className="ml-1">→</span>
+          </button>
         </div>
       </div>
     </div>
@@ -268,12 +285,6 @@ export function TheaterDetailsPage() {
   const [slotPrompt, setSlotPrompt] = useState(false);
   const [sortBy, setSortBy] = useState('recommended');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
-
-  useEffect(() => {
-    setDate(preselectedDate);
-    setSelectedRoomId(preselectedRoomId);
-    setSelectedTimeSlot(null);
-  }, [preselectedDate, preselectedRoomId]);
 
   const fetchAvailabilityForRoom = (roomId, targetDate) => {
     if (!targetDate) return;
