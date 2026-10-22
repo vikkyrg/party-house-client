@@ -75,7 +75,7 @@ export function HeroBookingWidget() {
   };
 
   const handleBookOnCall = () => {
-    window.location.href = 'tel:+918000000000';
+    window.location.href = 'tel:+918147897771';
   };
 
   return (
