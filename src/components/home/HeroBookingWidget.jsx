@@ -179,7 +179,7 @@ export function HeroBookingWidget() {
             onClick={handleBookOnCall}
             className="bg-white border-2 border-[#7a420b] text-[#7a420b] font-bold text-[15px] py-4 rounded-xl shadow-sm hover:bg-[#faf4ed] transition-colors flex items-center justify-center gap-2"
           >
-            <Phone className="w-4 h-4" /> Book On Call: 81478 97771
+            <Phone className="w-4 h-4" /> Book On Call
           </button>
         </div>
       </div>
