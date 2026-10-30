@@ -7,6 +7,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { handleImageError } from '../../utils/imageUtils';
+import { CurrentBookingNavbarButton } from './CurrentBookingNavbarButton';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -164,7 +165,8 @@ export function Header() {
           </nav>
 
           {/* ACTIONS */}
-          <div className="flex items-center gap-3 md:gap-5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+            <CurrentBookingNavbarButton />
 
             <Link
               to="/theaters"

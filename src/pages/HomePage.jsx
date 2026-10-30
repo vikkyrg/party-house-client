@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { HeroBookingWidget } from '../components/home/HeroBookingWidget';
+import { HeroSocialIcons } from '../components/home/HeroSocialIcons';
 import { WhyChooseUsSection } from '../components/home/WhyChooseUsSection';
 import { ServicesCarouselSection } from '../components/home/ServicesCarouselSection';
 import { ReviewsCarouselSection } from '../components/home/ReviewsCarouselSection';
@@ -117,9 +118,11 @@ export function HomePage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="w-full max-w-[800px]"
+            className="w-full max-w-[800px] flex flex-col items-center gap-4"
           >
             <HeroBookingWidget />
+            {/* Compact Social Media Icons below the booking widget */}
+            <HeroSocialIcons />
           </motion.div>
 
           {/* Features Strip */}

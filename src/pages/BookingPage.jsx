@@ -12,6 +12,8 @@ import { BookingStepper } from '../components/booking/BookingStepper';
 import { handleApiError } from '../lib/apiClient';
 import { Check, ArrowLeft, ArrowRight, ShieldCheck, MapPin, Calendar, Clock, Edit, AlertCircle, Users, Sparkles, Cake as CakeIcon, Gift } from 'lucide-react';
 import { PaymentModal } from '../components/booking/PaymentModal';
+import { PaymentProcessingPanel } from '../components/booking/PaymentProcessingPanel';
+import { useBookingModalStore } from '../store/bookingModalStore';
 import { SEO } from '../components/common/SEO';
 import { calculateBookingTotal, getAddonPriceForDuration } from '../utils/bookingCalculator';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
@@ -36,6 +38,15 @@ export function BookingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isProcessingPanelActive, setIsProcessingPanelActive] = useState(false);
+  const {
+    activeBooking,
+    isPaymentModalOpen: isGlobalModalOpen,
+    setActiveBooking,
+    openPaymentModal,
+    closePaymentModal,
+    clearActiveBooking,
+  } = useBookingModalStore();
   const [currentStep, setCurrentStep] = useState(1);
   
   const [theater, setTheater] = useState(null);
@@ -190,6 +201,7 @@ export function BookingPage() {
     if (!validateStep()) return;
 
     setSubmitting(true);
+    setIsProcessingPanelActive(true);
     setError(null);
     try {
       const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
@@ -202,6 +214,7 @@ export function BookingPage() {
       if (availRes.success) {
         if (!availRes.data.availableSlots.includes(selectedTimeSlot)) {
            setError('This slot is no longer available. Please choose another time.');
+           setIsProcessingPanelActive(false);
            setSubmitting(false);
            return;
         }
@@ -235,11 +248,18 @@ export function BookingPage() {
       if (bookingRes.success) {
         const bookingRecord = bookingRes.data;
         setCreatedBooking(bookingRecord);
-        // Open professional QR payment modal
-        setIsPaymentModalOpen(true);
+        setActiveBooking({
+          ...bookingRecord,
+          theaterName: theater?.name || bookingRecord.theaterName,
+          roomName: room?.name || bookingRecord.roomName,
+          bookingDate: selectedDate,
+          timeSlot: displayTimeSlot,
+        });
       }
     } catch (err) {
       setError(handleApiError(err));
+      setIsProcessingPanelActive(false);
+      setSubmitting(false);
     } finally {
       setSubmitting(false);
     }
@@ -810,32 +830,48 @@ export function BookingPage() {
               </motion.div>
             </AnimatePresence>
 
-            <div className="mt-10 flex items-center justify-between border-t border-[#ecdcd1] pt-8">
-              {currentStep > 1 ? (
-                <button type="button" onClick={handleBack} disabled={submitting} className="flex items-center gap-2 px-2 text-[14px] font-bold text-[#6b5c52] transition hover:text-[#9e6223] disabled:opacity-50">
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-              ) : <div />}
+            {/* Payment Processing Panel or Action Buttons */}
+            {isProcessingPanelActive ? (
+              <div className="mt-8 border-t border-[#ecdcd1] pt-6">
+                <PaymentProcessingPanel
+                  isSubmitting={submitting}
+                  advanceAmount={advanceAmount}
+                  error={error}
+                  onComplete={() => {
+                    setIsProcessingPanelActive(false);
+                    setIsPaymentModalOpen(true);
+                    openPaymentModal();
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="mt-10 flex items-center justify-between border-t border-[#ecdcd1] pt-8">
+                {currentStep > 1 ? (
+                  <button type="button" onClick={handleBack} disabled={submitting} className="flex items-center gap-2 px-2 text-[14px] font-bold text-[#6b5c52] transition hover:text-[#9e6223] disabled:opacity-50">
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                ) : <div />}
 
-              {currentStep < STEPS.length ? (
-                <button onClick={handleNext} className="h-11 flex items-center justify-center rounded-full bg-[#a9651c] px-8 text-white hover:bg-[#8e5217] font-bold text-[13px] transition-colors shadow-sm">
-                  Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleCreateBooking}
-                  disabled={submitting || !termsAccepted}
-                  className={`h-11 flex items-center justify-center rounded-full px-10 font-bold text-[13px] transition-all shadow-sm ${
-                    !termsAccepted || submitting
-                      ? 'bg-[#d6ccc2] text-[#857a70] cursor-not-allowed border border-[#c4b8ac]'
-                      : 'bg-[#a9651c] text-white hover:bg-[#8e5217] cursor-pointer'
-                  }`}
-                >
-                  {submitting ? 'Processing...' : `Pay Advance ₹${advanceAmount}`}
-                </button>
-              )}
-            </div>
+                {currentStep < STEPS.length ? (
+                  <button onClick={handleNext} className="h-11 flex items-center justify-center rounded-full bg-[#a9651c] px-8 text-white hover:bg-[#8e5217] font-bold text-[13px] transition-colors shadow-sm">
+                    Continue <ArrowRight className="ml-2 h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleCreateBooking}
+                    disabled={submitting || !termsAccepted}
+                    className={`h-11 flex items-center justify-center rounded-full px-10 font-bold text-[13px] transition-all shadow-sm ${
+                      !termsAccepted || submitting
+                        ? 'bg-[#d6ccc2] text-[#857a70] cursor-not-allowed border border-[#c4b8ac]'
+                        : 'bg-[#a9651c] text-white hover:bg-[#8e5217] cursor-pointer'
+                    }`}
+                  >
+                    Pay Advance ₹{advanceAmount}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
         
@@ -917,18 +953,23 @@ export function BookingPage() {
       </div>
 
       {/* Responsive QR Payment Modal */}
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        booking={createdBooking}
-        theaterName={theater?.name}
-        roomName={room?.name}
-        bookingDate={selectedDate}
-        timeSlot={displayTimeSlot}
+            <PaymentModal
+        isOpen={isPaymentModalOpen || (isGlobalModalOpen && (activeBooking?._id === (createdBooking?._id || activeBooking?._id)))}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          closePaymentModal();
+        }}
+        booking={createdBooking || activeBooking}
+        theaterName={theater?.name || activeBooking?.theaterName}
+        roomName={room?.name || activeBooking?.roomName}
+        bookingDate={selectedDate || activeBooking?.bookingDate}
+        timeSlot={displayTimeSlot || activeBooking?.timeSlot}
         advanceAmount={advanceAmount}
         onPaymentSuccess={(id) => {
           setIsPaymentModalOpen(false);
-          navigate(`/booking/success/${id || createdBooking?._id}`);
+          closePaymentModal();
+          clearActiveBooking();
+          navigate(`/booking/success/${id || createdBooking?._id || activeBooking?._id}`);
         }}
       />
     </div>
