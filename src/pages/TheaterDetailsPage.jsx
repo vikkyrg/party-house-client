@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, UserPlus, X, Gift } from 'lucide-react';
+import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, UserPlus, X, Gift, Tv, Monitor, Volume2 } from 'lucide-react';
+import { RoomMediaCarousel } from '../components/theater/RoomMediaCarousel';
 import { theaterService } from '../services/theaterService';
 import { roomService } from '../services/roomService';
 import { TheaterLoading } from '../components/theater/TheaterLoading';
@@ -11,6 +12,33 @@ import { readBookingQuery } from '../utils/bookingFlow';
 import { getRoomPriceForDuration, getKolkataTodayString, isSlotInPast } from '../utils/dateUtils';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
+
+const getScreenExperience = (room) => {
+  const name = (room?.name || '').toLowerCase();
+  let defaultSize = '';
+  let defaultPic = '';
+  let defaultSound = '';
+
+  if (name.includes('velvet')) {
+    defaultSize = '85-inch';
+    defaultPic = 'Clear picture with rich colors.';
+    defaultSound = 'Clear sound with deep bass.';
+  } else if (name.includes('sigma')) {
+    defaultSize = '100-inch';
+    defaultPic = 'Sharp picture with bright colors.';
+    defaultSound = 'Powerful sound with deep bass.';
+  } else if (name.includes('paradise')) {
+    defaultSize = '120-inch';
+    defaultPic = 'Big screen with stunning visuals.';
+    defaultSound = 'Surround sound for a cinematic experience.';
+  }
+
+  return {
+    screenSize: room?.screenSize || defaultSize,
+    pictureQuality: room?.pictureQuality || defaultPic,
+    soundQuality: room?.soundQuality || defaultSound,
+  };
+};
 
 function Feature({ label }) {
   return <div className="flex min-w-[88px] flex-col items-center gap-2 text-center text-[10px] font-medium text-[#5f5148]"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f6e5d5] text-sm text-[#9a5919]">✦</span><span>{label}</span></div>;
@@ -70,7 +98,6 @@ function RoomSlot({ slot, date, selected, onChoose, onSelect }) {
 }
 
 function RoomCard({ room, theater, date, availability, selected, selectedSlot, onChooseDate, onSelectRoom, onSelectSlot, onBook, onRetryAvailability }) {
-  const [roomImageIndex, setRoomImageIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [selectedDurationFilter, setSelectedDurationFilter] = useState(2);
   const isAvailabilityLoading = Boolean(availability?.loading);
@@ -118,8 +145,6 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
     })
     .filter(slot => !slot.isPast); // Filter out slots that have already started or passed for today / past dates
 
-  const roomImages = [room.image, ...(room.galleryImages || [])].filter(Boolean).filter((image, index, images) => (getImageUrl(image) || image) && images.findIndex((candidate) => (getImageUrl(candidate) || candidate) === (getImageUrl(image) || image)) === index);
-  const roomImage = roomImages[roomImageIndex] ? getImageUrl(roomImages[roomImageIndex]) : null;
   const displayedFeatures = [...(room.features || []), ...(room.amenities || [])].filter(Boolean).slice(0, 4);
   
   const selectedDuration = selectedSlot ? (selectedSlot.duration || getSlotDuration(selectedSlot.originalTime?.split(' - ')[0], selectedSlot.originalTime?.split(' - ')[1])) : selectedDurationFilter;
@@ -136,11 +161,23 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
   };
 
   return <article onClick={handleCardClick} className={`flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[16px] border bg-[#fffaf5] shadow-[0_4px_16px_rgba(75,43,20,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(75,43,20,0.12)] ${selected ? 'border-[#9b5417] bg-[#fff8ef] ring-2 ring-[#f0d4b8]' : 'border-[#ead9ca]'}`}>
-    <div className="relative h-[190px] overflow-hidden bg-[#eadfce]">
-      {roomImage ? <img src={roomImage} alt={room.name} onError={handleImageError} className="h-full w-full object-cover object-center" /> : <div className="flex h-full items-center justify-center text-xs text-[#8d7a6c]">Room image unavailable</div>}
-      {roomImages.length > 1 && <><button type="button" aria-label="Previous room image" onClick={() => setRoomImageIndex((roomImageIndex + roomImages.length - 1) % roomImages.length)} className="absolute left-3 top-1/2 rounded-full bg-[#252238]/75 p-2 text-white"><ChevronLeft className="h-4 w-4" /></button><button type="button" aria-label="Next room image" onClick={() => setRoomImageIndex((roomImageIndex + 1) % roomImages.length)} className="absolute right-3 top-1/2 rounded-full bg-[#252238]/75 p-2 text-white"><ChevronRight className="h-4 w-4" /></button></>}
-      {room.rating > 0 && <span className="absolute right-3 top-3 rounded-full bg-[#252238]/90 px-2 py-1 text-[10px] font-bold text-white">★ {room.rating.toFixed(1)}</span>}
-      {(theater.theatreVideoUrl || theater.branchVideoUrl) && <div className="absolute bottom-3 left-3 flex gap-2">{theater.theatreVideoUrl && <a href={theater.theatreVideoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[9px] font-bold text-[#302638]"><Play className="h-3 w-3 fill-current text-[#1e5bb8]" /> Theatre Video</a>}{theater.branchVideoUrl && <a href={theater.branchVideoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[9px] font-bold text-[#302638]"><Play className="h-3 w-3 fill-current text-[#1e5bb8]" /> Branch Video</a>}</div>}
+    <div className="relative h-[190px] overflow-hidden bg-[#1e1c29]">
+      <RoomMediaCarousel room={room} />
+      {room.rating > 0 && <span className="absolute right-3 top-3 z-20 rounded-full bg-[#252238]/90 px-2 py-1 text-[10px] font-bold text-white shadow-sm">★ {room.rating.toFixed(1)}</span>}
+      {(theater.theatreVideoUrl || theater.branchVideoUrl) && (
+        <div className="absolute bottom-3 left-3 z-20 flex gap-2">
+          {theater.theatreVideoUrl && (
+            <a href={theater.theatreVideoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-sm px-2 py-1 text-[9px] font-bold text-[#302638] shadow-sm hover:bg-white">
+              <Play className="h-3 w-3 fill-current text-[#1e5bb8]" /> Theatre Video
+            </a>
+          )}
+          {theater.branchVideoUrl && (
+            <a href={theater.branchVideoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-sm px-2 py-1 text-[9px] font-bold text-[#302638] shadow-sm hover:bg-white">
+              <Play className="h-3 w-3 fill-current text-[#1e5bb8]" /> Branch Video
+            </a>
+          )}
+        </div>
+      )}
     </div>
     <div className="flex flex-1 flex-col p-3">
       <div className="flex items-start justify-between gap-2"><div><h3 className="text-[18px] font-extrabold text-[#17171c]">{room.name}</h3>{selected && <p className="mt-1 text-[10px] font-bold text-[#9b5417]">✓ Selected room</p>}</div></div>
@@ -183,6 +220,54 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
           <UserPlus className="h-3.5 w-3.5 text-[#9b5417]" />
           <span>Additional guests: <strong className="font-bold text-[#17171c]">₹200</strong> per person</span>
         </div>
+
+        {/* Screen Experience Section */}
+        {(() => {
+          const { screenSize, pictureQuality, soundQuality } = getScreenExperience(room);
+          if (!screenSize && !pictureQuality && !soundQuality) return null;
+
+          return (
+            <div className="mb-3.5 rounded-xl border border-[#ecdcd1] bg-[#fcf8f3] p-3 text-[#5f5148] shadow-[0_1px_4px_rgba(75,43,20,0.03)] transition-all">
+              <div className="flex items-center justify-between border-b border-[#eddcd0] pb-2">
+                <div className="flex items-center gap-1.5">
+                  <Tv className="h-3.5 w-3.5 text-[#8c5211]" />
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8c5211]">
+                    Screen Experience
+                  </span>
+                </div>
+                {screenSize && (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[9.5px] font-medium text-[#75685f]">Screen:</span>
+                    <span className="text-[15px] font-black tracking-tight text-[#17171c]">
+                      {screenSize}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-2 space-y-1.5">
+                {pictureQuality && (
+                  <div className="flex items-start gap-2 text-[10.5px] leading-tight">
+                    <Monitor className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#8c5211]" />
+                    <div>
+                      <span className="font-bold text-[#17171c]">Picture Quality: </span>
+                      <span className="text-[#5f5148]">{pictureQuality}</span>
+                    </div>
+                  </div>
+                )}
+                {soundQuality && (
+                  <div className="flex items-start gap-2 text-[10.5px] leading-tight">
+                    <Volume2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#8c5211]" />
+                    <div>
+                      <span className="font-bold text-[#17171c]">Sound Quality: </span>
+                      <span className="text-[#5f5148]">{soundQuality}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Duration</p>
       <div className="mb-4 flex flex-wrap gap-2">
