@@ -8,7 +8,7 @@ import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { readBookingQuery } from '../utils/bookingFlow';
-import { getRoomPriceForDuration } from '../utils/dateUtils';
+import { getRoomPriceForDuration, getKolkataTodayString, isSlotInPast } from '../utils/dateUtils';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
 
@@ -96,13 +96,27 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
     return Math.round(end - start) || 2;
   };
 
-  const slots = allSlots.map(slot => {
-    const originalTime = slot.time || `${slot.startTime} - ${slot.endTime}`;
-    let [start, end] = originalTime.split(' - ');
-    if (originalTime.includes(' – ')) [start, end] = originalTime.split(' – ');
-    const calculatedDuration = getSlotDuration(start?.trim(), end?.trim());
-    return { ...slot, displayTime: `${start?.trim()} – ${end?.trim()}`, originalTime, duration: calculatedDuration };
-  });
+  const kolkataToday = getKolkataTodayString();
+  const isPastDate = Boolean(date && date < kolkataToday);
+
+  const slots = allSlots
+    .map(slot => {
+      const originalTime = slot.time || `${slot.startTime} - ${slot.endTime}`;
+      let [start, end] = originalTime.split(' - ');
+      if (originalTime.includes(' – ')) [start, end] = originalTime.split(' – ');
+      const calculatedDuration = getSlotDuration(start?.trim(), end?.trim());
+      const isPast = isPastDate || (date && isSlotInPast(date, start?.trim()));
+      return {
+        ...slot,
+        displayTime: `${start?.trim()} – ${end?.trim()}`,
+        originalTime,
+        duration: calculatedDuration,
+        startTime: start?.trim() || slot.startTime,
+        endTime: end?.trim() || slot.endTime,
+        isPast,
+      };
+    })
+    .filter(slot => !slot.isPast); // Filter out slots that have already started or passed for today / past dates
 
   const roomImages = [room.image, ...(room.galleryImages || [])].filter(Boolean).filter((image, index, images) => (getImageUrl(image) || image) && images.findIndex((candidate) => (getImageUrl(candidate) || candidate) === (getImageUrl(image) || image)) === index);
   const roomImage = roomImages[roomImageIndex] ? getImageUrl(roomImages[roomImageIndex]) : null;
@@ -197,8 +211,9 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Time Slot</p>
       
       {!date && <p className="mb-2 rounded-md bg-[#fff9d9] p-1.5 text-[9px] text-[#80651a]">Select a date to check availability.</p>}
-      {date && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking real-time availability...</p>}
-      {date && availabilityFailed && (
+      {isPastDate && <p className="mb-2 rounded-md bg-[#ffebee] p-1.5 text-[9px] font-semibold text-[#c62828]">Past dates are not available for booking.</p>}
+      {date && !isPastDate && isAvailabilityLoading && <p className="mb-2 rounded-md bg-[#f5eee8] p-1.5 text-[9px] text-[#76685e]">Checking real-time availability...</p>}
+      {date && !isPastDate && availabilityFailed && (
         <div className="mb-2 flex items-center justify-between rounded-md bg-red-50 p-1.5 text-[9px] text-red-600">
           <span>Unable to load availability.</span>
           {onRetryAvailability && (
@@ -217,7 +232,9 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
       )}
       
       <div className="flex flex-wrap items-start gap-1.5">
-        {slots.filter(s => s.duration === selectedDurationFilter).length ? (
+        {isPastDate ? (
+          <span className="text-[9px] text-[#c62828] font-medium">No time slots available for past dates. Please select today or a future date.</span>
+        ) : slots.filter(s => s.duration === selectedDurationFilter).length ? (
           slots.filter(s => s.duration === selectedDurationFilter).map((slot, index) => {
             const slotTime = slot.originalTime;
             const slotId = slot.id || slot._id;
@@ -532,7 +549,7 @@ export function TheaterDetailsPage() {
             <Calendar className="h-4 w-4 text-[#8c5211]" /> Select Date 
             <input 
               type="date" 
-              min={new Date().toISOString().slice(0, 10)} 
+              min={getKolkataTodayString()} 
               value={date} 
               onChange={handleDateChange} 
               className="rounded-xl border border-[#d9c5b3] bg-white px-3 py-2 text-xs font-bold text-[#17171c] shadow-sm focus:border-[#9b5417] focus:outline-none" 
@@ -607,7 +624,7 @@ export function TheaterDetailsPage() {
             <input 
               autoFocus 
               type="date" 
-              min={new Date().toISOString().slice(0, 10)} 
+              min={getKolkataTodayString()} 
               onChange={(event) => { 
                 handleDateChange(event); 
                 setDatePrompt(false); 

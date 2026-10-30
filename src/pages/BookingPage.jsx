@@ -517,37 +517,50 @@ export function BookingPage() {
                         <p className="text-[13px] text-[#6b5c52]">Please check back later or try another category.</p>
                       </div>
                     ) : (
-                      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                         {visibleCakes.map(cake => {
                           const isSelected = selectedCake?.cakeId === cake._id;
                           const cakeSizes = cake.sizes || [];
                           
                           return (
-                            <div key={cake._id} className={`group relative flex flex-col overflow-hidden rounded-[20px] border transition-all duration-300 ${isSelected ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_1px_rgba(169,101,28,0.3)] z-10' : 'border-[#ead9ca] bg-white hover:border-[#a9651c]/60 hover:shadow-md'}`}>
-                              
-                              <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+                            <div
+                              key={cake._id}
+                              className={`relative flex flex-col overflow-hidden rounded-2xl border text-left transition-all duration-300 group bg-white ${
+                                isSelected
+                                  ? 'border-[#8c5211] shadow-md ring-2 ring-[#8c5211]'
+                                  : 'border-[#ecdcd1] hover:shadow-lg'
+                              }`}
+                            >
+                              {/* Large Top Image Container matching Occasion Cards */}
+                              <div className="relative h-48 sm:h-52 w-full overflow-hidden shrink-0 bg-[#f8f4ee]">
                                 {getImageUrl(cake.image) ? (
-                                  <img src={getImageUrl(cake.image)} alt={cake.name} onError={handleImageError} className="h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-105" />
+                                  <img
+                                    src={getImageUrl(cake.image)}
+                                    alt={cake.name}
+                                    onError={handleImageError}
+                                    className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                                  />
                                 ) : (
-                                  <div className="flex h-full w-full items-center justify-center text-[#c2b4a7]">No Image</div>
+                                  <div className="flex h-full w-full items-center justify-center text-[#c2b4a7] font-medium text-xs">No Image</div>
                                 )}
                                 
                                 {isSelected && (
-                                  <div className="absolute top-3 right-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#a9651c] shadow-sm">
-                                    <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                                  <div className="absolute top-3 right-3 z-10 bg-[#8c5211] text-white rounded-full p-1 shadow-md">
+                                    <Check className="h-4 w-4" />
                                   </div>
                                 )}
                               </div>
 
-                              <div className="flex flex-1 flex-col p-4 pt-2 border-t border-[#f4e7da]/50">
-                                <div className="mb-4">
-                                  <h3 className="text-[15px] font-bold text-[#1a1c21] leading-tight mb-1 line-clamp-1">{cake.name}</h3>
+                              {/* Details & Size/Price Selection */}
+                              <div className="flex flex-1 flex-col p-4">
+                                <div className="mb-3">
+                                  <h3 className="text-[16px] font-bold text-[#1a1c21] leading-tight mb-1 line-clamp-1">{cake.name}</h3>
                                   {cake.description && (
                                     <p className="text-[12px] text-[#6b5c52] line-clamp-2 leading-relaxed">{cake.description}</p>
                                   )}
                                 </div>
                                 
-                                <div className="mt-auto space-y-2">
+                                <div className="mt-auto space-y-2 pt-2 border-t border-[#f4e7da]">
                                   <div className="flex flex-wrap gap-2">
                                     {cakeSizes.map(size => {
                                       const isSizeSelected = isSelected && selectedCake.size === size.name;
@@ -559,7 +572,11 @@ export function BookingPage() {
                                             e.stopPropagation();
                                             setSelectedCake({ cakeId: cake._id, category: cake.category || 'standard', name: cake.name, size: size.name, price: size.price, image: cake.image });
                                           }}
-                                          className={`flex-1 min-w-[100px] whitespace-nowrap rounded-lg border px-3 py-2 text-[12px] font-bold transition-all duration-200 ${isSizeSelected ? 'border-[#a9651c] bg-[#a9651c] text-white shadow-sm' : 'border-[#ead9ca] bg-[#faf8f5] text-[#1a1c21] hover:border-[#a9651c] hover:bg-white'}`}
+                                          className={`flex-1 min-w-[90px] whitespace-nowrap rounded-lg border px-3 py-2 text-[12px] font-bold transition-all duration-200 cursor-pointer ${
+                                            isSizeSelected
+                                              ? 'border-[#8c5211] bg-[#8c5211] text-white shadow-sm'
+                                              : 'border-[#ead9ca] bg-[#faf8f5] text-[#1a1c21] hover:border-[#8c5211] hover:bg-white'
+                                          }`}
                                         >
                                           {size.label} · ₹{size.price}
                                         </button>
@@ -610,31 +627,34 @@ export function BookingPage() {
                               return (
                                 <button
                                   key={addon._id}
+                                  type="button"
                                   onClick={() => handleAddonToggle(addon._id)}
-                                  className={`relative flex flex-col items-center justify-between rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb] shadow-md ring-1 ring-[#8c5211]' : 'border-[#ecdcd1] bg-white hover:border-[#8c5211] hover:shadow-sm'}`}
+                                  className={`relative flex flex-col overflow-hidden rounded-2xl border text-left transition-all duration-300 group bg-white cursor-pointer ${
+                                    isSelected
+                                      ? 'border-[#8c5211] shadow-md ring-2 ring-[#8c5211]'
+                                      : 'border-[#ecdcd1] hover:shadow-lg'
+                                  }`}
                                 >
-                                  {/* Combined Images Layout */}
-                                  <div className="w-full mb-4">
+                                  {/* Top Image Container matching Occasion Cards */}
+                                  <div className="relative h-48 sm:h-52 w-full overflow-hidden shrink-0 bg-[#f8f4ee]">
                                     {imagesList.length === 1 && (
-                                      <div className="h-28 w-28 shrink-0 mx-auto flex items-center justify-center overflow-hidden rounded-xl bg-neutral-50/60 p-1">
-                                        <img 
-                                          src={getImageUrl(imagesList[0]?.url || imagesList[0]) || '/placeholder.png'} 
-                                          alt={addon.name} 
-                                          onError={handleImageError} 
-                                          className="h-full w-full object-contain" 
-                                        />
-                                      </div>
+                                      <img 
+                                        src={getImageUrl(imagesList[0]?.url || imagesList[0]) || '/placeholder.png'} 
+                                        alt={addon.name} 
+                                        onError={handleImageError} 
+                                        className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105" 
+                                      />
                                     )}
 
                                     {imagesList.length === 2 && (
-                                      <div className="grid grid-cols-2 gap-2 h-28 w-full max-w-[240px] mx-auto">
+                                      <div className="grid grid-cols-2 gap-1 h-full w-full">
                                         {imagesList.map((img, i) => (
-                                          <div key={i} className="h-full w-full overflow-hidden rounded-xl border border-[#ecdcd1] bg-neutral-50 flex items-center justify-center">
+                                          <div key={i} className="h-full w-full overflow-hidden relative">
                                             <img 
                                               src={getImageUrl(img?.url || img) || '/placeholder.png'} 
                                               alt={`${addon.name} ${i + 1}`} 
                                               onError={handleImageError} 
-                                              className="h-full w-full object-cover" 
+                                              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105" 
                                             />
                                           </div>
                                         ))}
@@ -642,14 +662,14 @@ export function BookingPage() {
                                     )}
 
                                     {imagesList.length >= 3 && (
-                                      <div className="grid grid-cols-3 gap-1.5 h-28 w-full max-w-[260px] mx-auto">
+                                      <div className="grid grid-cols-3 gap-1 h-full w-full">
                                         {imagesList.slice(0, 3).map((img, i) => (
-                                          <div key={i} className="h-full w-full overflow-hidden rounded-xl border border-[#ecdcd1] bg-neutral-50 flex items-center justify-center">
+                                          <div key={i} className="h-full w-full overflow-hidden relative">
                                             <img 
                                               src={getImageUrl(img?.url || img) || '/placeholder.png'} 
                                               alt={`${addon.name} ${i + 1}`} 
                                               onError={handleImageError} 
-                                              className="h-full w-full object-cover" 
+                                              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105" 
                                             />
                                           </div>
                                         ))}
@@ -657,22 +677,23 @@ export function BookingPage() {
                                     )}
 
                                     {imagesList.length === 0 && (
-                                      <div className="h-28 w-28 shrink-0 mx-auto flex items-center justify-center">
-                                        <img src="/placeholder.png" alt={addon.name} className="h-full w-full object-contain" />
+                                      <div className="flex h-full w-full items-center justify-center text-[#c2b4a7] font-medium text-xs">
+                                        No Image
+                                      </div>
+                                    )}
+
+                                    {isSelected && (
+                                      <div className="absolute top-3 right-3 z-10 bg-[#8c5211] text-white rounded-full p-1 shadow-md">
+                                        <Check className="h-4 w-4" />
                                       </div>
                                     )}
                                   </div>
 
-                                  <div className="w-full">
-                                    <p className="text-[15px] font-bold text-[#1a1c21] mb-1 line-clamp-2">{addon.name}</p>
-                                    <p className="text-[14px] text-[#8c5211] font-bold">₹{displayPrice}</p>
+                                  {/* Addon Details */}
+                                  <div className="flex flex-1 flex-col justify-between p-4 w-full">
+                                    <h3 className="text-[16px] font-bold text-[#1a1c21] leading-tight mb-1 line-clamp-2">{addon.name}</h3>
+                                    <p className="text-[15px] text-[#8c5211] font-extrabold mt-1">₹{displayPrice}</p>
                                   </div>
-                                  
-                                  {isSelected && (
-                                    <div className="absolute top-3 right-3 bg-[#8c5211] text-white rounded-full p-1 shadow-md">
-                                      <Check className="h-4 w-4" />
-                                    </div>
-                                  )}
                                 </button>
                               );
                             })}

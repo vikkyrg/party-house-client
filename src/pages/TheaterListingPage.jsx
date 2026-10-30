@@ -9,6 +9,8 @@ import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { TheaterCard } from '../components/theater/TheaterCard';
 
+import { getKolkataTodayString } from '../utils/dateUtils';
+
 export function TheaterListingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedDate = searchParams.get('date');
@@ -136,7 +138,7 @@ export function TheaterListingPage() {
               ref={dateInputRef}
               type="date" 
               value={selectedDate || ''} 
-              min={new Date().toISOString().split('T')[0]}
+              min={getKolkataTodayString()}
               onChange={(e) => handleDateChange(e.target.value)}
               className="opacity-0 w-0 h-0 pointer-events-none absolute"
             />

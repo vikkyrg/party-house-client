@@ -4,13 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar, ChevronDown, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { roomService } from '../../services/roomService';
+import { getKolkataTodayString } from '../../utils/dateUtils';
 
 const getTodayDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return getKolkataTodayString();
 };
 
 export function HeroBookingWidget() {
