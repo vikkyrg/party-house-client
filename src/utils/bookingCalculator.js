@@ -1,4 +1,20 @@
-export const calculateBookingTotal = (theater, eventType, selectedCake, cakesList, selectedAddons, addonsList) => {
+export const getAddonPriceForDuration = (addon, duration = 2) => {
+  if (!addon) return 0;
+  const dur = Number(duration) || 2;
+  if (dur === 1 && addon.price1Hour !== undefined) return Number(addon.price1Hour);
+  if (dur === 2 && addon.price2Hours !== undefined) return Number(addon.price2Hours);
+  if (dur === 3 && addon.price3Hours !== undefined) return Number(addon.price3Hours);
+
+  if (addon.pricing) {
+    if (dur === 1 && addon.pricing.oneHour !== undefined) return Number(addon.pricing.oneHour);
+    if (dur === 2 && addon.pricing.twoHours !== undefined) return Number(addon.pricing.twoHours);
+    if (dur === 3 && addon.pricing.threeHours !== undefined) return Number(addon.pricing.threeHours);
+  }
+
+  return Number(addon.price) || 0;
+};
+
+export const calculateBookingTotal = (theater, eventType, selectedCake, cakesList, selectedAddons, addonsList, duration = 2) => {
   const theaterPrice = theater?.price || 0;
   let cakePrice = 0;
   let processedCake = null;
@@ -29,7 +45,7 @@ export const calculateBookingTotal = (theater, eventType, selectedCake, cakesLis
     const addon = addonsList.find((a) => a._id === id);
     if (!addon) return;
 
-    let price = addon.price || 0;
+    let price = getAddonPriceForDuration(addon, duration);
     const quantity = selection.quantity || 1;
     const totalForAddon = price * quantity;
     addOnsTotal += totalForAddon;

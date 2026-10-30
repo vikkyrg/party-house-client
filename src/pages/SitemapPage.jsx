@@ -24,10 +24,10 @@ export function SitemapPage() {
             RT Nagar, Bengaluru
           </h1>
           <p className="text-[#6b5c52] font-medium text-[15px] md:text-lg max-w-2xl mx-auto mb-6">
-            #7, Dinnur Main Road, Ganesh Block, RT Nagar, Bangalore - 560032. (Suzuki Showroom Building, 3rd Floor)
+            No 7, 3rd Floor, Dinnur Main Road, RT Nagar - Bangalore 560032
           </p>
           <a
-            href="https://www.google.com/maps/place/Dinnur+main+road,+Ganesha+Block,+5th+cross,+R+T+Nagar/@13.0245137,77.5945149,713m/data=!3m1!1e3!4m10!1m2!2m1!1s%237,+Dinnur+Main+Road,+Ganesh+Block,+RT+Nagar,+Bangalore+-+560032.!3m6!1s0x3bae1700683e0615:0x3a273125772c571b!8m2!3d13.0247187!4d77.5949869!15sCkEjNywgRGlubnVyIE1haW4gUm9hZCwgR2FuZXNoIEJsb2NrLCBSVCBOYWdhciwgQmFuZ2Fsb3JlIC0gNTYwMDMyLpIBIWFsdGVybmF0aXZlX21lZGljaW5lX3ByYWN0aXRpb25lcuABAA!16s%2Fg%2F11y0pdv62q?authuser=0&entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D"
+            href="https://www.google.com/maps/place/13%C2%B001'22.9%22N+77%C2%B036'03.9%22E/@13.0230255,77.5985146,851m/data=!3m2!1e3!4b1!4m4!3m3!8m2!3d13.0230255!4d77.6010895?hl=en&entry=ttu&g_ep=EgoyMDI2MTAyNy4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#A76520] hover:bg-[#8e5217] text-white text-[13px] font-bold transition shadow-md"
@@ -45,7 +45,7 @@ export function SitemapPage() {
         >
           <div className="w-full h-[600px] rounded-[24px] overflow-hidden bg-[#F9F6F0]">
             <iframe 
-              src="https://maps.google.com/maps?q=13.0247187,77.5949869&hl=en&z=17&output=embed" 
+              src="https://maps.google.com/maps?q=13.0230255,77.6010895&hl=en&z=17&output=embed" 
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 

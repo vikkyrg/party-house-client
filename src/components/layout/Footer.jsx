@@ -268,10 +268,16 @@ export function Footer() {
                 </a>
               </li>
               <li className="pt-1.5">
-                <div className="flex items-center gap-2 text-[#A86116] font-bold text-[13px]">
-                  <MapPin className="w-[19px] h-[19px] text-[#A86116] shrink-0 stroke-[2]" />
-                  <span>Bengaluru, India</span>
-                </div>
+                <a
+                  href="https://www.google.com/maps/place/13%C2%B001'22.9%22N+77%C2%B036'03.9%22E/@13.0230255,77.5985146,851m/data=!3m2!1e3!4b1!4m4!3m3!8m2!3d13.0230255!4d77.6010895?hl=en&entry=ttu&g_ep=EgoyMDI2MTAyNy4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[#A86116] hover:text-[#8F4F0E] font-bold text-[13px] transition-colors py-0.5 group"
+                  title="View on Google Maps"
+                >
+                  <MapPin className="w-[19px] h-[19px] text-[#A86116] group-hover:scale-110 shrink-0 stroke-[2] transition-transform" />
+                  <span className="hover:underline">Bengaluru, India</span>
+                </a>
               </li>
             </ul>
           </div>
@@ -373,7 +379,7 @@ export function Footer() {
             </Link>
             <span className="text-[#EBD8C2]" aria-hidden="true">|</span>
             <a
-              href="https://www.google.com/maps/place/Dinnur+main+road,+Ganesha+Block,+5th+cross,+R+T+Nagar/@13.0245137,77.5945149,713m/data=!3m1!1e3!4m10!1m2!2m1!1s%237,+Dinnur+Main+Road,+Ganesh+Block,+RT+Nagar,+Bangalore+-+560032.!3m6!1s0x3bae1700683e0615:0x3a273125772c571b!8m2!3d13.0247187!4d77.5949869!15sCkEjNywgRGlubnVyIE1haW4gUm9hZCwgR2FuZXNoIEJsb2NrLCBSVCBOYWdhciwgQmFuZ2Fsb3JlIC0gNTYwMDMyLpIBIWFsdGVybmF0aXZlX21lZGljaW5lX3ByYWN0aXRpb25lcuABAA!16s%2Fg%2F11y0pdv62q?authuser=0&entry=ttu&g_ep=EgoyMDI2MTAxMy4wIKXMDSoASAFQAw%3D%3D"
+              href="https://www.google.com/maps/place/13%C2%B001'22.9%22N+77%C2%B036'03.9%22E/@13.0230255,77.5985146,851m/data=!3m2!1e3!4b1!4m4!3m3!8m2!3d13.0230255!4d77.6010895?hl=en&entry=ttu&g_ep=EgoyMDI2MTAyNy4wIKXMDSoASAFQAw%3D%3D"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[#A86116] transition-colors"

@@ -1,26 +1,6 @@
-import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 import { SEO } from '../components/common/SEO';
 
 export function ListYourVenuePage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    city: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast.success('Your venue request has been received. Our team will contact you soon.');
-      setFormData({ name: '', phone: '', email: '', city: '' });
-    }, 1500);
-  };
-
   const whyPartner = [
     'Showcase your venue to customers',
     'Manage your theater and rooms',
@@ -89,81 +69,6 @@ export function ListYourVenuePage() {
               <p className="text-[#6b5c52] font-medium text-[15px] leading-[1.6]">{item.desc}</p>
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="bg-[#f29f43] py-20 px-5">
-        <div className="max-w-2xl mx-auto bg-white rounded-[32px] p-8 md:p-12 shadow-2xl">
-          <div className="text-center mb-10">
-            <h2 className="text-[32px] font-heading font-extrabold text-[#1a1c21] mb-2">
-              List Your Venue
-            </h2>
-            <p className="text-[#6b5c52] font-medium text-[16px] leading-[1.7]">
-              Share your venue details and our team will review the information to help you get started.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <input
-                type="text"
-                placeholder="Your Full Name"
-                required
-                value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-5 py-4 bg-white border border-gray-300 rounded-[12px] text-[15px] text-[#1a1c21] font-medium placeholder-gray-400 focus:outline-none focus:border-[#f29f43] focus:ring-1 focus:ring-[#f29f43] transition-all"
-              />
-            </div>
-            <div>
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                required
-                value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-5 py-4 bg-white border border-gray-300 rounded-[12px] text-[15px] text-[#1a1c21] font-medium placeholder-gray-400 focus:outline-none focus:border-[#f29f43] focus:ring-1 focus:ring-[#f29f43] transition-all"
-              />
-            </div>
-            <div>
-              <input
-                type="email"
-                placeholder="Email ID"
-                required
-                value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-5 py-4 bg-white border border-gray-300 rounded-[12px] text-[15px] text-[#1a1c21] font-medium placeholder-gray-400 focus:outline-none focus:border-[#f29f43] focus:ring-1 focus:ring-[#f29f43] transition-all"
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                placeholder="City"
-                required
-                value={formData.city}
-                onChange={e => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-5 py-4 bg-white border border-gray-300 rounded-[12px] text-[15px] text-[#1a1c21] font-medium placeholder-gray-400 focus:outline-none focus:border-[#f29f43] focus:ring-1 focus:ring-[#f29f43] transition-all"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full mt-4 py-4 bg-[#322a59] text-white rounded-[12px] font-bold text-[16px] shadow-lg hover:bg-[#1f1a38] transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Submitting...
-                </>
-              ) : (
-                'List Your Venue'
-              )}
-            </button>
-
-            <p className="text-center text-[13px] font-medium text-gray-500 mt-6">
-              We will review your venue listing and contact you with the next steps.
-            </p>
-          </form>
         </div>
       </div>
     </div>

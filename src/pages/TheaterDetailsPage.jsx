@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, X, Gift } from 'lucide-react';
+import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, UserPlus, X, Gift } from 'lucide-react';
 import { theaterService } from '../services/theaterService';
 import { roomService } from '../services/roomService';
-import { LoadingState } from '../components/common/LoadingState';
+import { TheaterLoading } from '../components/theater/TheaterLoading';
 import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
@@ -158,9 +158,17 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
           {room.description}
         </p>
       )}
-      <div className="mt-3"><div className="mb-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-[#5f5148]"><span className="flex items-center gap-1"><Gift className="h-3 w-3" /> Add Cake, Fog entry etc in next step</span> <span className="text-[#a89f91]">•</span> <span className="flex items-center gap-1 text-[#208653]"><Check className="h-3 w-3" /> Free Cancellation*</span></div>
-      
-
+      <div className="mt-3">
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-[#5f5148]">
+          <span className="flex items-center gap-1"><Gift className="h-3 w-3" /> Add Cake, Fog entry etc in next step</span> 
+          <span className="text-[#a89f91]">•</span> 
+          <span className="flex items-center gap-1 text-[#208653]"><Check className="h-3 w-3" /> Free Cancellation*</span>
+        </div>
+        
+        <div className="mb-3.5 flex items-center gap-1.5 text-[11px] font-medium text-[#5f5148]">
+          <UserPlus className="h-3.5 w-3.5 text-[#9b5417]" />
+          <span>Additional guests: <strong className="font-bold text-[#17171c]">₹200</strong> per person</span>
+        </div>
 
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#28212b]">Select Duration</p>
       <div className="mb-4 flex flex-wrap gap-2">
@@ -268,6 +276,7 @@ export function TheaterDetailsPage() {
   const { theaterId } = useParams();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+
   const bookingQuery = readBookingQuery(searchParams);
   const preselectedDate = location.state?.selectedDate || bookingQuery.date || '';
   const preselectedRoomId = searchParams.get('roomId') || null;
@@ -281,10 +290,54 @@ export function TheaterDetailsPage() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isAnimationFinished, setIsAnimationFinished] = useState(false);
   const [datePrompt, setDatePrompt] = useState(false);
   const [slotPrompt, setSlotPrompt] = useState(false);
   const [sortBy, setSortBy] = useState('recommended');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+
+  // Progress animation tied to actual API loading state
+  useEffect(() => {
+    let timer;
+    if (error) return;
+
+    if (loading) {
+      setIsAnimationFinished(false);
+      timer = setInterval(() => {
+        setLoadingProgress((prev) => {
+          if (prev < 35) return prev + 5;
+          if (prev < 70) return prev + 3;
+          if (prev < 88) return prev + 1;
+          return prev; // hold at ~88% until API responds
+        });
+      }, 70);
+    } else {
+      // API call completed successfully -> smoothly complete to 100%
+      timer = setInterval(() => {
+        setLoadingProgress((prev) => {
+          if (prev < 100) {
+            const next = prev + 6;
+            return next >= 100 ? 100 : next;
+          }
+          clearInterval(timer);
+          return 100;
+        });
+      }, 25);
+    }
+
+    return () => clearInterval(timer);
+  }, [loading, error]);
+
+  // Brief pause at 100% before revealing content
+  useEffect(() => {
+    if (loadingProgress >= 100 && !loading) {
+      const exitTimer = setTimeout(() => {
+        setIsAnimationFinished(true);
+      }, 250);
+      return () => clearTimeout(exitTimer);
+    }
+  }, [loadingProgress, loading]);
 
   const fetchAvailabilityForRoom = (roomId, targetDate) => {
     if (!targetDate) return;
@@ -349,9 +402,12 @@ export function TheaterDetailsPage() {
     };
   }, [date, rooms]);
 
-  useEffect(() => {
+  const fetchTheatersAndRooms = () => {
     setLoading(true);
     setError(null);
+    setLoadingProgress(0);
+    setIsAnimationFinished(false);
+
     if (theaterId) {
       Promise.all([theaterService.getTheaterById(theaterId), roomService.getRooms(theaterId)])
         .then(([theaterResponse, roomsResponse]) => {
@@ -386,6 +442,10 @@ export function TheaterDetailsPage() {
         })
         .finally(() => setLoading(false));
     }
+  };
+
+  useEffect(() => {
+    fetchTheatersAndRooms();
   }, [theaterId]);
 
   const images = useMemo(() => {
@@ -436,12 +496,24 @@ export function TheaterDetailsPage() {
       if (sortBy === 'price-low') return getPrice(first) - getPrice(second);
       if (sortBy === 'price-high') return getPrice(second) - getPrice(first);
       if (sortBy === 'members') return (second.maximumMembers || 0) - (first.maximumMembers || 0);
-      return first.name.localeCompare(second.name);
+      const orderA = typeof first.displayOrder === 'number' ? first.displayOrder : 0;
+      const orderB = typeof second.displayOrder === 'number' ? second.displayOrder : 0;
+      if (orderA !== orderB) return orderA - orderB;
+      return (first.name || '').localeCompare(second.name || '');
     });
   }, [rooms, sortBy, preselectedRoomId, date]);
 
-  if (loading) return <LoadingState message="Preparing rooms..." />;
-  if (error) return <ErrorState error={error} />;
+  if (error && !loading) {
+    return (
+      <div className="min-h-screen bg-[#fcf5eb] flex items-center justify-center p-6">
+        <ErrorState error={error} onRetry={fetchTheatersAndRooms} />
+      </div>
+    );
+  }
+
+  if (loading || !isAnimationFinished) {
+    return <TheaterLoading progress={loadingProgress} />;
+  }
 
   return <div className="min-h-screen bg-[#fcf5eb] px-4 pb-20 pt-24 text-[#6b5c52] sm:px-5">
     <SEO title={`${theater?.name || 'Theater'} Rooms | RIO Party House`} />

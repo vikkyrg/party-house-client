@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { SEO } from '../components/common/SEO';
 import { Mail, Phone, MapPin, User, MessageSquare, ChevronDown, Clock, Shield, Heart, Ticket, Send, Loader2 } from 'lucide-react';
-import { contentService } from '../services/contentService';
-import { handleApiError } from '../lib/apiClient';
 
 export function ContactPage() {
   const [formData, setFormData] = useState({
@@ -23,7 +21,7 @@ export function ContactPage() {
     if (errorMessage) setErrorMessage('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmitting) return;
 
@@ -58,33 +56,28 @@ export function ContactPage() {
     setErrorMessage('');
 
     try {
-      const response = await contentService.submitContactMessage({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        subject: formData.subject.trim(),
-        message: formData.message.trim(),
-      });
+      const whatsappMessage = `Hello Rio Party House Team!
 
-      if (response.success) {
-        toast.success(response.message || 'Your message has been sent successfully!');
-        setSubmitSuccess(true);
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          message: '',
-        });
-      } else {
-        const msg = response.message || 'Failed to send message. Please try again.';
-        setErrorMessage(msg);
-        toast.error(msg);
-      }
+I would like to make an enquiry.
+
+Name: ${formData.name.trim()}
+Email: ${formData.email.trim()}
+Phone: ${formData.phone.trim()}
+Subject: ${formData.subject.trim()}
+
+Message:
+${formData.message.trim()}
+
+Thank you!`;
+
+      const whatsappURL = `https://wa.me/918147897771?text=${encodeURIComponent(whatsappMessage)}`;
+
+      window.open(whatsappURL, '_blank', 'noopener,noreferrer');
+      setSubmitSuccess(true);
+      toast.success('Opening WhatsApp to send your enquiry...');
     } catch (err) {
-      const msg = handleApiError(err) || 'Failed to send message. Please try again later.';
-      setErrorMessage(msg);
-      toast.error(msg);
+      setErrorMessage('Failed to open WhatsApp. Please try again.');
+      toast.error('Failed to open WhatsApp. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -161,10 +154,7 @@ export function ContactPage() {
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1a1c21] mb-1">Business Address</h3>
                   <p className="text-[13px] font-medium text-[#6b5c52] mb-1 leading-relaxed">
-                    #7, Dinnur Main Road, Ganesh Block, RT Nagar, Bangalore - 560032.
-                  </p>
-                  <p className="text-[13px] font-medium text-[#8c5211] leading-relaxed">
-                    Suzuki showroom building 3rd floor.
+                    No 7, 3rd Floor, Dinnur Main Road, RT Nagar - Bangalore 560032
                   </p>
                 </div>
               </div>
@@ -195,7 +185,7 @@ export function ContactPage() {
 
               {submitSuccess && (
                 <div className="mb-6 p-4 rounded-[16px] bg-emerald-50 border border-emerald-200 text-emerald-800 text-[13px] font-medium">
-                  ✓ Thank you! Your message has been sent successfully. We will contact you soon.
+                  ✓ WhatsApp chat opened! Please click "Send" in WhatsApp to deliver your enquiry.
                 </div>
               )}
 

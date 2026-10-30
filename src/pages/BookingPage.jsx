@@ -13,7 +13,7 @@ import { handleApiError } from '../lib/apiClient';
 import { Check, ArrowLeft, ArrowRight, ShieldCheck, MapPin, Calendar, Clock, Edit, AlertCircle, Users, Sparkles, Cake as CakeIcon, Gift } from 'lucide-react';
 import { PaymentModal } from '../components/booking/PaymentModal';
 import { SEO } from '../components/common/SEO';
-import { calculateBookingTotal } from '../utils/bookingCalculator';
+import { calculateBookingTotal, getAddonPriceForDuration } from '../utils/bookingCalculator';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCakes } from '../hooks/useCakes';
 import { getRoomPriceForDuration } from '../utils/dateUtils';
@@ -134,7 +134,8 @@ export function BookingPage() {
       selectedCake,
       cakesList,
       selectedAddons, 
-      addons
+      addons,
+      duration
     );
   }, [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons, selectedDate, duration]);
 
@@ -244,14 +245,22 @@ export function BookingPage() {
     }
   };
 
+  const sortedAddons = useMemo(() => {
+    return [...addons].sort((a, b) => {
+      const orderA = a.displayOrder ?? a.sortOrder ?? 0;
+      const orderB = b.displayOrder ?? b.sortOrder ?? 0;
+      return orderA - orderB;
+    });
+  }, [addons]);
+
   const groupedAddons = useMemo(() => {
-    return addons.reduce((acc, addon) => {
+    return sortedAddons.reduce((acc, addon) => {
       const cat = addon.category || 'Other';
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(addon);
       return acc;
     }, {});
-  }, [addons]);
+  }, [sortedAddons]);
 
   if (loading) return <LoadingState />;
 
@@ -572,19 +581,72 @@ export function BookingPage() {
                           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                             {catAddons.map(addon => {
                               const isSelected = !!selectedAddons[addon._id];
-                              const displayPrice = addon.price || 0;
+                              const displayPrice = getAddonPriceForDuration(addon, duration);
+
+                              const imagesList = Array.isArray(addon.images) && addon.images.length > 0 
+                                ? addon.images 
+                                : (addon.image ? [addon.image] : []);
 
                               return (
                                 <button
                                   key={addon._id}
                                   onClick={() => handleAddonToggle(addon._id)}
-                                  className={`relative flex flex-col items-center justify-center rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb] shadow-md ring-1 ring-[#8c5211]' : 'border-[#ecdcd1] bg-white hover:border-[#8c5211] hover:shadow-sm'}`}
+                                  className={`relative flex flex-col items-center justify-between rounded-[22px] border p-4 text-center transition-all ${isSelected ? 'border-[#8c5211] bg-[#f9f2eb] shadow-md ring-1 ring-[#8c5211]' : 'border-[#ecdcd1] bg-white hover:border-[#8c5211] hover:shadow-sm'}`}
                                 >
-                                  <div className="h-28 w-28 shrink-0 mb-4 mx-auto flex items-center justify-center">
-                                    <img src={getImageUrl(addon.image) || '/placeholder.png'} alt={addon.name} onError={handleImageError} className="h-full w-full object-contain" />
+                                  {/* Combined Images Layout */}
+                                  <div className="w-full mb-4">
+                                    {imagesList.length === 1 && (
+                                      <div className="h-28 w-28 shrink-0 mx-auto flex items-center justify-center overflow-hidden rounded-xl bg-neutral-50/60 p-1">
+                                        <img 
+                                          src={getImageUrl(imagesList[0]?.url || imagesList[0]) || '/placeholder.png'} 
+                                          alt={addon.name} 
+                                          onError={handleImageError} 
+                                          className="h-full w-full object-contain" 
+                                        />
+                                      </div>
+                                    )}
+
+                                    {imagesList.length === 2 && (
+                                      <div className="grid grid-cols-2 gap-2 h-28 w-full max-w-[240px] mx-auto">
+                                        {imagesList.map((img, i) => (
+                                          <div key={i} className="h-full w-full overflow-hidden rounded-xl border border-[#ecdcd1] bg-neutral-50 flex items-center justify-center">
+                                            <img 
+                                              src={getImageUrl(img?.url || img) || '/placeholder.png'} 
+                                              alt={`${addon.name} ${i + 1}`} 
+                                              onError={handleImageError} 
+                                              className="h-full w-full object-cover" 
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {imagesList.length >= 3 && (
+                                      <div className="grid grid-cols-3 gap-1.5 h-28 w-full max-w-[260px] mx-auto">
+                                        {imagesList.slice(0, 3).map((img, i) => (
+                                          <div key={i} className="h-full w-full overflow-hidden rounded-xl border border-[#ecdcd1] bg-neutral-50 flex items-center justify-center">
+                                            <img 
+                                              src={getImageUrl(img?.url || img) || '/placeholder.png'} 
+                                              alt={`${addon.name} ${i + 1}`} 
+                                              onError={handleImageError} 
+                                              className="h-full w-full object-cover" 
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {imagesList.length === 0 && (
+                                      <div className="h-28 w-28 shrink-0 mx-auto flex items-center justify-center">
+                                        <img src="/placeholder.png" alt={addon.name} className="h-full w-full object-contain" />
+                                      </div>
+                                    )}
                                   </div>
-                                  <p className="text-[15px] font-bold text-[#1a1c21] mb-1">{addon.name}</p>
-                                  <p className="text-[14px] text-[#8c5211] font-bold">₹{displayPrice}</p>
+
+                                  <div className="w-full">
+                                    <p className="text-[15px] font-bold text-[#1a1c21] mb-1 line-clamp-2">{addon.name}</p>
+                                    <p className="text-[14px] text-[#8c5211] font-bold">₹{displayPrice}</p>
+                                  </div>
                                   
                                   {isSelected && (
                                     <div className="absolute top-3 right-3 bg-[#8c5211] text-white rounded-full p-1 shadow-md">

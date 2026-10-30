@@ -52,11 +52,6 @@ export const contentService = {
     return data;
   },
 
-  submitContactMessage: async (formData) => {
-    const { data } = await apiClient.post('/contact', formData);
-    return data;
-  },
-
   subscribeNewsletter: async (payload) => {
     const { data } = await apiClient.post('/newsletter/subscribe', payload);
     return data;
