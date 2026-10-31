@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, ChevronDown, Phone } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Calendar, ChevronDown, Phone, Clapperboard, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { roomService } from '../../services/roomService';
 import { getKolkataTodayString } from '../../utils/dateUtils';
 
@@ -16,9 +16,16 @@ export function HeroBookingWidget() {
   const [selectedDate, setSelectedDate] = useState('');
   const [validationError, setValidationError] = useState('');
 
-  const { data: roomsResponse } = useQuery({
+  const {
+    data: roomsResponse,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['rooms', 'all'],
     queryFn: () => roomService.getAllRooms(),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes to avoid redundant refetches on repeated clicks
   });
   const rooms = roomsResponse?.data || [];
 
@@ -128,25 +135,104 @@ export function HeroBookingWidget() {
             </div>
             
             {isDropdownOpen && (
-              <div className="absolute top-[105%] left-0 w-full bg-white border border-[#eaddd0] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-50 max-h-[220px] overflow-y-auto py-1">
-                {rooms.length === 0 ? (
-                  <div className="px-4 py-3 text-[13px] text-[#6b5c52]">Loading rooms...</div>
-                ) : (
-                  rooms.map((room) => (
-                    <div 
-                      key={room._id}
-                      className={`px-4 py-2.5 text-[14px] font-bold cursor-pointer transition-colors hover:bg-[#fffaf5] hover:text-[#8c5211] ${selectedRoom === room._id ? 'bg-[#fffaf5] text-[#8c5211]' : 'text-[#1a1c21]'}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedRoom(room._id);
-                        setValidationError('');
-                        setIsDropdownOpen(false);
-                      }}
+              <div 
+                className="absolute top-[105%] left-0 w-full bg-white border border-[#eaddd0] rounded-xl shadow-[0_12px_32px_rgba(140,82,17,0.12)] z-50 max-h-[240px] overflow-y-auto py-1.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <AnimatePresence mode="wait">
+                  {isLoading || (isFetching && rooms.length === 0) ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="px-4 py-5 flex flex-col items-center justify-center text-center gap-2.5 bg-gradient-to-b from-[#fffbf7] to-white rounded-lg mx-1"
                     >
-                      {room.name}
+                      {/* Animated Cinema Screen Icon */}
+                      <div className="relative flex items-center justify-center">
+                        {/* Subtle gold glow pulse */}
+                        <motion.div
+                          animate={{ scale: [1, 1.25, 1], opacity: [0.3, 0.65, 0.3] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute w-10 h-10 rounded-full bg-[#dfb26a]/20 -z-0"
+                        />
+                        {/* Smooth floating / bouncing icon with soft gold gradient & border */}
+                        <motion.div
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                          className="relative z-10 w-9 h-9 rounded-lg bg-gradient-to-br from-[#faf4ee] to-[#f4e6d7] border border-[#e8ceb5] shadow-xs flex items-center justify-center text-[#8c5211]"
+                        >
+                          <Clapperboard className="w-4 h-4 text-[#8c5211]" />
+                        </motion.div>
+                      </div>
+
+                      {/* Text & gold accent */}
+                      <div className="space-y-1">
+                        <span className="text-[12.5px] font-semibold text-[#8c5211] tracking-wide block">
+                          Finding Your Perfect Theatre...
+                        </span>
+                        <div className="flex items-center justify-center gap-1.5 pt-0.5">
+                          {[0, 1, 2].map((i) => (
+                            <motion.span
+                              key={i}
+                              animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.15, 0.85] }}
+                              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
+                              className="w-1.5 h-1.5 rounded-full bg-[#dfb26a]"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : isError ? (
+                    <motion.div
+                      key="error"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="px-4 py-4 text-center space-y-2"
+                    >
+                      <p className="text-[12px] text-[#a23d2e] font-medium">
+                        Unable to load theatres right now.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          refetch();
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-[#8c5211] bg-[#fffaf5] border border-[#eaddd0] rounded-lg hover:border-[#8c5211] hover:bg-[#faefe3] transition-colors cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Retry
+                      </button>
+                    </motion.div>
+                  ) : rooms.length === 0 ? (
+                    <div className="px-4 py-3 text-center text-[12px] text-[#6b5c52]">
+                      No rooms currently available.
                     </div>
-                  ))
-                )}
+                  ) : (
+                    <motion.div
+                      key="rooms-list"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {rooms.map((room) => (
+                        <div 
+                          key={room._id}
+                          className={`px-4 py-2.5 text-[14px] font-bold cursor-pointer transition-colors hover:bg-[#fffaf5] hover:text-[#8c5211] ${selectedRoom === room._id ? 'bg-[#fffaf5] text-[#8c5211]' : 'text-[#1a1c21]'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRoom(room._id);
+                            setValidationError('');
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          {room.name}
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>
