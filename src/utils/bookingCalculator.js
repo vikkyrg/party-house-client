@@ -28,8 +28,13 @@ export const calculateBookingTotal = (theater, eventType, selectedCake, cakesLis
       const sizeObj = cakeDoc.sizes.find(s => s.name === selectedCake.size);
       if (sizeObj) {
         cakePrice = sizeObj.price;
+        const isEggless = Boolean(selectedCake.isEggless);
+        const displayName = isEggless ? `${cakeDoc.name} (Eggless)` : cakeDoc.name;
         processedCake = {
           ...cakeDoc,
+          name: displayName,
+          rawName: cakeDoc.name,
+          isEggless,
           sizeName: sizeObj.name,
           sizeLabel: sizeObj.label,
           price: cakePrice,

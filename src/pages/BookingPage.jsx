@@ -232,7 +232,8 @@ export function BookingPage() {
         eventTypeId: selectedEventType,
         cake: selectedCake ? {
           cakeId: selectedCake.cakeId,
-          size: selectedCake.size
+          size: selectedCake.size,
+          isEggless: Boolean(selectedCake.isEggless)
         } : null,
         addOns: Object.entries(selectedAddons).map(([id, selection]) => ({ 
           id, 
@@ -485,26 +486,93 @@ export function BookingPage() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCake(null)}
-                      className={`group relative flex w-full items-center justify-between overflow-hidden rounded-2xl border px-4 py-3 text-left transition-all duration-300 ${!selectedCake ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_2px_rgba(169,101,28,0.2)]' : 'border-[#ead9ca] bg-white hover:border-[#a9651c] hover:bg-[#fffaf5]'}`}
-                    >
-                      <div className="flex items-center gap-3 relative z-10">
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${!selectedCake ? 'bg-[#a9651c]/10 text-[#a9651c]' : 'bg-[#fcf5eb] text-[#8c5211]'}`}>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                          </svg>
+                    {/* Compact No Cake & Eggless Options in a single balanced row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
+                      {/* No Cake Button */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCake(null)}
+                        className={`group relative flex items-center justify-between rounded-xl border px-3.5 py-2.5 sm:px-4 sm:py-3 text-left transition-all duration-200 cursor-pointer min-h-[48px] ${
+                          !selectedCake
+                            ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_1.5px_rgba(169,101,28,0.25)]'
+                            : 'border-[#ead9ca] bg-white hover:border-[#a9651c] hover:bg-[#fffaf5]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${!selectedCake ? 'bg-[#a9651c]/10 text-[#a9651c]' : 'bg-[#fcf5eb] text-[#8c5211]'}`}>
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[13px] sm:text-[14px] font-bold text-[#1a1c21] truncate">No Cake</span>
+                            <span className="text-[11px] text-[#6b5c52] truncate">Skip cake selection</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
-                          <span className="text-[14px] font-bold text-[#1a1c21]">No Cake</span>
-                          <span className="text-[12px] text-[#6b5c52]">Skip cake selection</span>
+                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${!selectedCake ? 'border-[#a9651c] bg-[#a9651c]' : 'border-[#ead9ca] bg-transparent group-hover:border-[#a9651c]'}`}>
+                          {!selectedCake && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+                        </div>
+                      </button>
+
+                      {/* Eggless Cake Toggle */}
+                      <div
+                        onClick={() => {
+                          if (selectedCake) {
+                            setSelectedCake(prev => prev ? ({ ...prev, isEggless: !prev.isEggless }) : null);
+                          }
+                        }}
+                        className={`relative flex items-center justify-between rounded-xl border px-3.5 py-2.5 sm:px-4 sm:py-3 text-left transition-all duration-200 min-h-[48px] ${
+                          selectedCake
+                            ? selectedCake.isEggless
+                              ? 'border-emerald-600 bg-emerald-50/40 shadow-[0_0_0_1.5px_rgba(5,150,105,0.2)] cursor-pointer'
+                              : 'border-[#ead9ca] bg-white hover:border-[#8c5211] hover:bg-[#fffaf5] cursor-pointer'
+                            : 'border-[#ead9ca]/70 bg-[#faf8f5] opacity-60 cursor-not-allowed'
+                        }`}
+                        title={!selectedCake ? 'Select a cake first to make it eggless' : 'Toggle eggless cake option'}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                            selectedCake?.isEggless ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-50 text-emerald-700'
+                          }`}>
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+                            </svg>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[13px] sm:text-[14px] font-bold text-[#1a1c21] truncate">Eggless Cake</span>
+                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                                100% Veg
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-[#6b5c52] truncate">
+                              {selectedCake ? (selectedCake.isEggless ? 'Eggless option applied' : 'Make my cake Eggless') : 'Select cake to enable'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Compact Toggle Switch */}
+                        <div className="relative inline-flex items-center shrink-0 ml-2">
+                          <input
+                            type="checkbox"
+                            disabled={!selectedCake}
+                            checked={Boolean(selectedCake?.isEggless)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              if (selectedCake) {
+                                setSelectedCake(prev => prev ? ({ ...prev, isEggless: e.target.checked }) : null);
+                              }
+                            }}
+                            className="sr-only peer"
+                          />
+                          <div className={`w-9 h-5 rounded-full transition-colors relative ${
+                            selectedCake?.isEggless ? 'bg-emerald-600' : 'bg-[#eaddd0]'
+                          } after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all ${
+                            selectedCake?.isEggless ? 'after:translate-x-4' : ''
+                          }`}></div>
                         </div>
                       </div>
-                      <div className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${!selectedCake ? 'border-[#a9651c] bg-[#a9651c]' : 'border-[#ead9ca] bg-transparent group-hover:border-[#a9651c]'}`}>
-                        {!selectedCake && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-                      </div>
-                    </button>
+                    </div>
 
                     {!visibleCakes.length ? (
                       <div className="rounded-[24px] border border-dashed border-[#ecdcd1] bg-[#faf8f5] p-10 text-center">
@@ -570,7 +638,15 @@ export function BookingPage() {
                                           type="button"
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            setSelectedCake({ cakeId: cake._id, category: cake.category || 'standard', name: cake.name, size: size.name, price: size.price, image: cake.image });
+                                            setSelectedCake(prev => ({
+                                              cakeId: cake._id,
+                                              category: cake.category || 'standard',
+                                              name: cake.name,
+                                              size: size.name,
+                                              price: size.price,
+                                              image: cake.image,
+                                              isEggless: prev?.cakeId === cake._id ? Boolean(prev.isEggless) : Boolean(prev?.isEggless)
+                                            }));
                                           }}
                                           className={`flex-1 min-w-[90px] whitespace-nowrap rounded-lg border px-3 py-2 text-[12px] font-bold transition-all duration-200 cursor-pointer ${
                                             isSizeSelected
@@ -782,7 +858,10 @@ export function BookingPage() {
                                 <span className="text-[11px] font-bold uppercase tracking-widest text-[#8c5211]">Celebration Cake</span>
                               </div>
                               <p className="text-[15px] font-bold text-[#1a1c21]">{processedCake.name}</p>
-                              <p className="text-[12px] text-[#6b5c52] mt-0.5">{processedCake.sizeLabel}</p>
+                              <div className="mt-1 space-y-0.5 text-[12px] text-[#6b5c52]">
+                                <p>Weight: {processedCake.sizeLabel}</p>
+                                <p>Cake Type: <span className={processedCake.isEggless ? "font-semibold text-emerald-700" : "font-semibold text-[#1a1c21]"}>{processedCake.isEggless ? 'Eggless' : 'Regular'}</span></p>
+                              </div>
                             </div>
                             <div className="mt-3 pt-2.5 border-t border-[#f4e7da] flex items-center justify-between text-[12px] text-[#6b5c52]">
                               <span>Price</span>
