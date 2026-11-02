@@ -64,8 +64,8 @@ export const calculateBookingTotal = (theater, eventType, selectedCake, cakesLis
   });
 
   const subtotal = theaterPrice + addOnsTotal + cakePrice;
-  const advanceAmount = 750;
-  const balanceAmount = subtotal > advanceAmount ? subtotal - advanceAmount : 0;
+  const advanceAmount = subtotal; // Full payment: 100% of booking total
+  const balanceAmount = 0;
 
   return {
     theaterPrice,

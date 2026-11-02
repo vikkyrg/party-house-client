@@ -271,11 +271,11 @@ export function PaymentModal({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#a9651c]">
-                    UPI ADVANCE
+                    UPI PAYMENT
                   </span>
                 </div>
                 <h3 className="text-base sm:text-lg font-heading font-extrabold text-[#17171c] leading-tight">
-                  Complete Your Advance Payment
+                  Complete Your Full Payment
                 </h3>
               </div>
             </div>
@@ -327,7 +327,7 @@ export function PaymentModal({
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold mb-2">
                 <Sparkles className="w-3 h-3 text-emerald-600" /> Payment Verified
               </span>
-              <h2 className="text-2xl font-extrabold text-slate-900">₹{advanceAmount} Advance Received</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900">₹{advanceAmount} Payment Received</h2>
               <p className="text-sm text-slate-600 mt-1 max-w-md">
                 Your booking reference <strong className="font-mono text-[#8c5211]">{statusData?.bulkBookingId || booking?.bulkBookingId || bookingRef}</strong> is now confirmed. Redirecting to confirmation page...
               </p>
@@ -389,7 +389,7 @@ export function PaymentModal({
                   <div className="rounded-2xl bg-gradient-to-r from-[#94551a] to-[#784312] p-4 text-white shadow-xs flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-amber-200/90">
-                        Advance Payable
+                        Payment Amount
                       </p>
                       <p className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight mt-0.5">
                         ₹{advanceAmount}
@@ -397,9 +397,9 @@ export function PaymentModal({
                     </div>
                     <div className="text-right">
                       <span className="inline-block rounded-full bg-white/20 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-bold tracking-wide">
-                        Slot Reservation
+                        Full Payment
                       </span>
-                      <p className="text-[10px] text-amber-100/80 mt-1">Remaining balance at venue</p>
+                      <p className="text-[10px] text-amber-100/80 mt-1">Remaining balance: ₹0</p>
                     </div>
                   </div>
 
@@ -524,7 +524,7 @@ export function PaymentModal({
                             ? 'Admin is verifying receipt with bank statement.'
                             : isRejected
                             ? 'Please check your reference or submit via WhatsApp.'
-                            : 'Scan QR and submit UTR to complete booking.'}
+                            : 'Scan the QR code and pay the full booking amount to confirm your reservation.'}
                         </p>
                       </div>
                     </div>

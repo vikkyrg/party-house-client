@@ -67,7 +67,7 @@ export function PaymentProcessingPanel({
 
   const getStatusText = () => {
     if (displayPercent < 30) return 'Initiating secure reservation...';
-    if (displayPercent < 60) return 'Configuring ₹' + advanceAmount + ' advance payment...';
+    if (displayPercent < 60) return 'Configuring ₹' + advanceAmount + ' payment...';
     if (displayPercent < 85) return 'Securing theater slot & lock...';
     if (displayPercent < 100) return 'Verifying reservation hold...';
     return 'Reservation secured! Preparing UPI payment...';
@@ -91,7 +91,7 @@ export function PaymentProcessingPanel({
           Processing Your Payment
         </h4>
         <p className="text-xs text-[#74695D] text-center mb-4 leading-tight">
-          Please wait while we securely lock your theater slot and prepare advance payment.
+          Please wait while we securely lock your theater slot and prepare payment.
         </p>
 
         {/* Film Strip Progress Bar */}
