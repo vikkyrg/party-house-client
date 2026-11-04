@@ -15,6 +15,7 @@ import { PaymentModal } from '../components/booking/PaymentModal';
 import { PaymentProcessingPanel } from '../components/booking/PaymentProcessingPanel';
 import { useBookingModalStore } from '../store/bookingModalStore';
 import { SEO } from '../components/common/SEO';
+import { settingService } from '../services/settingService';
 import { calculateBookingTotal, getAddonPriceForDuration } from '../utils/bookingCalculator';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCakes } from '../hooks/useCakes';
@@ -52,6 +53,7 @@ export function BookingPage() {
   const [theater, setTheater] = useState(null);
   const [eventTypes, setEventTypes] = useState([]);
   const [addons, setAddons] = useState([]);
+  const [configuredAdvanceAmount, setConfiguredAdvanceAmount] = useState(750);
   
   // Get date and slot from URL
   const selectedDate = searchParams.get('date');
@@ -95,17 +97,21 @@ export function BookingPage() {
 
     const fetchData = async () => {
       try {
-        const [theaterRes, roomRes, eventsRes, addonsRes] = await Promise.all([
+        const [theaterRes, roomRes, eventsRes, addonsRes, settingsRes] = await Promise.all([
           theaterService.getTheaterById(theaterId),
           roomService.getRoom(roomId),
           contentService.getEventTypes(),
-          contentService.getAddons()
+          contentService.getAddons(),
+          settingService.getPaymentSettings().catch(() => null)
         ]);
         
         if (theaterRes.success) setTheater(theaterRes.data);
         if (roomRes?.success && roomRes.data) setRoom(roomRes.data);
         if (eventsRes.success) setEventTypes(eventsRes.data);
         if (addonsRes.success) setAddons(addonsRes.data);
+        if (settingsRes?.data?.advancePaymentAmount !== undefined) {
+          setConfiguredAdvanceAmount(settingsRes.data.advancePaymentAmount);
+        }
       } catch (err) {
         setError(handleApiError(err));
       } finally {
@@ -146,9 +152,10 @@ export function BookingPage() {
       cakesList,
       selectedAddons, 
       addons,
-      duration
+      duration,
+      configuredAdvanceAmount
     );
-  }, [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons, selectedDate, duration]);
+  }, [theater, room, customerDetails.members, eventTypes, selectedEventType, selectedCake, cakesList, selectedAddons, addons, selectedDate, duration, configuredAdvanceAmount]);
 
   const validateStep = () => {
     if (currentStep === 1) { // Guest Details
@@ -486,124 +493,33 @@ export function BookingPage() {
                       </div>
                     </div>
 
-                    {/* No Cake & Eggless Options */}
-                    {cakeCategory === 'premium' ? (
-                      /* Premium Cakes: Single balanced row with No Cake and Eggless Toggle side-by-side */
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
-                        {/* No Cake Button */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCake(null)}
-                          className={`group relative flex items-center justify-between rounded-xl border px-3.5 py-2.5 sm:px-4 sm:py-3 text-left transition-all duration-200 cursor-pointer min-h-[48px] ${
-                            !selectedCake
-                              ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_1.5px_rgba(169,101,28,0.25)]'
-                              : 'border-[#ead9ca] bg-white hover:border-[#a9651c] hover:bg-[#fffaf5]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${!selectedCake ? 'bg-[#a9651c]/10 text-[#a9651c]' : 'bg-[#fcf5eb] text-[#8c5211]'}`}>
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                              </svg>
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[13px] sm:text-[14px] font-bold text-[#1a1c21] truncate">No Cake</span>
-                              <span className="text-[11px] text-[#6b5c52] truncate">Skip cake selection</span>
-                            </div>
+                    {/* No Cake Option */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCake(null)}
+                        className={`group relative flex items-center justify-between rounded-xl border px-3.5 py-2.5 sm:px-4 sm:py-3 text-left transition-all duration-200 cursor-pointer min-h-[48px] w-full sm:w-1/2 ${
+                          !selectedCake
+                            ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_1.5px_rgba(169,101,28,0.25)]'
+                            : 'border-[#ead9ca] bg-white hover:border-[#a9651c] hover:bg-[#fffaf5]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${!selectedCake ? 'bg-[#a9651c]/10 text-[#a9651c]' : 'bg-[#fcf5eb] text-[#8c5211]'}`}>
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
                           </div>
-                          <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${!selectedCake ? 'border-[#a9651c] bg-[#a9651c]' : 'border-[#ead9ca] bg-transparent group-hover:border-[#a9651c]'}`}>
-                            {!selectedCake && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-                          </div>
-                        </button>
-
-                        {/* Eggless Cake Toggle (Premium only) */}
-                        <div
-                          onClick={() => {
-                            if (selectedCake) {
-                              setSelectedCake(prev => prev ? ({ ...prev, isEggless: !prev.isEggless }) : null);
-                            }
-                          }}
-                          className={`relative flex items-center justify-between rounded-xl border px-3.5 py-2.5 sm:px-4 sm:py-3 text-left transition-all duration-200 min-h-[48px] ${
-                            selectedCake
-                              ? selectedCake.isEggless
-                                ? 'border-emerald-600 bg-emerald-50/40 shadow-[0_0_0_1.5px_rgba(5,150,105,0.2)] cursor-pointer'
-                                : 'border-[#ead9ca] bg-white hover:border-[#8c5211] hover:bg-[#fffaf5] cursor-pointer'
-                              : 'border-[#ead9ca]/70 bg-[#faf8f5] opacity-60 cursor-not-allowed'
-                          }`}
-                          title={!selectedCake ? 'Select a cake first to make it eggless' : 'Toggle eggless cake option'}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                              selectedCake?.isEggless ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-50 text-emerald-700'
-                            }`}>
-                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
-                              </svg>
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[13px] sm:text-[14px] font-bold text-[#1a1c21] truncate">Eggless Cake</span>
-                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
-                                  100% Veg
-                                </span>
-                              </div>
-                              <span className="text-[11px] text-[#6b5c52] truncate">
-                                {selectedCake ? (selectedCake.isEggless ? 'Eggless option applied' : 'Make my cake Eggless') : 'Select cake to enable'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Compact Toggle Switch */}
-                          <div className="relative inline-flex items-center shrink-0 ml-2">
-                            <input
-                              type="checkbox"
-                              disabled={!selectedCake}
-                              checked={Boolean(selectedCake?.isEggless)}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                if (selectedCake) {
-                                  setSelectedCake(prev => prev ? ({ ...prev, isEggless: e.target.checked }) : null);
-                                }
-                              }}
-                              className="sr-only peer"
-                            />
-                            <div className={`w-9 h-5 rounded-full transition-colors relative ${
-                              selectedCake?.isEggless ? 'bg-emerald-600' : 'bg-[#eaddd0]'
-                            } after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all ${
-                              selectedCake?.isEggless ? 'after:translate-x-4' : ''
-                            }`}></div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[13px] sm:text-[14px] font-bold text-[#1a1c21] truncate">No Cake</span>
+                            <span className="text-[11px] text-[#6b5c52] truncate">Skip cake selection</span>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      /* Standard Cakes: No Cake option only, compact and clean without Eggless toggle */
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCake(null)}
-                          className={`group relative flex items-center justify-between rounded-xl border px-3.5 py-2.5 sm:px-4 sm:py-3 text-left transition-all duration-200 cursor-pointer min-h-[48px] w-full sm:w-1/2 ${
-                            !selectedCake
-                              ? 'border-[#a9651c] bg-[#fffaf5] shadow-[0_0_0_1.5px_rgba(169,101,28,0.25)]'
-                              : 'border-[#ead9ca] bg-white hover:border-[#a9651c] hover:bg-[#fffaf5]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${!selectedCake ? 'bg-[#a9651c]/10 text-[#a9651c]' : 'bg-[#fcf5eb] text-[#8c5211]'}`}>
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                              </svg>
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[13px] sm:text-[14px] font-bold text-[#1a1c21] truncate">No Cake</span>
-                              <span className="text-[11px] text-[#6b5c52] truncate">Skip cake selection</span>
-                            </div>
-                          </div>
-                          <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${!selectedCake ? 'border-[#a9651c] bg-[#a9651c]' : 'border-[#ead9ca] bg-transparent group-hover:border-[#a9651c]'}`}>
-                            {!selectedCake && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-                          </div>
-                        </button>
-                      </div>
-                    )}
+                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${!selectedCake ? 'border-[#a9651c] bg-[#a9651c]' : 'border-[#ead9ca] bg-transparent group-hover:border-[#a9651c]'}`}>
+                          {!selectedCake && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+                        </div>
+                      </button>
+                    </div>
 
                     {!visibleCakes.length ? (
                       <div className="rounded-[24px] border border-dashed border-[#ecdcd1] bg-[#faf8f5] p-10 text-center">
@@ -676,9 +592,7 @@ export function BookingPage() {
                                               size: size.name,
                                               price: size.price,
                                               image: cake.image,
-                                              isEggless: (cake.category || 'standard') === 'premium'
-                                                ? (prev?.cakeId === cake._id ? Boolean(prev.isEggless) : Boolean(prev?.isEggless))
-                                                : false
+                                              isEggless: false
                                             }));
                                           }}
                                           className={`flex-1 min-w-[90px] whitespace-nowrap rounded-lg border px-3 py-2 text-[12px] font-bold transition-all duration-200 cursor-pointer ${
@@ -1000,7 +914,7 @@ export function BookingPage() {
                         : 'bg-[#a9651c] text-white hover:bg-[#8e5217] cursor-pointer'
                     }`}
                   >
-                    Pay ₹{advanceAmount}
+                    Pay Advance ₹{advanceAmount}
                   </button>
                 )}
               </div>
@@ -1031,15 +945,16 @@ export function BookingPage() {
             </div>
             
             <div className="space-y-4 text-[14px]">
-              <div className="space-y-1 border-b border-dashed border-[#ecdcd1] pb-3">
-                <div className="flex justify-between"><span className="text-[#6b5c52]">Theater</span><span className="font-bold text-[#1a1c21]">{theater?.name}</span></div>
-                <div className="flex justify-between"><span className="text-[#6b5c52]">Room</span><span className="font-bold text-[#1a1c21]">{room?.name}</span></div>
-                {room?.couple ? <div className="flex justify-between"><span className="text-[#6b5c52]">Couple</span><span className="font-bold text-[#1a1c21]">{room?.couple}</span></div> : null}
-                <div className="flex justify-between"><span className="text-[#6b5c52]">Maximum Members</span><span className="font-bold text-[#1a1c21]">{room?.maximumMembers}</span></div>
+              <div className="space-y-1.5 border-b border-dashed border-[#ecdcd1] pb-3">
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Theater name</span><span className="font-bold text-[#1a1c21] text-right">{theater?.name}</span></div>
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Room name</span><span className="font-bold text-[#1a1c21] text-right">{room?.name}</span></div>
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Booking date and time</span><span className="font-bold text-[#1a1c21] text-right">{selectedDate} · {displayTimeSlot}</span></div>
+                {room?.couple ? <div className="flex justify-between"><span className="text-[#6b5c52]">Couple</span><span className="font-bold text-[#1a1c21] text-right">{room?.couple}</span></div> : null}
+                <div className="flex justify-between"><span className="text-[#6b5c52]">Maximum members</span><span className="font-bold text-[#1a1c21] text-right">{room?.maximumMembers}</span></div>
               </div>
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-[#6b5c52] font-medium">Room Price ({duration} Hour{duration > 1 ? 's' : ''})</span>
+                  <span className="text-[#6b5c52] font-medium">Room price ({duration} Hour{duration > 1 ? 's' : ''})</span>
                 </div>
                 <span className="font-bold text-[#1a1c21]">₹{theaterPrice}</span>
               </div>
@@ -1047,33 +962,48 @@ export function BookingPage() {
               {processedCake && (
                 <div className="flex justify-between items-start border-t border-dashed border-[#ecdcd1] pt-3 mt-3">
                   <div className="flex flex-col">
-                    <span className="text-[#6b5c52] font-medium text-[#1a1c21]">{processedCake.name}</span>
-                    <span className="text-[12px] text-[#6b5c52]">{processedCake.sizeLabel}</span>
+                    <span className="text-[#6b5c52] font-medium text-[#1a1c21]">Selected cake price</span>
+                    <span className="text-[12px] text-[#8c5211]">{processedCake.name} ({processedCake.sizeLabel})</span>
                   </div>
                   <span className="font-bold text-[#1a1c21]">₹{processedCake.total}</span>
                 </div>
               )}
               
-              {processedAddons.map((addon) => (
-                <div key={addon._id} className="flex justify-between items-start border-t border-dashed border-[#ecdcd1] pt-3 mt-3">
-                  <div className="flex flex-col">
-                    <span className="text-[#6b5c52]">{addon.name}</span>
+              {processedAddons.length > 0 && (
+                <div className="border-t border-dashed border-[#ecdcd1] pt-3 mt-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#6b5c52] font-medium text-[#1a1c21]">Selected add-ons price</span>
+                    <span className="font-bold text-[#1a1c21]">₹{addOnsTotal}</span>
                   </div>
-                  <span className="font-bold text-[#1a1c21]">₹{addon.total}</span>
+                  <div className="pl-2 space-y-1">
+                    {processedAddons.map((addon) => (
+                      <div key={addon._id} className="flex justify-between items-center text-[12px] text-[#6b5c52]">
+                        <span className="truncate max-w-[200px]">{addon.name}</span>
+                        <span>₹{addon.total}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
 
-            <div className="mt-6 pt-6 border-t border-[#ecdcd1]">
-              <div className="flex justify-between items-end mb-4">
+            <div className="mt-6 pt-5 border-t border-[#ecdcd1] space-y-3">
+              <div className="flex justify-between items-center">
                 <span className="text-[14px] font-bold text-[#1a1c21]">Subtotal</span>
-                <span className="text-[20px] font-bold text-[#1a1c21]">₹{subtotal}</span>
+                <span className="font-bold text-[#1a1c21]">₹{subtotal}</span>
               </div>
-              <div className="bg-[#f9f2eb] rounded-xl p-4 border border-[#ead9ca]/50">
-                <div className="flex justify-between items-center">
-                  <span className="text-[13px] font-bold text-[#9e6223]">Total Amount to Pay</span>
-                  <span className="text-[18px] font-extrabold text-[#9e6223]">₹{subtotal}</span>
+
+              <div className="flex justify-between items-center border-t border-dashed border-[#ecdcd1] pt-3">
+                <span className="font-bold text-[#8c5211]">Advance Payment</span>
+                <span className="font-bold text-[#8c5211]">₹{advanceAmount}</span>
+              </div>
+
+              <div className="flex justify-between items-start border-t border-dashed border-[#ecdcd1] pt-3">
+                <div className="flex flex-col">
+                  <span className="font-bold text-[#1a1c21]">Remaining Amount</span>
+                  <span className="text-[12px] text-[#6b5c52]">(Subtotal - ₹{advanceAmount})</span>
                 </div>
+                <span className="font-bold text-[#1a1c21]">₹{balanceAmount}</span>
               </div>
             </div>
           </div>

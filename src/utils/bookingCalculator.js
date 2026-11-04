@@ -14,7 +14,7 @@ export const getAddonPriceForDuration = (addon, duration = 2) => {
   return Number(addon.price) || 0;
 };
 
-export const calculateBookingTotal = (theater, eventType, selectedCake, cakesList, selectedAddons, addonsList, duration = 2) => {
+export const calculateBookingTotal = (theater, eventType, selectedCake, cakesList, selectedAddons, addonsList, duration = 2, configuredAdvanceAmount = 750) => {
   const theaterPrice = theater?.price || 0;
   let cakePrice = 0;
   let processedCake = null;
@@ -64,8 +64,9 @@ export const calculateBookingTotal = (theater, eventType, selectedCake, cakesLis
   });
 
   const subtotal = theaterPrice + addOnsTotal + cakePrice;
-  const advanceAmount = subtotal; // Full payment: 100% of booking total
-  const balanceAmount = 0;
+  const advanceCap = Number(configuredAdvanceAmount) >= 0 ? Number(configuredAdvanceAmount) : 750;
+  const advanceAmount = Math.min(advanceCap, subtotal);
+  const balanceAmount = Math.max(0, subtotal - advanceAmount);
 
   return {
     theaterPrice,

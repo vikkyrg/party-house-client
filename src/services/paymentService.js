@@ -1,13 +1,23 @@
 import { apiClient } from '../lib/apiClient';
 
 export const paymentService = {
-  submitUpi: async ({ bookingId, upiTransactionId }) => {
-    const { data } = await apiClient.post('/payment/submit-upi', { bookingId, upiTransactionId });
+  submitUpi: async ({ bookingId, paymentAmount, transactionReference, upiTransactionId }) => {
+    const { data } = await apiClient.post('/payment/submit-upi', {
+      bookingId,
+      paymentAmount,
+      transactionReference,
+      upiTransactionId,
+    });
     return data;
   },
 
-  submitUpiPayment: async ({ bookingId, upiTransactionId }) => {
-    const { data } = await apiClient.post('/payment/submit-upi', { bookingId, upiTransactionId });
+  submitUpiPayment: async ({ bookingId, paymentAmount, transactionReference, upiTransactionId }) => {
+    const { data } = await apiClient.post('/payment/submit-upi', {
+      bookingId,
+      paymentAmount,
+      transactionReference,
+      upiTransactionId,
+    });
     return data;
   },
 
