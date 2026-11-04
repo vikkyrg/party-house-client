@@ -19,6 +19,8 @@ export function CurrentBookingNavbarButton() {
   const {
     activeBooking,
     hasValidHold,
+    hasPaymentBalance,
+    bookingRemainingBalance,
     formattedTime,
     isPaymentModalOpen,
     openPaymentModal,
@@ -26,7 +28,7 @@ export function CurrentBookingNavbarButton() {
     clearActiveBooking,
   } = useActiveBookingHold();
 
-  if (!hasValidHold || !activeBooking) {
+  if ((!hasValidHold && !hasPaymentBalance) || !activeBooking) {
     return null;
   }
 
@@ -40,7 +42,7 @@ export function CurrentBookingNavbarButton() {
         type="button"
         onClick={handleOpenCurrentBooking}
         className="inline-flex items-center gap-2 rounded-full border border-[#B87525]/70 bg-gradient-to-r from-[#2F2859] to-[#201a40] px-3.5 sm:px-4 py-2 text-white shadow-sm hover:shadow-md hover:border-[#DDAA4B] active:scale-[0.98] transition-all cursor-pointer group"
-        title="View active reservation & complete payment"
+        title={hasPaymentBalance ? 'View booking balance and make another payment' : 'View active reservation & complete payment'}
       >
         <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#B87525]/30 text-[#F5E2B3] group-hover:scale-105 transition-transform">
           <Ticket className="h-3.5 w-3.5" />
@@ -50,7 +52,9 @@ export function CurrentBookingNavbarButton() {
             Current Booking
           </span>
           <span className="text-[10px] font-semibold text-[#E4C389] leading-none mt-0.5 flex items-center gap-1 font-mono">
-            <Clock className="w-2.5 h-2.5" /> {formattedTime}
+            {hasPaymentBalance
+              ? `Balance ₹${bookingRemainingBalance.toLocaleString('en-IN')}`
+              : <><Clock className="w-2.5 h-2.5" /> {formattedTime}</>}
           </span>
         </div>
       </button>
@@ -76,4 +80,3 @@ export function CurrentBookingNavbarButton() {
 }
 
 export default CurrentBookingNavbarButton;
-

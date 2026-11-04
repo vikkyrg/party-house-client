@@ -18,10 +18,25 @@ export function useActiveBookingHold() {
 
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [hasValidHold, setHasValidHold] = useState(false);
+  const bookingRemainingBalance = Number(
+    activeBooking?.paymentSummary?.remainingBalance ??
+    Math.max(
+      0,
+      Number(activeBooking?.pricing?.total || 0) -
+        Number(activeBooking?.payment?.amountPaid || 0)
+    )
+  );
+  const hasPaymentBalance = activeBooking?.status === 'confirmed' && bookingRemainingBalance > 0;
 
   // Compute countdown timer accurately against the real expiration timestamp
   useEffect(() => {
     if (!activeBooking) {
+      setHasValidHold(false);
+      setRemainingSeconds(0);
+      return;
+    }
+
+    if (activeBooking.status === 'confirmed') {
       setHasValidHold(false);
       setRemainingSeconds(0);
       return;
@@ -56,7 +71,7 @@ export function useActiveBookingHold() {
 
   // Periodic status re-validation with backend
   useEffect(() => {
-    if (!activeBooking?._id || !hasValidHold) return;
+    if (!activeBooking?._id || (!hasValidHold && !hasPaymentBalance)) return;
 
     let isMounted = true;
     const verifyStatus = async () => {
@@ -64,7 +79,11 @@ export function useActiveBookingHold() {
         const res = await paymentService.checkStatus(activeBooking._id);
         if (!isMounted) return;
         if (res.success && res.data) {
-          if (res.data.status === 'confirmed' || res.data.paymentStatus === 'paid' || res.data.isExpired || res.data.status === 'cancelled') {
+          if (
+            res.data.isExpired ||
+            res.data.status === 'cancelled' ||
+            (res.data.status === 'confirmed' && Number(res.data.paymentSummary?.remainingBalance) <= 0)
+          ) {
             clearActiveBooking();
           } else if (res.data.holdExpiresAt || res.data.expiresAt) {
             setActiveBooking({
@@ -83,7 +102,7 @@ export function useActiveBookingHold() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [activeBooking?._id, hasValidHold, clearActiveBooking, setActiveBooking]);
+  }, [activeBooking?._id, hasValidHold, hasPaymentBalance, clearActiveBooking, setActiveBooking]);
 
   const minutes = Math.floor(remainingSeconds / 60);
   const seconds = remainingSeconds % 60;
@@ -92,6 +111,8 @@ export function useActiveBookingHold() {
   return {
     activeBooking,
     hasValidHold,
+    hasPaymentBalance,
+    bookingRemainingBalance,
     remainingSeconds,
     formattedTime,
     isPaymentModalOpen,
