@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import QRCode from 'qrcode';
 import {
   X,
   Copy,
@@ -16,10 +15,8 @@ import {
   Send,
   Sparkles,
 } from 'lucide-react';
+import qrCodeImg from '../../assets/qr code.jpeg';
 import { paymentService } from '../../services/paymentService';
-
-const UPI_PAYEE_ADDRESS = 'shailajagovindraju-1@okhdfcbank';
-const UPI_PAYEE_NAME = 'Rio Party House';
 
 /**
  * PaymentModal
@@ -32,6 +29,7 @@ export function PaymentModal({
   isOpen,
   onClose,
   booking,
+  advanceAmount = 750,
   onPaymentSuccess,
   theaterName: propTheaterName,
   roomName: propRoomName,
@@ -47,18 +45,10 @@ export function PaymentModal({
   const [statusData, setStatusData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [isHoldExpired, setIsHoldExpired] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [qrImage, setQrImage] = useState('');
-  const [qrError, setQrError] = useState('');
 
   // Authoritative hold expiration time computation
   useEffect(() => {
     if (!isOpen) return;
-    if (['confirmed', 'completed'].includes(statusData?.status || booking?.status)) {
-      setTimeLeft(null);
-      setIsHoldExpired(false);
-      return;
-    }
 
     const expiresAt =
       statusData?.holdExpiresAt ||
@@ -106,8 +96,6 @@ export function PaymentModal({
 
   const bookingRef = booking?.bookingId || 'PENDING';
   const bookingDbId = booking?._id;
-  const currentStatus = statusData?.status || booking?.status || 'pending_payment';
-  const currentPaymentStatus = statusData?.paymentStatus || booking?.payment?.status || 'pending';
 
   // Poll booking payment & confirmation status while modal is open
   useEffect(() => {
@@ -139,7 +127,7 @@ export function PaymentModal({
             setIsHoldExpired(true);
           }
 
-          if (res.data.paymentSummary?.paymentStatus === 'fully_paid') {
+          if (res.data.status === 'confirmed' || res.data.paymentStatus === 'paid') {
             setTimeout(() => {
               if (onPaymentSuccess) onPaymentSuccess(bookingDbId);
             }, 1500);
@@ -176,10 +164,6 @@ export function PaymentModal({
 
   const handleSubmitUpi = async (e) => {
     e.preventDefault();
-    if (!isValidPaymentAmount) {
-      setErrorMessage(`Enter an amount between ₹1 and ₹${remainingBalance.toLocaleString('en-IN')}.`);
-      return;
-    }
     if (!upiRefInput.trim()) {
       setErrorMessage('Please enter the 12-digit UPI reference / UTR number.');
       return;
@@ -197,17 +181,14 @@ export function PaymentModal({
     try {
       const res = await paymentService.submitUpiPayment({
         bookingId: bookingDbId,
-        paymentAmount: paymentAmountValue,
-        transactionReference: upiRefInput.trim(),
         upiTransactionId: upiRefInput.trim(),
       });
 
       if (res.success) {
-        setMessage(`Payment of ₹${paymentAmountValue.toLocaleString('en-IN')} submitted. It is awaiting admin verification.`);
+        setMessage('UPI reference submitted! Admin is verifying the payment.');
         if (res.data) {
-          setStatusData((previous) => ({ ...previous, ...res.data }));
+          setStatusData(res.data);
         }
-        setUpiRefInput('');
       } else {
         setErrorMessage(res.message || 'Failed to submit UPI reference. Please try again.');
       }
@@ -231,95 +212,6 @@ export function PaymentModal({
     year: 'numeric',
   }) : '';
   const timeSlot = propTimeSlot || booking?.timeSlot || '';
-  const paymentRecords = statusData?.paymentRecords || booking?.paymentRecords || [];
-  const paymentTotal = Number(statusData?.paymentSummary?.totalBookingAmount ?? booking?.pricing?.total ?? 0);
-  const verifiedAmountPaid = Number(
-    statusData?.paymentSummary?.verifiedAmountPaid ??
-    booking?.paymentSummary?.verifiedAmountPaid ??
-    (paymentRecords.length
-      ? paymentRecords
-          .filter((record) => record.paymentStatus === 'verified')
-          .reduce((sum, record) => sum + Number(record.paymentAmount || 0), 0)
-      : ['paid', 'partial', 'partially_paid', 'fully_paid'].includes(booking?.payment?.status)
-        ? Number(booking.payment.amountPaid || 0)
-        : 0)
-  );
-  const pendingVerificationAmount = Number(
-    statusData?.paymentSummary?.pendingVerificationAmount ??
-    booking?.paymentSummary?.pendingVerificationAmount ??
-    paymentRecords
-      .filter((record) => record.paymentStatus === 'pending_verification')
-      .reduce((sum, record) => sum + Number(record.paymentAmount || 0), 0)
-  );
-  const remainingBalance = Number(
-    statusData?.paymentSummary?.remainingBalance ??
-    booking?.paymentSummary?.remainingBalance ??
-    Math.max(0, paymentTotal - verifiedAmountPaid)
-  );
-  const paymentAmountValue = Number(paymentAmount);
-  const isValidPaymentAmount = Number.isFinite(paymentAmountValue) &&
-    paymentAmountValue >= 1 &&
-    Math.round(paymentAmountValue * 100) === paymentAmountValue * 100 &&
-    paymentAmountValue <= remainingBalance;
-  const isFullyPaid = remainingBalance <= 0;
-  const canSubmitPayment = !isFullyPaid && !isHoldExpired && currentStatus !== 'cancelled';
-  const isConfirmed = currentStatus === 'confirmed' || isFullyPaid;
-  const isSubmitted = pendingVerificationAmount > 0;
-  const isRejected = statusData?.paymentSummary?.paymentStatus === 'payment_rejected' ||
-    (currentPaymentStatus === 'rejected' && !isSubmitted);
-
-  useEffect(() => {
-    if (!isOpen || !bookingDbId || !remainingBalance) {
-      setPaymentAmount('');
-      return;
-    }
-    setPaymentAmount((current) => {
-      const currentAmount = Number(current);
-      if (current && Number.isFinite(currentAmount) && currentAmount >= 1 && currentAmount <= remainingBalance) {
-        return current;
-      }
-      return String(remainingBalance);
-    });
-  }, [isOpen, bookingDbId, remainingBalance]);
-
-  useEffect(() => {
-    if (!isOpen || !booking || !canSubmitPayment || !isValidPaymentAmount) {
-      setQrImage('');
-      setQrError('');
-      return;
-    }
-
-    const params = new URLSearchParams({
-      pa: UPI_PAYEE_ADDRESS,
-      pn: UPI_PAYEE_NAME,
-      am: paymentAmountValue.toFixed(2),
-      cu: 'INR',
-      tn: `Booking ${bookingRef}`,
-    });
-    let isMounted = true;
-    QRCode.toDataURL(`upi://pay?${params.toString()}`, {
-      errorCorrectionLevel: 'M',
-      margin: 1,
-      width: 320,
-    })
-      .then((dataUrl) => {
-        if (isMounted) {
-          setQrImage(dataUrl);
-          setQrError('');
-        }
-      })
-      .catch((error) => {
-        if (isMounted) {
-          setQrImage('');
-          setQrError('Unable to generate a payment QR for this amount. Please try again.');
-          console.error('Unable to generate dynamic UPI payment QR.', error);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, booking, bookingRef, canSubmitPayment, isValidPaymentAmount, paymentAmountValue]);
 
   const handleManualCheck = async () => {
     if (!bookingDbId) return;
@@ -332,14 +224,14 @@ export function PaymentModal({
         if (res.data.isExpired) {
           setIsHoldExpired(true);
           setErrorMessage('This reservation hold has expired. Please select an available slot and rebook.');
-        } else if (res.data.paymentSummary?.paymentStatus === 'fully_paid') {
+        } else if (res.data.status === 'confirmed' || res.data.paymentStatus === 'paid') {
           setMessage('Payment verified! Booking confirmed.');
           setTimeout(() => {
             if (onPaymentSuccess) onPaymentSuccess(bookingDbId);
           }, 1200);
-        } else if (res.data.paymentSummary?.pendingVerificationAmount > 0) {
+        } else if (res.data.paymentStatus === 'submitted') {
           setMessage('Transaction submitted — awaiting admin bank verification.');
-        } else if (res.data.paymentSummary?.paymentStatus === 'payment_rejected') {
+        } else if (res.data.paymentStatus === 'rejected') {
           setErrorMessage(`Payment rejected: ${res.data.rejectedReason || 'Could not verify transaction in bank account.'}`);
         } else {
           setMessage('Status: Awaiting UPI payment & reference submission.');
@@ -353,6 +245,12 @@ export function PaymentModal({
   };
 
   if (!isOpen) return null;
+
+  const currentStatus = statusData?.status || booking?.status || 'pending_payment';
+  const currentPaymentStatus = statusData?.paymentStatus || booking?.payment?.status || 'pending';
+  const isConfirmed = currentStatus === 'confirmed' || currentPaymentStatus === 'paid';
+  const isSubmitted = currentPaymentStatus === 'submitted' || currentStatus === 'pending_verification';
+  const isRejected = currentPaymentStatus === 'rejected' || currentPaymentStatus === 'failed';
 
   return (
     <AnimatePresence>
@@ -377,13 +275,13 @@ export function PaymentModal({
                   </span>
                 </div>
                 <h3 className="text-base sm:text-lg font-heading font-extrabold text-[#17171c] leading-tight">
-                  Make a Payment
+                  Complete Your Full Payment
                 </h3>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5">
-              {timeLeft && !isConfirmed && (
+              {timeLeft && !isConfirmed && !isSubmitted && (
                 <div
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tracking-tight shadow-xs ${
                     isHoldExpired
@@ -421,7 +319,7 @@ export function PaymentModal({
           )}
 
           {/* Success State Overlay if Verified */}
-          {isFullyPaid ? (
+          {isConfirmed ? (
             <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center flex-1 my-auto">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 shadow-sm">
                 <CheckCircle2 className="w-9 h-9" />
@@ -429,7 +327,7 @@ export function PaymentModal({
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold mb-2">
                 <Sparkles className="w-3 h-3 text-emerald-600" /> Payment Verified
               </span>
-              <h2 className="text-2xl font-extrabold text-slate-900">₹{verifiedAmountPaid.toLocaleString('en-IN')} Payment Received</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900">₹{advanceAmount} Payment Received</h2>
               <p className="text-sm text-slate-600 mt-1 max-w-md">
                 Your booking reference <strong className="font-mono text-[#8c5211]">{statusData?.bulkBookingId || booking?.bulkBookingId || bookingRef}</strong> is now confirmed. Redirecting to confirmation page...
               </p>
@@ -445,21 +343,15 @@ export function PaymentModal({
                   <div className="rounded-2xl border border-[#ebdcd0] bg-[#fcf8f4]/60 p-4 text-center shadow-xs flex flex-col items-center">
                     <div className="w-full flex items-center justify-between pb-2 mb-2 border-b border-[#f0e4da]">
                       <span className="text-xs font-bold tracking-tight text-slate-700">Scan to Pay</span>
-                      <span className="text-sm font-extrabold text-[#9e5e1e]">₹{isValidPaymentAmount ? paymentAmountValue.toLocaleString('en-IN') : '—'}</span>
+                      <span className="text-sm font-extrabold text-[#9e5e1e]">₹{advanceAmount}</span>
                     </div>
 
                     <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl bg-white p-2 border border-[#ebdcd0] shadow-sm flex items-center justify-center">
-                      {qrImage && canSubmitPayment && isValidPaymentAmount ? (
-                        <img
-                          src={qrImage}
-                          alt={`UPI payment QR for ₹${paymentAmountValue.toFixed(2)}`}
-                          className="w-full h-full object-contain rounded-lg"
-                        />
-                      ) : (
-                        <p className="px-3 text-center text-xs text-slate-500">
-                          {qrError || (isFullyPaid ? 'Payment completed.' : 'Enter a valid payment amount to generate your QR code.')}
-                        </p>
-                      )}
+                      <img
+                        src={qrCodeImg}
+                        alt="Rio Party House UPI QR Code"
+                        className="w-full h-full object-contain rounded-lg"
+                      />
                     </div>
 
                     <p className="text-xs font-semibold text-slate-700 mt-3">
@@ -473,7 +365,7 @@ export function PaymentModal({
                   {/* WhatsApp Help / Receipt Button */}
                   <a
                     href={`https://wa.me/918147897771?text=${encodeURIComponent(
-                      `Hello, I have completed my booking payment. Please find my payment confirmation screenshot attached. Kindly verify my payment.\n\nBooking Reference: ${bookingRef}\nVenue: ${theaterName || ''}${roomName ? ` · ${roomName}` : ''}\nDate & Slot: ${bookingDate || ''} | ${timeSlot || ''}\nAmount Paid: ₹${paymentAmountValue || 0}\nUPI Reference: ${upiRefInput || 'Please add the UTR'}`
+                      `Hello, I have completed my booking payment. Please find my payment confirmation screenshot attached. Kindly verify my payment and confirm my booking.\n\nBooking Reference: ${bookingRef}\nVenue: ${theaterName || ''}${roomName ? ` · ${roomName}` : ''}\nDate & Slot: ${bookingDate || ''} | ${timeSlot || ''}\nAmount Paid: ₹${advanceAmount}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -500,14 +392,14 @@ export function PaymentModal({
                         Payment Amount
                       </p>
                       <p className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight mt-0.5">
-                        ₹{isValidPaymentAmount ? paymentAmountValue.toLocaleString('en-IN') : '—'}
+                        ₹{advanceAmount}
                       </p>
                     </div>
                     <div className="text-right">
                       <span className="inline-block rounded-full bg-white/20 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-bold tracking-wide">
-                        {isFullyPaid ? 'Fully Paid' : 'Payment Amount'}
+                        Full Payment
                       </span>
-                      <p className="text-[10px] text-amber-100/80 mt-1">Remaining balance: ₹{remainingBalance.toLocaleString('en-IN')}</p>
+                      <p className="text-[10px] text-amber-100/80 mt-1">Remaining balance: ₹0</p>
                     </div>
                   </div>
 
@@ -565,54 +457,6 @@ export function PaymentModal({
                     </div>
                   </div>
 
-                  {/* Dynamic payment amount */}
-                  <div className="rounded-2xl border border-[#ebdcd0] bg-white p-3.5 shadow-xs space-y-3">
-                    <div>
-                      <label htmlFor="paymentAmount" className="block text-xs font-bold text-slate-800 mb-1.5">
-                        Enter Amount You Want to Pay
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <span className="h-10 px-3 flex items-center rounded-xl border border-[#ebdcd0] bg-[#fdfcf9] font-bold text-[#8c5211]">₹</span>
-                        <input
-                          id="paymentAmount"
-                          type="number"
-                          min="1"
-                          max={remainingBalance}
-                          step="0.01"
-                          inputMode="decimal"
-                          value={paymentAmount}
-                          onChange={(event) => setPaymentAmount(event.target.value)}
-                          disabled={!canSubmitPayment}
-                          placeholder="Enter payment amount"
-                          className="flex-1 h-10 px-3 text-sm rounded-xl border border-[#ebdcd0] bg-[#fdfcf9] font-semibold text-slate-900 outline-none focus:border-[#94551a] focus:ring-1 focus:ring-[#94551a]/20 disabled:bg-slate-100 disabled:text-slate-400"
-                        />
-                      </div>
-                      <p className={`text-[11px] mt-1 ${isValidPaymentAmount ? 'text-slate-500' : 'text-rose-600'}`}>
-                        Minimum ₹1 · Maximum ₹{remainingBalance.toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-center border-t border-[#ebdcd0] pt-2">
-                      <div>
-                        <p className="text-[10px] font-semibold text-slate-500">Total Booking Amount</p>
-                        <p className="text-sm font-extrabold text-slate-900">₹{paymentTotal.toLocaleString('en-IN')}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-slate-500">Already Paid</p>
-                        <p className="text-sm font-extrabold text-emerald-700">₹{verifiedAmountPaid.toLocaleString('en-IN')}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-slate-500">Remaining Balance</p>
-                        <p className="text-sm font-extrabold text-[#8c5211]">₹{remainingBalance.toLocaleString('en-IN')}</p>
-                      </div>
-                    </div>
-                    {isValidPaymentAmount && (
-                      <div className="rounded-xl bg-gradient-to-r from-[#94551a] to-[#784312] p-3 text-white flex items-center justify-between">
-                        <span className="text-xs font-bold">Scan to Pay</span>
-                        <span className="text-xl font-heading font-extrabold">₹{paymentAmountValue.toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* UPI Reference Input Card */}
                   <form onSubmit={handleSubmitUpi} className="rounded-2xl border border-[#ebdcd0] bg-white p-3.5 shadow-xs space-y-2">
                     <div className="flex items-center justify-between">
@@ -629,12 +473,12 @@ export function PaymentModal({
                         value={upiRefInput}
                         onChange={(e) => setUpiRefInput(e.target.value)}
                         placeholder={isHoldExpired ? 'Hold window expired' : 'e.g. 408219349812 or UTR No'}
-                        disabled={!canSubmitPayment}
+                        disabled={isConfirmed || isHoldExpired}
                         className="flex-1 h-10 px-3 text-xs rounded-xl border border-[#ebdcd0] bg-[#fdfcf9] font-mono text-slate-900 outline-none focus:border-[#94551a] focus:ring-1 focus:ring-[#94551a]/20 disabled:bg-slate-100 disabled:text-slate-400 transition"
                       />
                       <button
                         type="submit"
-                        disabled={submittingRef || !canSubmitPayment || !isValidPaymentAmount || !upiRefInput.trim()}
+                        disabled={submittingRef || isConfirmed || isHoldExpired || !upiRefInput.trim()}
                         className="h-10 px-4 rounded-xl bg-[#94551a] hover:bg-[#7e4714] active:scale-[0.98] text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs shrink-0"
                       >
                         {submittingRef ? (
@@ -642,24 +486,19 @@ export function PaymentModal({
                         ) : (
                           <Send className="h-3.5 w-3.5" />
                         )}
-                        <span>Submit Payment</span>
+                        <span>{isSubmitted ? 'Update Ref' : 'Submit Ref'}</span>
                       </button>
                     </div>
 
                     <p className="text-[11px] text-slate-500 leading-tight">
-                      Enter your UPI reference after paying the exact amount shown in the QR code.
+                      Paste the 12-digit transaction reference after completing UPI transfer.
                     </p>
-                    {paymentRecords.filter((record) => record.paymentStatus === 'pending_verification').map((record) => (
-                      <p key={record._id} className="text-[11px] text-indigo-700">
-                        ₹{Number(record.paymentAmount).toLocaleString('en-IN')} submitted — Pending Verification
-                      </p>
-                    ))}
                   </form>
 
                   {/* Payment Status Bar */}
                   <div className="rounded-2xl border border-[#ebdcd0] bg-[#fbf6f0] p-3 flex items-center justify-between shadow-2xs">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      {isFullyPaid ? (
+                      {isConfirmed ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                       ) : isSubmitted ? (
                         <Clock className="h-4 w-4 text-[#8c5211] shrink-0" />
@@ -670,26 +509,22 @@ export function PaymentModal({
                       )}
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-800 truncate">
-                          {isFullyPaid
-                            ? 'Payment Completed'
+                          {isConfirmed
+                            ? 'Payment Verified & Confirmed'
                             : isSubmitted
-                            ? 'Pending Verification'
-                            : isConfirmed
-                            ? 'Partially Paid'
+                            ? 'Verifying Payment'
                             : isRejected
                             ? 'Payment Failed / Rejected'
                             : 'Awaiting Payment'}
                         </p>
                         <p className="text-[11px] text-slate-500 truncate">
-                          {isFullyPaid
-                            ? 'Your booking is fully paid.'
+                          {isConfirmed
+                            ? 'Your slot reservation is confirmed!'
                             : isSubmitted
-                            ? `Admin is verifying ₹${pendingVerificationAmount.toLocaleString('en-IN')}. Pending amounts do not reduce the balance.`
-                            : isConfirmed
-                            ? `Verified payments total ₹${verifiedAmountPaid.toLocaleString('en-IN')}. You can pay the remaining balance.`
+                            ? 'Admin is verifying receipt with bank statement.'
                             : isRejected
                             ? 'Please check your reference or submit via WhatsApp.'
-                            : 'Enter a payment amount and pay using its matching UPI QR code.'}
+                            : 'Scan the QR code and pay the full booking amount to confirm your reservation.'}
                         </p>
                       </div>
                     </div>
