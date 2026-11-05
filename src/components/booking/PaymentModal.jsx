@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Send,
+  Smartphone,
   Sparkles,
 } from 'lucide-react';
 import qrCodeImg from '../../assets/qr code.jpeg';
@@ -46,11 +47,13 @@ export function PaymentModal({
   const [isVerifying, setIsVerifying] = useState(false);
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [statusWarning, setStatusWarning] = useState('');
   const [statusData, setStatusData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [isHoldExpired, setIsHoldExpired] = useState(false);
   const [whatsAppUrl, setWhatsAppUrl] = useState('');
   const paymentSubmissionInProgress = useRef(false);
+  const statusCheckInProgress = useRef(false);
 
   useEffect(() => {
     if (!isOpen || !booking?._id) {
@@ -157,16 +160,20 @@ export function PaymentModal({
       holdExpiresAt: booking?.holdExpiresAt || booking?.expiresAt,
     });
     setErrorMessage('');
+    setStatusWarning('');
     setMessage('');
 
     let isMounted = true;
     let interval;
 
     const checkCurrentStatus = async () => {
+      if (statusCheckInProgress.current) return;
+      statusCheckInProgress.current = true;
       try {
         const res = await paymentService.checkStatus(bookingDbId);
         if (!isMounted) return;
         if (res.success && res.data) {
+          setStatusWarning('');
           setStatusData(res.data);
           if (res.data.upiTransactionId && !upiRefInput) {
             setUpiRefInput(res.data.upiTransactionId);
@@ -188,12 +195,14 @@ export function PaymentModal({
           }
         }
       } catch (err) {
-        if (err?.response?.status === 404) {
-          setErrorMessage('Booking session expired or not found. Please choose an available time slot.');
+        if ([400, 403, 404].includes(err?.response?.status)) {
+          setErrorMessage(err.response?.data?.message || 'Booking session expired or not found. Please choose an available time slot.');
+          clearInterval(interval);
         } else {
-          setErrorMessage('Unable to check booking payment status. Please retry or contact support.');
+          setStatusWarning('Payment status could not be refreshed due to a temporary connection issue. Your payment is not marked verified; try Refresh again.');
         }
-        clearInterval(interval);
+      } finally {
+        statusCheckInProgress.current = false;
       }
     };
 
@@ -244,7 +253,7 @@ export function PaymentModal({
     currentPaymentStatus === 'submitted' ||
     currentPaymentStatus === 'pending_verification' ||
     currentStatus === 'pending_verification';
-  const isRejected = currentPaymentStatus === 'rejected' || currentPaymentStatus === 'failed';
+  const isRejected = ['rejected', 'failed', 'payment_rejected'].includes(currentPaymentStatus);
   const submittedPayments = statusData?.paymentRecords || booking?.paymentRecords || [];
   const latestSubmittedPayment = submittedPayments[submittedPayments.length - 1];
 
@@ -258,6 +267,21 @@ export function PaymentModal({
     timeZone: 'Asia/Kolkata',
   }) : '';
   const timeSlot = propTimeSlot || booking?.timeSlot || '';
+  const parsedPaymentAmount = Number(paymentAmountInput);
+  const canCreateUpiIntent =
+    Boolean(upiId) &&
+    Number.isFinite(parsedPaymentAmount) &&
+    parsedPaymentAmount >= 1 &&
+    parsedPaymentAmount <= remainingBalance &&
+    Math.round(parsedPaymentAmount * 100) === parsedPaymentAmount * 100;
+  const upiIntentParams = new URLSearchParams({
+    pa: upiId,
+    pn: theaterName,
+    am: canCreateUpiIntent ? parsedPaymentAmount.toFixed(2) : '',
+    cu: 'INR',
+    tn: `Booking ${bookingRef}`,
+  });
+  const upiIntentUrl = canCreateUpiIntent ? `upi://pay?${upiIntentParams.toString()}` : '';
 
   const handleSubmitUpi = async (e) => {
     e.preventDefault();
@@ -370,12 +394,15 @@ export function PaymentModal({
   };
 
   const handleManualCheck = async () => {
-    if (!bookingDbId) return;
+    if (!bookingDbId || statusCheckInProgress.current) return;
+    statusCheckInProgress.current = true;
     setIsVerifying(true);
     setErrorMessage('');
+    setStatusWarning('');
     try {
       const res = await paymentService.checkStatus(bookingDbId);
       if (res.success && res.data) {
+        setStatusWarning('');
         setStatusData(res.data);
         if (res.data.isExpired) {
           setIsHoldExpired(true);
@@ -393,15 +420,21 @@ export function PaymentModal({
           setMessage('Payment submitted — awaiting admin verification.');
         } else if (res.data.paymentStatus === 'submitted') {
           setMessage('Transaction submitted — awaiting admin bank verification.');
-        } else if (res.data.paymentStatus === 'rejected') {
-          setErrorMessage(`Payment rejected: ${res.data.rejectedReason || 'Could not verify transaction in bank account.'}`);
+        } else if (['rejected', 'payment_rejected'].includes(res.data.paymentStatus)) {
+          const latestPayment = res.data.paymentRecords?.[res.data.paymentRecords.length - 1];
+          setErrorMessage(`Payment rejected: ${latestPayment?.rejectionReason || res.data.rejectedReason || 'Could not verify transaction in bank account.'}`);
         } else {
           setMessage('Status: Awaiting UPI payment & reference submission.');
         }
       }
     } catch (err) {
-      setErrorMessage('Unable to query verification status right now. Please try again.');
+      if ([400, 403, 404].includes(err?.response?.status)) {
+        setErrorMessage(err.response?.data?.message || 'Unable to access this booking payment status.');
+      } else {
+        setStatusWarning('Payment status could not be refreshed due to a temporary connection issue. Your payment is not marked verified; try Refresh again.');
+      }
     } finally {
+      statusCheckInProgress.current = false;
       setIsVerifying(false);
     }
   };
@@ -639,16 +672,52 @@ export function PaymentModal({
                       <p className="text-[10px] text-slate-500">
                         Amount must be at least ₹1 and no more than the remaining balance. Pending claims do not reduce the balance until verified.
                       </p>
+                      {upiId ? (
+                        <a
+                          href={upiIntentUrl || undefined}
+                          onClick={(event) => {
+                            if (!upiIntentUrl || isHoldExpired || isConfirmed) {
+                              event.preventDefault();
+                              return;
+                            }
+                            setMessage('Complete payment in your UPI app, then return here and submit the UTR. App launch does not confirm payment.');
+                          }}
+                          aria-disabled={!upiIntentUrl || isHoldExpired || isConfirmed}
+                          className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#94551a] px-4 text-sm font-bold transition sm:hidden ${
+                            !upiIntentUrl || isHoldExpired || isConfirmed
+                              ? 'cursor-not-allowed bg-[#94551a]/50 text-white'
+                              : 'bg-[#94551a] text-white hover:bg-[#7e4714]'
+                          }`}
+                        >
+                          <Smartphone className="h-4 w-4" />
+                          Pay Using UPI App
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#94551a] bg-[#94551a]/50 px-4 text-sm font-bold text-white sm:hidden"
+                          title="UPI app payments require a configured UPI ID"
+                        >
+                          <Smartphone className="h-4 w-4" />
+                          Pay Using UPI App
+                        </button>
+                      )}
+                      {!upiId && (
+                        <p className="text-[10px] text-amber-800 sm:hidden">
+                          UPI app details are unavailable. Scan the static QR and complete payment manually.
+                        </p>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <label htmlFor="upiRef" className="text-xs font-bold text-slate-800">
                         UPI Reference / UTR Number <span className="text-amber-700">*</span>
                       </label>
                       <span className="text-[10px] font-medium text-slate-500">Found in your UPI app receipt</span>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row">
                       <input
                         id="upiRef"
                         type="text"
@@ -656,12 +725,12 @@ export function PaymentModal({
                         onChange={(e) => setUpiRefInput(e.target.value)}
                         placeholder={isHoldExpired ? 'Hold window expired' : 'Enter transaction reference / UTR'}
                         disabled={isConfirmed || isHoldExpired}
-                        className="flex-1 h-10 px-3 text-xs rounded-xl border border-[#ebdcd0] bg-[#fdfcf9] font-mono text-slate-900 outline-none focus:border-[#94551a] focus:ring-1 focus:ring-[#94551a]/20 disabled:bg-slate-100 disabled:text-slate-400 transition"
+                        className="h-10 w-full min-w-0 px-3 text-xs rounded-xl border border-[#ebdcd0] bg-[#fdfcf9] font-mono text-slate-900 outline-none focus:border-[#94551a] focus:ring-1 focus:ring-[#94551a]/20 disabled:bg-slate-100 disabled:text-slate-400 transition sm:flex-1"
                       />
                       <button
                         type="submit"
                         disabled={submittingRef || isConfirmed || isHoldExpired || !upiRefInput.trim() || !paymentAmountInput}
-                        className="h-10 px-4 rounded-xl bg-[#94551a] hover:bg-[#7e4714] active:scale-[0.98] text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs shrink-0"
+                        className="h-10 w-full justify-center px-4 rounded-xl bg-[#94551a] hover:bg-[#7e4714] active:scale-[0.98] text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs sm:w-auto sm:shrink-0"
                       >
                         {submittingRef ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -707,7 +776,7 @@ export function PaymentModal({
                             : isSubmitted
                             ? `₹${Number(latestSubmittedPayment?.paymentAmount || pendingVerificationAmount).toLocaleString('en-IN')} submitted; pending claims are not counted as paid.`
                             : isRejected
-                            ? 'Please verify your transaction reference number and try again.'
+                            ? (latestSubmittedPayment?.rejectionReason || statusData?.rejectedReason || 'Please verify your transaction reference number and try again.')
                             : isBookingConfirmed
                               ? `Your required advance is verified. Remaining balance: ₹${remainingBalance.toLocaleString('en-IN')}.`
                               : 'Scan the static QR, pay your chosen amount, then submit the amount and UTR for admin verification.'}
@@ -731,6 +800,13 @@ export function PaymentModal({
                     <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 flex items-start gap-2 shadow-2xs">
                       <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
                       <span>{message}</span>
+                    </div>
+                  )}
+
+                  {statusWarning && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900 flex items-start gap-2 shadow-2xs" role="status">
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
+                      <span>{statusWarning}</span>
                     </div>
                   )}
 
