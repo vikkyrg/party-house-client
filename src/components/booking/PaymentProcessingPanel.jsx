@@ -30,25 +30,15 @@ export function PaymentProcessingPanel({
     if (isSubmitting) {
       timer = setInterval(() => {
         setProgress((prev) => {
-          if (prev < 30) return prev + 4;
-          if (prev < 60) return prev + 2.5;
-          if (prev < 85) return prev + 1.2;
-          if (prev < 89) return prev + 0.4;
-          return prev; // holds at ~89% until backend API responds
+          if (prev < 45) return prev + 9;
+          if (prev < 80) return prev + 6;
+          if (prev < 94) return prev + 2;
+          return prev; // holds at ~94% until backend API responds
         });
-      }, 60);
+      }, 25);
     } else {
-      // Once API call finishes successfully
-      timer = setInterval(() => {
-        setProgress((prev) => {
-          if (prev < 100) {
-            const next = prev + 5;
-            return next >= 100 ? 100 : next;
-          }
-          clearInterval(timer);
-          return 100;
-        });
-      }, 20);
+      // Once API call finishes successfully, immediately reach 100%
+      setProgress(100);
     }
 
     return () => clearInterval(timer);
@@ -58,7 +48,7 @@ export function PaymentProcessingPanel({
     if (progress >= 100 && !isSubmitting && onComplete) {
       const exitTimer = setTimeout(() => {
         onComplete();
-      }, 200);
+      }, 60);
       return () => clearTimeout(exitTimer);
     }
   }, [progress, isSubmitting, onComplete]);

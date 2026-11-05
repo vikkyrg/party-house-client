@@ -54,6 +54,7 @@ export function BookingPage() {
   const [eventTypes, setEventTypes] = useState([]);
   const [addons, setAddons] = useState([]);
   const [configuredAdvanceAmount, setConfiguredAdvanceAmount] = useState(750);
+  const [paymentSettings, setPaymentSettings] = useState(null);
   
   // Get date and slot from URL
   const selectedDate = searchParams.get('date');
@@ -109,8 +110,11 @@ export function BookingPage() {
         if (roomRes?.success && roomRes.data) setRoom(roomRes.data);
         if (eventsRes.success) setEventTypes(eventsRes.data);
         if (addonsRes.success) setAddons(addonsRes.data);
-        if (settingsRes?.data?.advancePaymentAmount !== undefined) {
-          setConfiguredAdvanceAmount(settingsRes.data.advancePaymentAmount);
+        if (settingsRes?.data) {
+          setPaymentSettings(settingsRes.data);
+          if (settingsRes.data.advancePaymentAmount !== undefined) {
+            setConfiguredAdvanceAmount(settingsRes.data.advancePaymentAmount);
+          }
         }
       } catch (err) {
         setError(handleApiError(err));
@@ -212,20 +216,6 @@ export function BookingPage() {
     setError(null);
     try {
       const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
-
-
-
-      // Single Booking flow
-      // Real-time re-check availability before single booking
-      const availRes = await bookingService.checkAvailability(theaterId, selectedDate, roomId);
-      if (availRes.success) {
-        if (!availRes.data.availableSlots.includes(selectedTimeSlot)) {
-           setError('This slot is no longer available. Please choose another time.');
-           setIsProcessingPanelActive(false);
-           setSubmitting(false);
-           return;
-        }
-      }
 
       const payload = {
         theaterId,
@@ -1024,6 +1014,7 @@ export function BookingPage() {
         bookingDate={selectedDate || activeBooking?.bookingDate}
         timeSlot={displayTimeSlot || activeBooking?.timeSlot}
         advanceAmount={advanceAmount}
+        upiId={paymentSettings?.upiId || theater?.upiId}
         onPaymentSuccess={(id) => {
           setIsPaymentModalOpen(false);
           closePaymentModal();

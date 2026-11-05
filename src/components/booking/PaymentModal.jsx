@@ -54,7 +54,12 @@ export function PaymentModal({
     if (!isOpen) return undefined;
 
     let isMounted = true;
-    setUpiId(propUpiId || '');
+    if (propUpiId) {
+      setUpiId(propUpiId);
+      setUpiSettingsError('');
+      return undefined;
+    }
+    setUpiId('');
     setUpiSettingsError('');
     settingService.getPaymentSettings()
       .then((response) => {
