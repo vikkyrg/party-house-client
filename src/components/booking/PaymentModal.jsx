@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   RefreshCw,
   Send,
-  Smartphone,
   Sparkles,
 } from 'lucide-react';
 import qrCodeImg from '../../assets/qr code.jpeg';
@@ -148,10 +147,11 @@ export function PaymentModal({
 
     setUpiRefInput(booking?.payment?.upiTransactionId || '');
     const bookingTotal = Number(booking?.pricing?.total || 0);
+    const bookingAdvanceAmount = Number(booking?.pricing?.advanceAmount ?? advanceAmount) || 0;
     setPaymentAmountInput(
       bookingTotal > 0
-        ? String(Math.min(Number(advanceAmount) || 0, bookingTotal))
-        : String(Number(advanceAmount) || '')
+        ? String(Math.min(bookingAdvanceAmount, bookingTotal))
+        : String(bookingAdvanceAmount || '')
     );
     setStatusData({
       status: booking?.status || 'pending_payment',
@@ -216,7 +216,7 @@ export function PaymentModal({
       isMounted = false;
       clearInterval(interval);
     };
-  }, [isOpen, bookingDbId]);
+  }, [isOpen, bookingDbId, advanceAmount, booking?.pricing?.advanceAmount]);
 
   const handleCopyRef = () => {
     const textToCopy = statusData?.bulkBookingId || booking?.bulkBookingId || bookingRef;
@@ -281,7 +281,34 @@ export function PaymentModal({
     cu: 'INR',
     tn: `Booking ${bookingRef}`,
   });
-  const upiIntentUrl = canCreateUpiIntent ? `upi://pay?${upiIntentParams.toString()}` : '';
+  const upiIntentQuery = upiIntentParams.toString();
+  const upiIntentUrl = canCreateUpiIntent ? `upi://pay?${upiIntentQuery}` : '';
+  const upiAppOptions = [
+    {
+      label: 'Google Pay',
+      href: `tez://upi/pay?${upiIntentQuery}`,
+      icon: 'G',
+      iconClass: 'bg-white text-[#4285f4] border border-slate-200',
+    },
+    {
+      label: 'PhonePe',
+      href: `phonepe://pay?${upiIntentQuery}`,
+      icon: 'P',
+      iconClass: 'bg-[#5f259f] text-white',
+    },
+    {
+      label: 'Paytm',
+      href: `paytmmp://pay?${upiIntentQuery}`,
+      icon: '₹',
+      iconClass: 'bg-[#00baf2] text-white',
+    },
+    {
+      label: 'Other UPI Apps',
+      href: upiIntentUrl,
+      icon: 'UPI',
+      iconClass: 'bg-[#138808] text-white',
+    },
+  ];
 
   const handleSubmitUpi = async (e) => {
     e.preventDefault();
@@ -304,6 +331,10 @@ export function PaymentModal({
     const trimmedUtr = upiRefInput.trim();
     if (!trimmedUtr) {
       setErrorMessage('Please enter the UPI transaction reference / UTR number.');
+      return;
+    }
+    if (trimmedUtr.length < 6 || trimmedUtr.length > 35) {
+      setErrorMessage('UPI transaction references must be between 6 and 35 characters.');
       return;
     }
     if (!bookingDbId) {
@@ -341,7 +372,7 @@ export function PaymentModal({
         const summaryTotal = Number(res.data?.paymentSummary?.totalBookingAmount ?? totalBookingAmount);
         const summaryVerified = Number(res.data?.paymentSummary?.verifiedAmountPaid ?? verifiedPaidAmount);
         const summaryPending = Number(res.data?.paymentSummary?.pendingVerificationAmount ?? submittedAmount);
-        const summaryRemaining = Number(res.data?.paymentSummary?.remainingBalance ?? Math.max(0, summaryTotal - summaryVerified));
+        const summaryRemaining = Math.max(0, summaryTotal - summaryVerified - summaryPending);
 
         const whatsappMessage = [
           'NEW BOOKING PAYMENT RECEIVED',
@@ -349,7 +380,7 @@ export function PaymentModal({
           'A customer has submitted a booking payment.',
           '',
           'BOOKING DETAILS:',
-          `Booking Reference: ${bookingRef || 'N/A'}`,
+          `Booking ID: ${bookingRef || 'N/A'}`,
           `Customer Name: ${booking?.customerDetails?.name || booking?.user?.name || 'Customer'}`,
           `Customer Mobile: ${booking?.customerDetails?.phone || booking?.user?.phone || 'N/A'}`,
           `Venue: ${theaterName || 'Rio Party House'}`,
@@ -359,10 +390,10 @@ export function PaymentModal({
           '',
           'PAYMENT DETAILS:',
           `Total Booking Amount: ₹${summaryTotal.toLocaleString('en-IN')}`,
-          `Amount Submitted: ₹${submittedAmount.toLocaleString('en-IN')}`,
+          `Advance Amount Paid (pending verification): ₹${submittedAmount.toLocaleString('en-IN')}`,
           `Verified Paid: ₹${summaryVerified.toLocaleString('en-IN')}`,
           `Pending Verification: ₹${summaryPending.toLocaleString('en-IN')}`,
-          `Remaining Balance: ₹${summaryRemaining.toLocaleString('en-IN')}`,
+          `Remaining Balance (after verification): ₹${summaryRemaining.toLocaleString('en-IN')}`,
           `UPI Reference / UTR: ${trimmedUtr}`,
         ].join('\n');
 
@@ -527,9 +558,9 @@ export function PaymentModal({
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
                 
                 {/* Left Column: QR Code */}
-                <div className="md:col-span-5 flex flex-col gap-3.5">
+                <div className="hidden md:col-span-5 md:flex flex-col gap-3.5">
                   {/* QR Card */}
-                  <div className="rounded-2xl border border-[#ebdcd0] bg-[#fcf8f4]/60 p-4 text-center shadow-xs flex flex-col items-center">
+                  <div className="hidden rounded-2xl border border-[#ebdcd0] bg-[#fcf8f4]/60 p-4 text-center shadow-xs flex-col items-center md:flex">
                     <div className="w-full flex items-center justify-between pb-2 mb-2 border-b border-[#f0e4da]">
                       <span className="text-xs font-bold tracking-tight text-slate-700">Static UPI QR</span>
                       <span className="text-sm font-extrabold text-[#9e5e1e]">Advance ₹{advanceAmount}</span>
@@ -567,6 +598,49 @@ export function PaymentModal({
 
                 {/* Right Column: Amount Badge, Booking Details, UTR input, Status */}
                 <div className="md:col-span-7 flex flex-col gap-3.5">
+                  <section className="md:hidden rounded-2xl border border-[#ebdcd0] bg-[#fcf8f4]/70 p-3.5" aria-label="UPI payment options">
+                    <h4 className="text-sm font-extrabold text-slate-900">Pay with a UPI app</h4>
+                    <p className="mt-1 text-[11px] text-slate-600">
+                      Pay ₹{paymentAmountInput ? Number(paymentAmountInput).toLocaleString('en-IN') : '—'} to {theaterName}. Return here to submit your UTR.
+                    </p>
+                    {upiId ? (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {upiAppOptions.map((option) => (
+                          <a
+                            key={option.label}
+                            href={canCreateUpiIntent ? option.href : undefined}
+                            aria-label={option.label}
+                            aria-disabled={!canCreateUpiIntent || isHoldExpired || isConfirmed}
+                            onClick={(event) => {
+                              if (!canCreateUpiIntent || isHoldExpired || isConfirmed) {
+                                event.preventDefault();
+                                return;
+                              }
+                              setMessage('Complete payment in your UPI app, then return here and submit the UTR. App launch does not confirm payment.');
+                            }}
+                            className={`flex min-w-0 items-center gap-2 rounded-xl border border-[#ebdcd0] bg-white p-2 text-left transition ${
+                              !canCreateUpiIntent || isHoldExpired || isConfirmed
+                                ? 'cursor-not-allowed opacity-50'
+                                : 'hover:border-[#94551a] hover:bg-[#fffaf5] active:scale-[0.98]'
+                            }`}
+                          >
+                            <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${option.iconClass}`}>
+                              {option.icon}
+                            </span>
+                            <span className="min-w-0 truncate text-xs font-bold text-slate-800">{option.label}</span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-amber-800" role="status">
+                        UPI app payments are unavailable because the business UPI ID is not configured.
+                      </p>
+                    )}
+                    <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+                      Your payment remains pending until an admin verifies it. If an app does not open, choose Other UPI Apps.
+                    </p>
+                  </section>
+
                   {/* Amount Callout */}
                   <div className="rounded-2xl bg-gradient-to-r from-[#94551a] to-[#784312] p-4 text-white shadow-xs flex items-center justify-between">
                     <div>
@@ -672,42 +746,6 @@ export function PaymentModal({
                       <p className="text-[10px] text-slate-500">
                         Amount must be at least ₹1 and no more than the remaining balance. Pending claims do not reduce the balance until verified.
                       </p>
-                      {upiId ? (
-                        <a
-                          href={upiIntentUrl || undefined}
-                          onClick={(event) => {
-                            if (!upiIntentUrl || isHoldExpired || isConfirmed) {
-                              event.preventDefault();
-                              return;
-                            }
-                            setMessage('Complete payment in your UPI app, then return here and submit the UTR. App launch does not confirm payment.');
-                          }}
-                          aria-disabled={!upiIntentUrl || isHoldExpired || isConfirmed}
-                          className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#94551a] px-4 text-sm font-bold transition sm:hidden ${
-                            !upiIntentUrl || isHoldExpired || isConfirmed
-                              ? 'cursor-not-allowed bg-[#94551a]/50 text-white'
-                              : 'bg-[#94551a] text-white hover:bg-[#7e4714]'
-                          }`}
-                        >
-                          <Smartphone className="h-4 w-4" />
-                          Pay Using UPI App
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#94551a] bg-[#94551a]/50 px-4 text-sm font-bold text-white sm:hidden"
-                          title="UPI app payments require a configured UPI ID"
-                        >
-                          <Smartphone className="h-4 w-4" />
-                          Pay Using UPI App
-                        </button>
-                      )}
-                      {!upiId && (
-                        <p className="text-[10px] text-amber-800 sm:hidden">
-                          UPI app details are unavailable. Scan the static QR and complete payment manually.
-                        </p>
-                      )}
                     </div>
 
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -745,6 +783,19 @@ export function PaymentModal({
                       Enter the reference from your UPI app receipt. Each reference can only be submitted once.
                     </p>
                   </form>
+
+                  {latestSubmittedPayment && (
+                    <div className="md:hidden rounded-2xl border border-indigo-200 bg-indigo-50 p-3 text-xs" role="status">
+                      <p className="font-bold text-indigo-900">Payment details submitted — Pending Verification</p>
+                      <div className="mt-2 flex justify-between gap-3 text-indigo-900">
+                        <span>Advance amount paid</span>
+                        <span className="font-bold">₹{Number(latestSubmittedPayment.paymentAmount || 0).toLocaleString('en-IN')}</span>
+                      </div>
+                      <p className="mt-1 break-all text-indigo-800">
+                        UTR / Reference: <span className="font-mono font-semibold">{latestSubmittedPayment.transactionReference}</span>
+                      </p>
+                    </div>
+                  )}
 
                   {/* Payment Status Bar */}
                   <div className="rounded-2xl border border-[#ebdcd0] bg-[#fbf6f0] p-3 flex items-center justify-between shadow-2xs">
