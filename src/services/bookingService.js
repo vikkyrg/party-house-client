@@ -8,6 +8,11 @@ export const bookingService = {
     return data;
   },
 
+  createHold: async (payload) => {
+    const { data } = await apiClient.post('/bookings/hold', payload);
+    return data;
+  },
+
   createBooking: async (payload) => {
     const { data } = await apiClient.post('/bookings', payload);
     return data;

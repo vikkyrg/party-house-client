@@ -45,13 +45,13 @@ export function PaymentProcessingPanel({
   }, [isSubmitting, error]);
 
   useEffect(() => {
-    if (progress >= 100 && !isSubmitting && onComplete) {
+    if (progress >= 100 && !isSubmitting && !error && onComplete) {
       const exitTimer = setTimeout(() => {
         onComplete();
       }, 60);
       return () => clearTimeout(exitTimer);
     }
-  }, [progress, isSubmitting, onComplete]);
+  }, [progress, isSubmitting, error, onComplete]);
 
   const displayPercent = Math.min(100, Math.floor(progress));
 
@@ -154,4 +154,3 @@ export function PaymentProcessingPanel({
 }
 
 export default PaymentProcessingPanel;
-

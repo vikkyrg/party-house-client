@@ -93,7 +93,9 @@ export function useActiveBookingHold() {
           }
         }
       } catch (e) {
-        // keep local state if network temporarily drops
+        if (e?.response?.status === 404) {
+          clearActiveBooking();
+        }
       }
     };
 

@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { bookingService } from '../services/bookingService';
-import { paymentService } from '../services/paymentService';
 import { theaterService } from '../services/theaterService';
 import { roomService } from '../services/roomService';
 import { useAuthStore } from '../store/authStore';
@@ -41,8 +40,6 @@ export function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isProcessingPanelActive, setIsProcessingPanelActive] = useState(false);
   const {
-    activeBooking,
-    isPaymentModalOpen: isGlobalModalOpen,
     setActiveBooking,
     openPaymentModal,
     closePaymentModal,
@@ -88,6 +85,8 @@ export function BookingPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [createdBooking, setCreatedBooking] = useState(null);
+  const [slotHoldId, setSlotHoldId] = useState('');
+  const bookingSubmissionInProgress = useRef(false);
   
   useEffect(() => {
     if (!roomId || !selectedDate || !selectedTimeSlot) {
@@ -96,15 +95,39 @@ export function BookingPage() {
       return;
     }
 
+    setLoading(true);
+    setSlotHoldId('');
     const fetchData = async () => {
       try {
-        const [theaterRes, roomRes, eventsRes, addonsRes, settingsRes] = await Promise.all([
+        const holdStorageKey = `booking-hold:${theaterId}:${roomId}:${selectedDate}:${selectedTimeSlotId || selectedTimeSlot}`;
+        let holdId = window.sessionStorage.getItem(holdStorageKey);
+        if (!holdId) {
+          const randomBytes = window.crypto.getRandomValues(new Uint8Array(12));
+          holdId = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+          window.sessionStorage.setItem(holdStorageKey, holdId);
+        }
+
+        const [theaterRes, roomRes, eventsRes, addonsRes, settingsRes, holdRes] = await Promise.all([
           theaterService.getTheaterById(theaterId),
           roomService.getRoom(roomId),
           contentService.getEventTypes(),
           contentService.getAddons(),
-          settingService.getPaymentSettings().catch(() => null)
+          settingService.getPaymentSettings().catch(() => null),
+          bookingService.createHold({
+            theaterId,
+            roomId,
+            date: selectedDate,
+            timeSlot: selectedTimeSlot,
+            timeSlotId: selectedTimeSlotId || undefined,
+            duration,
+            holdId,
+          }),
         ]);
+        if (!holdRes.success || !holdRes.data?.holdId) {
+          throw new Error(holdRes.message || 'The selected time slot could not be reserved.');
+        }
+        setSlotHoldId(holdRes.data.holdId);
+        window.sessionStorage.setItem(holdStorageKey, holdRes.data.holdId);
         
         if (theaterRes.success) setTheater(theaterRes.data);
         if (roomRes?.success && roomRes.data) setRoom(roomRes.data);
@@ -123,7 +146,7 @@ export function BookingPage() {
       }
     };
     fetchData();
-  }, [theaterId, roomId, selectedDate, selectedTimeSlot, navigate]);
+  }, [theaterId, roomId, selectedDate, selectedTimeSlot, selectedTimeSlotId, duration, navigate]);
 
   const handleAddonToggle = (addonId) => {
     setSelectedAddons(prev => {
@@ -209,8 +232,14 @@ export function BookingPage() {
   };
 
   const handleCreateBooking = async () => {
+    if (bookingSubmissionInProgress.current) return;
     if (!validateStep()) return;
+    if (!slotHoldId) {
+      setError('Your selected slot is still being reserved. Please wait a moment and try again.');
+      return;
+    }
 
+    bookingSubmissionInProgress.current = true;
     setSubmitting(true);
     setIsProcessingPanelActive(true);
     setError(null);
@@ -226,6 +255,7 @@ export function BookingPage() {
         duration,
         timeSlot: selectedTimeSlot,
         timeSlotId: selectedTimeSlotId || undefined,
+        slotHoldId: slotHoldId || undefined,
         eventTypeId: selectedEventType,
         cake: selectedCake ? {
           cakeId: selectedCake.cakeId,
@@ -243,22 +273,24 @@ export function BookingPage() {
       };
       
       const bookingRes = await bookingService.createBooking(payload);
-      if (bookingRes.success) {
-        const bookingRecord = bookingRes.data;
-        setCreatedBooking(bookingRecord);
-        setActiveBooking({
-          ...bookingRecord,
-          theaterName: theater?.name || bookingRecord.theaterName,
-          roomName: room?.name || bookingRecord.roomName,
-          bookingDate: selectedDate,
-          timeSlot: displayTimeSlot,
-        });
+      if (!bookingRes.success || !bookingRes.data?._id) {
+        throw new Error(bookingRes.message || 'The booking could not be created. Please try again.');
       }
+      const bookingRecord = bookingRes.data;
+      setCreatedBooking(bookingRecord);
+      setActiveBooking({
+        ...bookingRecord,
+        theaterName: theater?.name || bookingRecord.theaterName,
+        roomName: room?.name || bookingRecord.roomName,
+        bookingDate: selectedDate,
+        timeSlot: displayTimeSlot,
+      });
     } catch (err) {
       setError(handleApiError(err));
       setIsProcessingPanelActive(false);
       setSubmitting(false);
     } finally {
+      bookingSubmissionInProgress.current = false;
       setSubmitting(false);
     }
   };
@@ -334,7 +366,7 @@ export function BookingPage() {
                   </h2>
                   <div className="text-[11px] font-bold text-[#8c5211] mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {theater?.city?.name || 'Bengaluru'} · {theater?.name}</span>
-                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })}</span>
                     <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {selectedTimeSlot}</span>
                   </div>
                 </div>
@@ -1002,24 +1034,24 @@ export function BookingPage() {
       </div>
 
       {/* Responsive QR Payment Modal */}
-            <PaymentModal
-        isOpen={isPaymentModalOpen || (isGlobalModalOpen && (activeBooking?._id === (createdBooking?._id || activeBooking?._id)))}
+      <PaymentModal
+        isOpen={Boolean(isPaymentModalOpen && createdBooking?._id)}
         onClose={() => {
           setIsPaymentModalOpen(false);
           closePaymentModal();
         }}
-        booking={createdBooking || activeBooking}
-        theaterName={theater?.name || activeBooking?.theaterName}
-        roomName={room?.name || activeBooking?.roomName}
-        bookingDate={selectedDate || activeBooking?.bookingDate}
-        timeSlot={displayTimeSlot || activeBooking?.timeSlot}
+        booking={createdBooking}
+        theaterName={theater?.name || createdBooking?.theaterName}
+        roomName={room?.name || createdBooking?.roomName}
+        bookingDate={selectedDate || createdBooking?.date}
+        timeSlot={displayTimeSlot || createdBooking?.timeSlot}
         advanceAmount={advanceAmount}
         upiId={paymentSettings?.upiId || theater?.upiId}
         onPaymentSuccess={(id) => {
           setIsPaymentModalOpen(false);
           closePaymentModal();
           clearActiveBooking();
-          navigate(`/booking/success/${id || createdBooking?._id || activeBooking?._id}`);
+          navigate(`/booking/success/${id || createdBooking?._id}`);
         }}
       />
     </div>

@@ -111,8 +111,26 @@ This document details the expected API contracts between the CS Cinemas frontend
 ### Check Availability
 - **Method:** `GET`
 - **URL:** `/bookings/check-availability`
-- **Query Params:** `theaterId`, `date`
+- **Query Params:** `roomId`, `date` (`YYYY-MM-DD`)
 - **Auth Required:** No
+
+### Reserve a Selected Slot
+- **Method:** `POST`
+- **URL:** `/bookings/hold`
+- **Auth Required:** Yes (guest/customer session)
+- **Request Body:**
+  ```json
+  {
+    "theaterId": "THEATER_ID",
+    "roomId": "ROOM_ID",
+    "date": "YYYY-MM-DD",
+    "timeSlot": "10:30 AM - 12:30 PM",
+    "timeSlotId": "ROOM_SLOT_ID",
+    "duration": 2,
+    "holdId": "24_CHARACTER_HEX_ID"
+  }
+  ```
+- Reuse the returned `holdId` when creating the booking. Holds expire after 10 minutes.
 
 ### Create Booking
 - **Method:** `POST`
@@ -122,13 +140,18 @@ This document details the expected API contracts between the CS Cinemas frontend
   ```json
   {
     "theaterId": "THEATER_ID",
+    "roomId": "ROOM_ID",
     "date": "YYYY-MM-DD",
-    "timeSlot": "2:00 PM - 5:00 PM",
+    "timeSlot": "10:30 AM - 12:30 PM",
+    "timeSlotId": "ROOM_SLOT_ID",
+    "slotHoldId": "HOLD_ID_FROM_RESERVE_REQUEST",
+    "duration": 2,
     "eventTypeId": "EVENT_TYPE_ID",
     "customerDetails": {
       "name": "John Doe",
       "phone": "8147897771",
-      "email": "john@example.com"
+      "email": "john@example.com",
+      "members": 2
     }
   }
   ```
@@ -142,16 +165,24 @@ This document details the expected API contracts between the CS Cinemas frontend
 
 ## 5. Payment
 
-### Create Order
+### Submit Static QR Payment Confirmation
 - **Method:** `POST`
-- **URL:** `/payment/create-order`
+- **URL:** `/payment/submit-upi`
 - **Auth Required:** Yes (Bearer Token)
 - **Request Body:**
   ```json
   {
-    "bookingId": "BOOKING_ID"
+    "bookingId": "BOOKING_ID",
+    "paymentAmount": 750,
+    "transactionReference": "UPI_TRANSACTION_REFERENCE"
   }
   ```
+- The customer-entered amount is stored as a pending payment record until an admin verifies it.
+
+### Check Payment Status
+- **Method:** `GET`
+- **URL:** `/payment/status/:bookingId`
+- **Auth Required:** Yes (booking owner or admin)
 
 ---
 

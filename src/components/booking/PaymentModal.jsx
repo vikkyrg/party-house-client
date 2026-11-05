@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { settingService } from '../../services/settingService';
 import {
@@ -50,9 +50,10 @@ export function PaymentModal({
   const [timeLeft, setTimeLeft] = useState(null);
   const [isHoldExpired, setIsHoldExpired] = useState(false);
   const [whatsAppUrl, setWhatsAppUrl] = useState('');
+  const paymentSubmissionInProgress = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || !booking?._id) {
       setWhatsAppUrl('');
       return undefined;
     }
@@ -79,7 +80,7 @@ export function PaymentModal({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, propUpiId]);
+  }, [isOpen, propUpiId, booking?._id]);
 
   // Authoritative hold expiration time computation
   useEffect(() => {
@@ -159,6 +160,7 @@ export function PaymentModal({
     setMessage('');
 
     let isMounted = true;
+    let interval;
 
     const checkCurrentStatus = async () => {
       try {
@@ -172,6 +174,11 @@ export function PaymentModal({
 
           if (res.data.isExpired) {
             setIsHoldExpired(true);
+            setErrorMessage('Your reservation hold has expired. Please select an available slot and rebook.');
+            clearInterval(interval);
+          } else if (res.data.status === 'cancelled') {
+            setErrorMessage('This booking was cancelled and is no longer available for payment.');
+            clearInterval(interval);
           }
 
           if (Number(res.data.paymentSummary?.remainingBalance) === 0 && onPaymentSuccess) {
@@ -181,17 +188,18 @@ export function PaymentModal({
           }
         }
       } catch (err) {
-        // Silently retry on interval
+        if (err?.response?.status === 404) {
+          setErrorMessage('Booking session expired or not found. Please choose an available time slot.');
+        } else {
+          setErrorMessage('Unable to check booking payment status. Please retry or contact support.');
+        }
+        clearInterval(interval);
       }
     };
 
     checkCurrentStatus();
 
-    const interval = setInterval(() => {
-      if (statusData?.status === 'cancelled' || statusData?.isExpired) {
-        clearInterval(interval);
-        return;
-      }
+    interval = setInterval(() => {
       checkCurrentStatus();
     }, 5000);
 
@@ -247,11 +255,13 @@ export function PaymentModal({
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    timeZone: 'Asia/Kolkata',
   }) : '';
   const timeSlot = propTimeSlot || booking?.timeSlot || '';
 
   const handleSubmitUpi = async (e) => {
     e.preventDefault();
+    if (paymentSubmissionInProgress.current) return;
     const submittedAmount = Number(paymentAmountInput);
     if (
       !Number.isFinite(submittedAmount) ||
@@ -282,6 +292,7 @@ export function PaymentModal({
       return;
     }
 
+    paymentSubmissionInProgress.current = true;
     setSubmittingRef(true);
     setErrorMessage('');
     setMessage('');
@@ -353,6 +364,7 @@ export function PaymentModal({
         setIsHoldExpired(true);
       }
     } finally {
+      paymentSubmissionInProgress.current = false;
       setSubmittingRef(false);
     }
   };
@@ -394,7 +406,7 @@ export function PaymentModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !bookingDbId) return null;
 
   return (
     <AnimatePresence>
