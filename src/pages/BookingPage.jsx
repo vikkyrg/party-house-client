@@ -704,7 +704,7 @@ export function BookingPage() {
 
                                   {/* Addon Details */}
                                   <div className="flex flex-1 flex-col justify-between p-4 w-full">
-                                    <h3 className="text-[16px] font-bold text-[#1a1c21] leading-tight mb-1 line-clamp-2">{addon.name}</h3>
+                                    <h3 className="mb-1 whitespace-normal break-words text-[16px] font-bold leading-tight text-[#1a1c21]">{addon.name}</h3>
                                     <p className="text-[15px] text-[#8c5211] font-extrabold mt-1">₹{displayPrice}</p>
                                   </div>
                                 </button>

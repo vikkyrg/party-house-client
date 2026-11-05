@@ -49,9 +49,14 @@ export function PaymentModal({
   const [statusData, setStatusData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [isHoldExpired, setIsHoldExpired] = useState(false);
+  const [whatsAppUrl, setWhatsAppUrl] = useState('');
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen) {
+      setWhatsAppUrl('');
+      return undefined;
+    }
+    setWhatsAppUrl('');
 
     let isMounted = true;
     if (propUpiId) {
@@ -235,6 +240,16 @@ export function PaymentModal({
   const submittedPayments = statusData?.paymentRecords || booking?.paymentRecords || [];
   const latestSubmittedPayment = submittedPayments[submittedPayments.length - 1];
 
+  const theaterName = propTheaterName || booking?.theater?.name || booking?.theaterName || 'Rio Party House';
+  const roomName = propRoomName || booking?.roomName || booking?.room?.name || 'Private Theater';
+  const rawDate = propBookingDate || booking?.date || booking?.bookingDate;
+  const bookingDate = rawDate ? new Date(rawDate).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }) : '';
+  const timeSlot = propTimeSlot || booking?.timeSlot || '';
+
   const handleSubmitUpi = async (e) => {
     e.preventDefault();
     const submittedAmount = Number(paymentAmountInput);
@@ -252,7 +267,8 @@ export function PaymentModal({
       );
       return;
     }
-    if (!upiRefInput.trim()) {
+    const trimmedUtr = upiRefInput.trim();
+    if (!trimmedUtr) {
       setErrorMessage('Please enter the UPI transaction reference / UTR number.');
       return;
     }
@@ -269,12 +285,13 @@ export function PaymentModal({
     setSubmittingRef(true);
     setErrorMessage('');
     setMessage('');
+    setWhatsAppUrl('');
 
     try {
       const res = await paymentService.submitUpiPayment({
         bookingId: bookingDbId,
         paymentAmount: submittedAmount,
-        transactionReference: upiRefInput.trim(),
+        transactionReference: trimmedUtr,
       });
 
       if (res.success) {
@@ -284,6 +301,46 @@ export function PaymentModal({
         if (res.data) {
           setStatusData(res.data);
         }
+
+        // Build WhatsApp notification message with actual saved booking & payment information
+        const summaryTotal = Number(res.data?.paymentSummary?.totalBookingAmount ?? totalBookingAmount);
+        const summaryVerified = Number(res.data?.paymentSummary?.verifiedAmountPaid ?? verifiedPaidAmount);
+        const summaryPending = Number(res.data?.paymentSummary?.pendingVerificationAmount ?? submittedAmount);
+        const summaryRemaining = Number(res.data?.paymentSummary?.remainingBalance ?? Math.max(0, summaryTotal - summaryVerified));
+
+        const whatsappMessage = [
+          'NEW BOOKING PAYMENT RECEIVED',
+          '',
+          'A customer has submitted a booking payment.',
+          '',
+          'BOOKING DETAILS:',
+          `Booking Reference: ${bookingRef || 'N/A'}`,
+          `Customer Name: ${booking?.customerDetails?.name || booking?.user?.name || 'Customer'}`,
+          `Customer Mobile: ${booking?.customerDetails?.phone || booking?.user?.phone || 'N/A'}`,
+          `Venue: ${theaterName || 'Rio Party House'}`,
+          `Room: ${roomName || 'Sigma'}`,
+          `Booking Date: ${bookingDate || 'N/A'}`,
+          `Time Slot: ${timeSlot || 'N/A'}`,
+          '',
+          'PAYMENT DETAILS:',
+          `Total Booking Amount: ₹${summaryTotal.toLocaleString('en-IN')}`,
+          `Amount Submitted: ₹${submittedAmount.toLocaleString('en-IN')}`,
+          `Verified Paid: ₹${summaryVerified.toLocaleString('en-IN')}`,
+          `Pending Verification: ₹${summaryPending.toLocaleString('en-IN')}`,
+          `Remaining Balance: ₹${summaryRemaining.toLocaleString('en-IN')}`,
+          `UPI Reference / UTR: ${trimmedUtr}`,
+        ].join('\n');
+
+        const singleWhatsAppUrl = `https://wa.me/918147897771?text=${encodeURIComponent(whatsappMessage)}`;
+        setWhatsAppUrl(singleWhatsAppUrl);
+
+        // Open single WhatsApp chat for +91 81478 97771
+        try {
+          window.open(singleWhatsAppUrl, '_blank', 'noopener,noreferrer');
+        } catch {
+          // Popup blocked by browser; clickable link is visible below
+        }
+
         setUpiRefInput('');
         setPaymentAmountInput('');
       } else {
@@ -299,16 +356,6 @@ export function PaymentModal({
       setSubmittingRef(false);
     }
   };
-
-  const theaterName = propTheaterName || booking?.theater?.name || booking?.theaterName || 'Rio Party House';
-  const roomName = propRoomName || booking?.roomName || booking?.room?.name || 'Private Theater';
-  const rawDate = propBookingDate || booking?.date || booking?.bookingDate;
-  const bookingDate = rawDate ? new Date(rawDate).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }) : '';
-  const timeSlot = propTimeSlot || booking?.timeSlot || '';
 
   const handleManualCheck = async () => {
     if (!bookingDbId) return;
@@ -434,7 +481,7 @@ export function PaymentModal({
             <div className="p-5 sm:p-7 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
                 
-                {/* Left Column: QR Code & WhatsApp CTA */}
+                {/* Left Column: QR Code */}
                 <div className="md:col-span-5 flex flex-col gap-3.5">
                   {/* QR Card */}
                   <div className="rounded-2xl border border-[#ebdcd0] bg-[#fcf8f4]/60 p-4 text-center shadow-xs flex flex-col items-center">
@@ -471,26 +518,6 @@ export function PaymentModal({
                       <p className="mt-2 text-[10px] text-amber-800">{upiSettingsError}</p>
                     )}
                   </div>
-
-                  {/* WhatsApp Help / Receipt Button */}
-                  <a
-                    href={`https://wa.me/918147897771?text=${encodeURIComponent(
-                      `Hello, I have completed my booking payment. Please find my payment confirmation screenshot attached. Kindly verify my payment and confirm my booking.\n\nBooking Reference: ${bookingRef}\nVenue: ${theaterName || ''}${roomName ? ` · ${roomName}` : ''}\nDate & Slot: ${bookingDate || ''} | ${timeSlot || ''}\nAmount Paid: ₹${paymentAmountInput || advanceAmount}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2.5 px-3.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70 text-emerald-800 text-xs font-bold transition-all flex items-center justify-between group shadow-2xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-                        </svg>
-                      </div>
-                      <span className="font-semibold text-slate-800">Share Receipt on WhatsApp</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-emerald-700 underline group-hover:no-underline">Send</span>
-                  </a>
                 </div>
 
                 {/* Right Column: Amount Badge, Booking Details, UTR input, Status */}
@@ -668,7 +695,7 @@ export function PaymentModal({
                             : isSubmitted
                             ? `₹${Number(latestSubmittedPayment?.paymentAmount || pendingVerificationAmount).toLocaleString('en-IN')} submitted; pending claims are not counted as paid.`
                             : isRejected
-                            ? 'Please check your reference or submit via WhatsApp.'
+                            ? 'Please verify your transaction reference number and try again.'
                             : isBookingConfirmed
                               ? `Your required advance is verified. Remaining balance: ₹${remainingBalance.toLocaleString('en-IN')}.`
                               : 'Scan the static QR, pay your chosen amount, then submit the amount and UTR for admin verification.'}
@@ -692,6 +719,32 @@ export function PaymentModal({
                     <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 flex items-start gap-2 shadow-2xs">
                       <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
                       <span>{message}</span>
+                    </div>
+                  )}
+
+                  {whatsAppUrl && (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 space-y-2.5 shadow-2xs">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-emerald-900">
+                          WhatsApp Notification Chat:
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-medium">
+                          Click below if popup was blocked:
+                        </span>
+                      </div>
+                      <div>
+                        <a
+                          href={whatsAppUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs shadow-xs transition w-full"
+                        >
+                          <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                          </svg>
+                          <span>Send WhatsApp Notification (+91 81478 97771)</span>
+                        </a>
+                      </div>
                     </div>
                   )}
 

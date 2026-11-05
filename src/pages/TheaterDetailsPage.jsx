@@ -181,7 +181,7 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
     </div>
     <div className="flex flex-1 flex-col p-3">
       <div className="flex items-start justify-between gap-2"><div><h3 className="text-[18px] font-extrabold text-[#17171c]">{room.name}</h3>{selected && <p className="mt-1 text-[10px] font-bold text-[#9b5417]">✓ Selected room</p>}</div></div>
-      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#665951]">{room.couple ? <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Couple: {room.couple}</span> : null}<span className="flex items-center gap-1"><Users className="h-3 w-3" /> Maximum Members: {room.maximumMembers}</span><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Family Friend</span></div>
+      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#665951]">{room.couple ? <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Couple: {room.couple}</span> : null}<span className="flex items-center gap-1"><Users className="h-3 w-3" /> Maximum Members: {room.maximumMembers}</span><span className="flex items-center gap-1"><Users className="h-3 w-3" /> Exclusive for Couples</span></div>
       {room.location && (
         <div className="mt-1.5 flex items-start gap-1 text-[10px] text-[#665951]">
           <MapPin className="h-3 w-3 shrink-0 mt-0.5 text-[#8c5211]" />
