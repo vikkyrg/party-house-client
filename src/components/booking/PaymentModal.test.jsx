@@ -1,13 +1,18 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { checkStatus, submitUpiPayment } = vi.hoisted(() => ({
+const { checkStatus, submitUpiPayment, getPaymentSettings } = vi.hoisted(() => ({
   checkStatus: vi.fn(),
   submitUpiPayment: vi.fn(),
+  getPaymentSettings: vi.fn(),
 }));
 
 vi.mock('../../services/paymentService', () => ({
   paymentService: { checkStatus, submitUpiPayment },
+}));
+
+vi.mock('../../services/settingService', () => ({
+  settingService: { getPaymentSettings },
 }));
 
 import { PaymentModal } from './PaymentModal';
@@ -43,7 +48,7 @@ describe('PaymentModal', () => {
           pricing: { total: 2597, advanceAmount: 620 },
           payment: { status: 'pending' },
         }}
-        upiId="configured@upi"
+        upiId="shailajagovindraju-1@okhdfcbank"
         theaterName="Rio Party House"
       />
     );
@@ -53,7 +58,7 @@ describe('PaymentModal', () => {
     const intent = new URL(link.getAttribute('href'));
 
     expect(intent.protocol).toBe('upi:');
-    expect(intent.searchParams.get('pa')).toBe('configured@upi');
+    expect(intent.searchParams.get('pa')).toBe('shailajagovindraju-1@okhdfcbank');
     expect(intent.searchParams.get('pn')).toBe('Rio Party House');
     expect(intent.searchParams.get('am')).toBe('620.00');
     expect(intent.searchParams.get('cu')).toBe('INR');
@@ -68,7 +73,7 @@ describe('PaymentModal', () => {
 
     for (const appLink of [googlePayLink, phonePeLink, paytmLink]) {
       const appIntent = new URL(appLink.getAttribute('href'));
-      expect(appIntent.searchParams.get('pa')).toBe('configured@upi');
+      expect(appIntent.searchParams.get('pa')).toBe('shailajagovindraju-1@okhdfcbank');
       expect(appIntent.searchParams.get('am')).toBe('620.00');
       expect(appIntent.searchParams.get('cu')).toBe('INR');
       expect(appIntent.searchParams.get('tn')).toBe('Booking CS-TEST-123');
@@ -91,11 +96,53 @@ describe('PaymentModal', () => {
           pricing: { total: 2597 },
           payment: { status: 'pending' },
         }}
-        upiId="configured@upi"
+        upiId="shailajagovindraju-1@okhdfcbank"
       />
     );
 
     expect(await screen.findByText(/temporary connection issue/i)).toBeTruthy();
+  });
+
+  it('uses the public payment configuration when no UPI ID prop is provided', async () => {
+    getPaymentSettings.mockResolvedValue({
+      data: { upiId: 'shailajagovindraju-1@okhdfcbank' },
+    });
+    checkStatus.mockResolvedValue({
+      success: true,
+      data: {
+        status: 'pending_payment',
+        paymentStatus: 'unpaid',
+        paymentSummary: {
+          totalBookingAmount: 2597,
+          verifiedAmountPaid: 0,
+          pendingVerificationAmount: 0,
+          remainingBalance: 2597,
+        },
+      },
+    });
+
+    render(
+      <PaymentModal
+        isOpen
+        booking={{
+          _id: '507f1f77bcf86cd799439011',
+          bookingId: 'CS-TEST-123',
+          status: 'pending_payment',
+          pricing: { total: 2597, advanceAmount: 620 },
+          payment: { status: 'pending' },
+        }}
+        theaterName="Rio Party House"
+      />
+    );
+
+    const link = await screen.findByRole('link', { name: /other upi apps/i });
+    const intent = new URL(link.getAttribute('href'));
+    expect(getPaymentSettings).toHaveBeenCalledTimes(1);
+    expect(intent.searchParams.get('pa')).toBe('shailajagovindraju-1@okhdfcbank');
+    expect(intent.searchParams.get('am')).toBe('620.00');
+    expect(intent.searchParams.get('pn')).toBe('Rio Party House');
+    expect(intent.searchParams.get('cu')).toBe('INR');
+    expect(intent.searchParams.get('tn')).toBe('Booking CS-TEST-123');
   });
 
   it('submits the entered UTR and opens WhatsApp with pending payment details', async () => {
@@ -146,7 +193,7 @@ describe('PaymentModal', () => {
           customerDetails: { name: 'Test Customer', phone: '9999999999' },
           payment: { status: 'pending' },
         }}
-        upiId="configured@upi"
+        upiId="shailajagovindraju-1@okhdfcbank"
         theaterName="Rio Party House"
         roomName="Private Room"
       />
