@@ -131,11 +131,6 @@ This document details the expected API contracts between the CS Cinemas frontend
   }
   ```
 - Reuse the returned `holdId` when creating the booking. Holds expire after 10 minutes.
-- The API sets an HttpOnly `bookingSession` cookie. Keep the hold ID in the current browser session and never place it or customer data in a URL.
-- Release an abandoned hold with `DELETE /bookings/hold/:holdId`; the server only releases holds owned by that browser session.
-- Pass the selected theater, room, date, and slot through client-side navigation state, not query parameters. Opening a copied `/book/:theaterId` URL without that state returns the customer to theater selection.
-- Save and restore non-payment progress with `GET`, `PUT`, or `DELETE /bookings/drafts/:draftId`. Drafts are scoped to the HttpOnly browser session and expire after 24 hours.
-- `GET /bookings/current-session` restores only the active booking for the authenticated account or the current guest browser session; it returns `null` when there is no active booking.
 
 ### Create Booking
 - **Method:** `POST`

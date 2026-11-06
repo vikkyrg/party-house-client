@@ -8,17 +8,16 @@ import { useAuthStore } from '../../store/authStore';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { handleImageError } from '../../utils/imageUtils';
 import { CurrentBookingNavbarButton } from './CurrentBookingNavbarButton';
-import { authService } from '../../services/authService';
-import { handleApiError } from '../../lib/apiClient';
-import toast from 'react-hot-toast';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  
   // States for desktop dropdowns
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const { scrollY } = useScroll();
@@ -48,15 +47,6 @@ export function Header() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  };
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      logout();
-    } catch (error) {
-      toast.error(handleApiError(error));
-    }
   };
 
   const learnLinks = [
@@ -177,25 +167,6 @@ export function Header() {
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
             <CurrentBookingNavbarButton />
 
-            {user ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="hidden md:inline-flex items-center gap-2 rounded-full border border-[#ded4cb] px-4 py-2.5 text-sm font-semibold text-[#322a59] hover:bg-[#fcf5eb]"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                className="hidden md:inline-flex items-center gap-2 rounded-full border border-[#ded4cb] px-4 py-2.5 text-sm font-semibold text-[#322a59] hover:bg-[#fcf5eb]"
-              >
-                <User className="h-4 w-4" />
-                Sign in
-              </Link>
-            )}
-
             <Link
               to="/theaters"
               className="hidden sm:inline-flex items-center justify-center gap-3 bg-[#322a59] text-white px-6 py-3 rounded-full text-[15px] font-semibold shadow-[0_8px_18px_rgba(50,42,89,0.2)] hover:bg-[#1f1a38] transition-colors"
@@ -282,24 +253,6 @@ export function Header() {
                 </div>
               ))}
               <div className="pt-6 flex flex-col gap-3">
-                {user ? (
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-[#ded4cb] py-3 font-semibold text-[#322a59]"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign out
-                  </button>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-[#ded4cb] py-3 font-semibold text-[#322a59]"
-                  >
-                    <User className="h-4 w-4" />
-                    Sign in
-                  </Link>
-                )}
                 <Link
                   to="/book"
                   className="flex w-full items-center justify-center h-12 bg-[#322a59] text-white rounded-full font-semibold shadow-sm text-base"

@@ -1,12 +1,11 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { motion } from 'framer-motion';
 import { SEO } from '../components/common/SEO';
 
 export function BookingSuccessPage() {
-  const location = useLocation();
-  const bookingReference = location.state?.bookingReference;
+  const { bookingId } = useParams();
 
   return (
     <div className="min-h-screen pt-28 pb-20 bg-background flex items-center justify-center relative overflow-hidden">
@@ -34,7 +33,7 @@ export function BookingSuccessPage() {
           
           <div className="bg-black/30 w-full p-4 rounded-xl border border-white/5 mb-10">
             <p className="text-sm text-white/50 uppercase tracking-widest font-semibold mb-1">Booking Reference</p>
-            <p className="font-mono text-xl text-primary font-bold">{bookingReference || 'Available in your booking details'}</p>
+            <p className="font-mono text-xl text-primary font-bold">{bookingId}</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full">

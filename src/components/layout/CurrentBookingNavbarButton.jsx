@@ -69,11 +69,10 @@ export function CurrentBookingNavbarButton() {
         bookingDate={activeBooking?.bookingDate || activeBooking?.date}
         timeSlot={activeBooking?.timeSlot}
         advanceAmount={activeBooking?.pricing?.advanceAmount || 750}
-        onPaymentSuccess={() => {
+        onPaymentSuccess={(id) => {
           closePaymentModal();
           clearActiveBooking();
-          window.sessionStorage.removeItem('rio-active-booking-id');
-          navigate('/booking/success', { state: { bookingReference: activeBooking?.bookingId } });
+          navigate(`/booking/success/${id || activeBooking?._id}`);
         }}
       />
     </>
