@@ -36,7 +36,6 @@ export function Header() {
 
   useEffect(() => {
     setMobileMenuOpen(false);
-    setProfileDropdownOpen(false);
     setActiveDropdown(null);
   }, [location.pathname]);
 
