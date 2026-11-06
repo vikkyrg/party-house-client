@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Calendar, Check, ChevronLeft, ChevronRight, MapPin, Play, Users, UserPlus, X, Gift, Tv, Monitor, Volume2 } from 'lucide-react';
 import { RoomMediaCarousel } from '../components/theater/RoomMediaCarousel';
 import { theaterService } from '../services/theaterService';
 import { roomService } from '../services/roomService';
+import { bookingService } from '../services/bookingService';
 import { TheaterLoading } from '../components/theater/TheaterLoading';
 import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { readBookingQuery } from '../utils/bookingFlow';
 import { getRoomPriceForDuration, getKolkataTodayString, isSlotInPast } from '../utils/dateUtils';
+import { useBookingModalStore } from '../store/bookingModalStore';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
 
@@ -377,6 +379,8 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
 export function TheaterDetailsPage() {
   const { theaterId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const clearActiveBooking = useBookingModalStore((state) => state.clearActiveBooking);
   const [searchParams] = useSearchParams();
 
   const bookingQuery = readBookingQuery(searchParams);
@@ -585,7 +589,39 @@ export function TheaterDetailsPage() {
 
   const bookRoom = (room, slot, duration) => {
     const tId = theaterId || (room.theater?._id ? room.theater._id : room.theater);
-    window.location.assign(`/book/${tId}?roomId=${room._id}&date=${date}&duration=${duration}&slot=${encodeURIComponent(slot.originalTime || slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
+    clearActiveBooking();
+    window.sessionStorage.removeItem('rio-active-booking-id');
+    const previousDraftId = window.sessionStorage.getItem('rio-current-draft-id');
+    const previousHoldId = previousDraftId
+      ? window.sessionStorage.getItem(`booking-hold:${previousDraftId}`)
+      : null;
+    if (previousHoldId) {
+      bookingService.releaseHold(previousHoldId).catch((error) => {
+        console.error('Unable to release the abandoned booking hold.', error);
+      });
+    }
+    if (previousDraftId) {
+      bookingService.deleteDraft(previousDraftId).catch((error) => {
+        console.error('Unable to remove the abandoned booking draft.', error);
+      });
+      window.sessionStorage.removeItem(`booking-hold:${previousDraftId}`);
+    }
+
+    const randomBytes = window.crypto.getRandomValues(new Uint8Array(16));
+    const draftId = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    window.sessionStorage.setItem('rio-current-draft-id', draftId);
+    navigate(`/book/${tId}`, {
+      state: {
+        bookingSelection: {
+          draftId,
+          roomId: room._id,
+          date,
+          duration,
+          timeSlot: slot.originalTime || slot.time || `${slot.startTime} - ${slot.endTime}`,
+          timeSlotId: slot.id || slot._id || '',
+        },
+      },
+    });
   };
 
   const sortedRooms = useMemo(() => {

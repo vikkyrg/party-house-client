@@ -23,6 +23,7 @@ import { PlaceholderPage } from '../pages/PlaceholderPage';
 import { AboutPage } from '../pages/AboutPage';
 import { FoundersPage } from '../pages/FoundersPage';
 import { ListYourVenuePage } from '../pages/ListYourVenuePage';
+import { LoginPage } from '../pages/LoginPage';
 
 function RouteErrorElement() {
   const error = useRouteError();
@@ -76,7 +77,11 @@ const router = createBrowserRouter([
         element: <BookingPage />,
       },
       {
-        path: 'booking/success/:bookingId',
+        path: 'login',
+        element: <LoginPage />,
+      },
+      {
+        path: 'booking/success',
         element: <BookingSuccessPage />,
       },
       {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { bookingService } from '../services/bookingService';
@@ -31,9 +31,10 @@ const STEPS = [
 export function BookingPage() {
   const { theaterId } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const bookingSelection = location.state?.bookingSelection;
   
-  const { user, setGuestDetails } = useAuthStore();
+  const { user } = useAuthStore();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,13 +54,11 @@ export function BookingPage() {
   const [configuredAdvanceAmount, setConfiguredAdvanceAmount] = useState(750);
   const [paymentSettings, setPaymentSettings] = useState(null);
   
-  // Get date and slot from URL
-  const selectedDate = searchParams.get('date');
-  const selectedTimeSlot = searchParams.get('slot');
-  const selectedTimeSlotId = searchParams.get('slotId');
-  const durationStr = searchParams.get('duration');
-  const duration = parseInt(durationStr, 10) || 2;
-  const roomId = searchParams.get('roomId');
+  const selectedDate = bookingSelection?.date;
+  const selectedTimeSlot = bookingSelection?.timeSlot;
+  const selectedTimeSlotId = bookingSelection?.timeSlotId;
+  const duration = Number.parseInt(bookingSelection?.duration, 10) || 2;
+  const roomId = bookingSelection?.roomId;
   const [room, setRoom] = useState(null);
   
   const displayTimeSlot = selectedTimeSlot;
@@ -86,20 +85,30 @@ export function BookingPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [createdBooking, setCreatedBooking] = useState(null);
   const [slotHoldId, setSlotHoldId] = useState('');
+  const [draftReady, setDraftReady] = useState(false);
   const bookingSubmissionInProgress = useRef(false);
+  const restoredDraft = useRef(false);
   
   useEffect(() => {
-    if (!roomId || !selectedDate || !selectedTimeSlot) {
-      // If accessed without date/slot, redirect to theater details to force selection
+    const activeDraftId = window.sessionStorage.getItem('rio-current-draft-id');
+    if (
+      !bookingSelection?.draftId ||
+      activeDraftId !== bookingSelection.draftId ||
+      !roomId ||
+      !selectedDate ||
+      !selectedTimeSlot
+    ) {
       navigate(`/theaters/${theaterId}`);
       return;
     }
 
     setLoading(true);
+    setDraftReady(false);
+    restoredDraft.current = false;
     setSlotHoldId('');
     const fetchData = async () => {
       try {
-        const holdStorageKey = `booking-hold:${theaterId}:${roomId}:${selectedDate}:${selectedTimeSlotId || selectedTimeSlot}`;
+        const holdStorageKey = `booking-hold:${bookingSelection.draftId}`;
         let holdId = window.sessionStorage.getItem(holdStorageKey);
         if (!holdId) {
           const randomBytes = window.crypto.getRandomValues(new Uint8Array(12));
@@ -107,6 +116,7 @@ export function BookingPage() {
           window.sessionStorage.setItem(holdStorageKey, holdId);
         }
 
+        const draftRes = await bookingService.getDraft(bookingSelection.draftId);
         const [theaterRes, roomRes, eventsRes, addonsRes, settingsRes, holdRes] = await Promise.all([
           theaterService.getTheaterById(theaterId),
           roomService.getRoom(roomId),
@@ -126,6 +136,16 @@ export function BookingPage() {
         if (!holdRes.success || !holdRes.data?.holdId) {
           throw new Error(holdRes.message || 'The selected time slot could not be reserved.');
         }
+        if (draftRes.data) {
+          restoredDraft.current = true;
+          setCurrentStep(draftRes.data.currentStep);
+          setCustomerDetails(draftRes.data.customerDetails);
+          setSelectedEventType(draftRes.data.selectedEventType);
+          setSelectedCake(draftRes.data.selectedCake);
+          setSelectedAddons(draftRes.data.selectedAddons || {});
+          setTermsAccepted(draftRes.data.termsAccepted);
+        }
+        setDraftReady(true);
         setSlotHoldId(holdRes.data.holdId);
         window.sessionStorage.setItem(holdStorageKey, holdRes.data.holdId);
         
@@ -140,13 +160,71 @@ export function BookingPage() {
           }
         }
       } catch (err) {
+        if (err?.response?.status === 409) {
+          window.sessionStorage.removeItem(`booking-hold:${bookingSelection.draftId}`);
+          window.sessionStorage.removeItem('rio-current-draft-id');
+          navigate(`/theaters/${theaterId}`, { replace: true });
+          return;
+        }
         setError(handleApiError(err));
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [theaterId, roomId, selectedDate, selectedTimeSlot, selectedTimeSlotId, duration, navigate]);
+  }, [theaterId, bookingSelection, roomId, selectedDate, selectedTimeSlot, selectedTimeSlotId, duration, navigate]);
+
+  useEffect(() => {
+    if (!draftReady || !bookingSelection?.draftId) return undefined;
+
+    const timer = window.setTimeout(() => {
+      bookingService.saveDraft(bookingSelection.draftId, {
+        selection: {
+          theaterId,
+          roomId,
+          date: selectedDate,
+          timeSlot: selectedTimeSlot,
+          timeSlotId: selectedTimeSlotId || '',
+          duration,
+        },
+        currentStep,
+        customerDetails,
+        selectedEventType,
+        selectedCake,
+        selectedAddons,
+        termsAccepted,
+      }).catch((draftError) => {
+        setError(handleApiError(draftError));
+      });
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    draftReady,
+    bookingSelection?.draftId,
+    theaterId,
+    roomId,
+    selectedDate,
+    selectedTimeSlot,
+    selectedTimeSlotId,
+    duration,
+    currentStep,
+    customerDetails,
+    selectedEventType,
+    selectedCake,
+    selectedAddons,
+    termsAccepted,
+  ]);
+
+  useEffect(() => {
+    if (!draftReady || restoredDraft.current || !user) return;
+    setCustomerDetails((details) => ({
+      ...details,
+      name: details.name || user.name || '',
+      phone: details.phone || user.phone || '',
+      email: details.email || user.email || '',
+    }));
+  }, [draftReady, user]);
 
   const handleAddonToggle = (addonId) => {
     setSelectedAddons(prev => {
@@ -218,9 +296,6 @@ export function BookingPage() {
 
   const handleNext = () => {
     if (validateStep()) {
-      if (currentStep === 1) {
-        setGuestDetails({ name: customerDetails.name, phone: customerDetails.phone, email: customerDetails.email });
-      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setCurrentStep(p => Math.min(p + 1, STEPS.length));
     }
@@ -247,6 +322,7 @@ export function BookingPage() {
       const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
 
       const payload = {
+        draftId: bookingSelection.draftId,
         theaterId,
         locationId: theater?.location?._id || theater?.location,
         roomId,
@@ -277,13 +353,20 @@ export function BookingPage() {
         throw new Error(bookingRes.message || 'The booking could not be created. Please try again.');
       }
       const bookingRecord = bookingRes.data;
+      setDraftReady(false);
       setCreatedBooking(bookingRecord);
+      window.sessionStorage.setItem('rio-active-booking-id', bookingRecord._id);
+      window.sessionStorage.removeItem('rio-current-draft-id');
+      window.sessionStorage.removeItem(`booking-hold:${bookingSelection.draftId}`);
       setActiveBooking({
         ...bookingRecord,
         theaterName: theater?.name || bookingRecord.theaterName,
         roomName: room?.name || bookingRecord.roomName,
         bookingDate: selectedDate,
         timeSlot: displayTimeSlot,
+      });
+      bookingService.deleteDraft(bookingSelection.draftId).catch((draftError) => {
+        console.error('Unable to remove the completed booking draft.', draftError);
       });
     } catch (err) {
       setError(handleApiError(err));
@@ -1047,11 +1130,12 @@ export function BookingPage() {
         timeSlot={displayTimeSlot || createdBooking?.timeSlot}
         advanceAmount={advanceAmount}
         upiId={paymentSettings?.upiId || theater?.upiId}
-        onPaymentSuccess={(id) => {
+        onPaymentSuccess={() => {
           setIsPaymentModalOpen(false);
           closePaymentModal();
           clearActiveBooking();
-          navigate(`/booking/success/${id || createdBooking?._id}`);
+          window.sessionStorage.removeItem('rio-active-booking-id');
+          navigate('/booking/success', { state: { bookingReference: createdBooking?.bookingId } });
         }}
       />
     </div>
