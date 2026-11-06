@@ -295,6 +295,22 @@ export function BookingPage() {
     setError(null);
     try {
       const cleanedPhone = (customerDetails.phone || '').trim().replace(/[\s\-()]/g, '').replace(/^(\+91|91|0)/, '');
+      const holdStorageKey = `booking-hold:${theaterId}:${roomId}:${selectedDate}:${selectedTimeSlotId || selectedTimeSlot}`;
+      const refreshedHold = await bookingService.createHold({
+        theaterId,
+        roomId,
+        date: selectedDate,
+        timeSlot: selectedTimeSlot,
+        timeSlotId: selectedTimeSlotId || undefined,
+        duration,
+        holdId: slotHoldId,
+      });
+      if (!refreshedHold.success || !refreshedHold.data?.holdId) {
+        throw new Error(refreshedHold.message || 'The selected time slot is no longer available.');
+      }
+      const refreshedHoldId = refreshedHold.data.holdId;
+      setSlotHoldId(refreshedHoldId);
+      window.sessionStorage.setItem(holdStorageKey, refreshedHoldId);
 
       const payload = {
         theaterId,
@@ -305,7 +321,7 @@ export function BookingPage() {
         duration,
         timeSlot: selectedTimeSlot,
         timeSlotId: selectedTimeSlotId || undefined,
-        slotHoldId: slotHoldId || undefined,
+        slotHoldId: refreshedHoldId,
         eventTypeId: selectedEventType,
         cake: selectedCake ? {
           cakeId: selectedCake.cakeId,

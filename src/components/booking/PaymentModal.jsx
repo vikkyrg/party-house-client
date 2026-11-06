@@ -256,6 +256,7 @@ export function PaymentModal({
   const isRejected = ['rejected', 'failed', 'payment_rejected'].includes(currentPaymentStatus);
   const submittedPayments = statusData?.paymentRecords || booking?.paymentRecords || [];
   const latestSubmittedPayment = submittedPayments[submittedPayments.length - 1];
+  const mobileUpiId = upiId || 'shailajagovindraju-1@okhdfcbank';
 
   const theaterName = propTheaterName || booking?.theater?.name || booking?.theaterName || 'Rio Party House';
   const roomName = propRoomName || booking?.roomName || booking?.room?.name || 'Private Theater';
@@ -269,13 +270,13 @@ export function PaymentModal({
   const timeSlot = propTimeSlot || booking?.timeSlot || '';
   const parsedPaymentAmount = Number(paymentAmountInput);
   const canCreateUpiIntent =
-    Boolean(upiId) &&
+    Boolean(mobileUpiId) &&
     Number.isFinite(parsedPaymentAmount) &&
     parsedPaymentAmount >= 1 &&
     parsedPaymentAmount <= remainingBalance &&
     Math.round(parsedPaymentAmount * 100) === parsedPaymentAmount * 100;
   const upiIntentParams = new URLSearchParams({
-    pa: upiId,
+    pa: mobileUpiId,
     pn: theaterName,
     am: canCreateUpiIntent ? parsedPaymentAmount.toFixed(2) : '',
     cu: 'INR',
@@ -480,7 +481,7 @@ export function PaymentModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-[820px] max-h-[92vh] flex flex-col rounded-3xl bg-white border border-[#ebdcd0] shadow-[0_25px_60px_-15px_rgba(23,23,28,0.25)] overflow-hidden my-auto"
+          className="relative w-full max-w-[820px] max-h-[calc(100dvh-1.5rem)] sm:max-h-[92vh] flex flex-col rounded-2xl sm:rounded-3xl bg-white border border-[#ebdcd0] shadow-[0_25px_60px_-15px_rgba(23,23,28,0.25)] overflow-hidden my-auto"
         >
           {/* Top Header */}
           <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-[#f2e7de] bg-[#fdfaf6] shrink-0">
@@ -603,7 +604,7 @@ export function PaymentModal({
                     <p className="mt-1 text-[11px] text-slate-600">
                       Pay ₹{paymentAmountInput ? Number(paymentAmountInput).toLocaleString('en-IN') : '—'} to {theaterName}. Return here to submit your UTR.
                     </p>
-                    {upiId ? (
+                    {mobileUpiId ? (
                       <div className="mt-3 grid grid-cols-2 gap-2">
                         {upiAppOptions.map((option) => (
                           <a

@@ -145,6 +145,43 @@ describe('PaymentModal', () => {
     expect(intent.searchParams.get('tn')).toBe('Booking CS-TEST-123');
   });
 
+  it('uses the configured mobile UPI ID when payment settings cannot be loaded', async () => {
+    getPaymentSettings.mockRejectedValue(new Error('settings unavailable'));
+    checkStatus.mockResolvedValue({
+      success: true,
+      data: {
+        status: 'pending_payment',
+        paymentStatus: 'unpaid',
+        paymentSummary: {
+          totalBookingAmount: 2597,
+          verifiedAmountPaid: 0,
+          pendingVerificationAmount: 0,
+          remainingBalance: 2597,
+        },
+      },
+    });
+
+    render(
+      <PaymentModal
+        isOpen
+        booking={{
+          _id: '507f1f77bcf86cd799439011',
+          bookingId: 'CS-TEST-123',
+          status: 'pending_payment',
+          pricing: { total: 2597, advanceAmount: 620 },
+          payment: { status: 'pending' },
+        }}
+        theaterName="Rio Party House"
+      />
+    );
+
+    const link = await screen.findByRole('link', { name: /other upi apps/i });
+    const intent = new URL(link.getAttribute('href'));
+    expect(intent.searchParams.get('pa')).toBe('shailajagovindraju-1@okhdfcbank');
+    expect(intent.searchParams.get('am')).toBe('620.00');
+    expect(intent.searchParams.get('cu')).toBe('INR');
+  });
+
   it('submits the entered UTR and opens WhatsApp with pending payment details', async () => {
     checkStatus.mockResolvedValue({
       success: true,
