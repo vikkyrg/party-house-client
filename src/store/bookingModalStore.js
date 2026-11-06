@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 export const useBookingModalStore = create(
   persist(
@@ -38,7 +38,7 @@ export const useBookingModalStore = create(
     {
       name: 'rio-active-booking-hold',
       partialize: (state) => ({ activeBooking: state.activeBooking }),
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
-

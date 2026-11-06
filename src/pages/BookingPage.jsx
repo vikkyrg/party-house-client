@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentService } from '../services/contentService';
 import { bookingService } from '../services/bookingService';
@@ -19,6 +19,7 @@ import { calculateBookingTotal, getAddonPriceForDuration } from '../utils/bookin
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { useCakes } from '../hooks/useCakes';
 import { getRoomPriceForDuration } from '../utils/dateUtils';
+import { clearBookingDraft, readBookingDraft, writeBookingDraft } from '../utils/bookingDraft';
 
 const STEPS = [
   { id: 'details', title: 'Guest Details' },
@@ -29,23 +30,27 @@ const STEPS = [
 ];
 
 export function BookingPage() {
-  const { theaterId } = useParams();
+  const { theaterId: routeTheaterId } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  
+  const [bookingDraft] = useState(readBookingDraft);
+  const theaterId = bookingDraft?.theaterId;
   const { user, setGuestDetails } = useAuthStore();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [isProcessingPanelActive, setIsProcessingPanelActive] = useState(false);
+  const [isProcessingPanelActive, setIsProcessingPanelActive] = useState(Boolean(bookingDraft?.isProcessingPanelActive));
   const {
     setActiveBooking,
     openPaymentModal,
     closePaymentModal,
     clearActiveBooking,
   } = useBookingModalStore();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(() => (
+    Number.isInteger(bookingDraft?.currentStep) && bookingDraft.currentStep >= 1 && bookingDraft.currentStep <= STEPS.length
+      ? bookingDraft.currentStep
+      : 1
+  ));
   
   const [theater, setTheater] = useState(null);
   const [eventTypes, setEventTypes] = useState([]);
@@ -53,45 +58,48 @@ export function BookingPage() {
   const [configuredAdvanceAmount, setConfiguredAdvanceAmount] = useState(750);
   const [paymentSettings, setPaymentSettings] = useState(null);
   
-  // Get date and slot from URL
-  const selectedDate = searchParams.get('date');
-  const selectedTimeSlot = searchParams.get('slot');
-  const selectedTimeSlotId = searchParams.get('slotId');
-  const durationStr = searchParams.get('duration');
-  const duration = parseInt(durationStr, 10) || 2;
-  const roomId = searchParams.get('roomId');
+  const selectedDate = bookingDraft?.date;
+  const selectedTimeSlot = bookingDraft?.timeSlot;
+  const selectedTimeSlotId = bookingDraft?.timeSlotId;
+  const duration = Number(bookingDraft?.duration) || 2;
+  const roomId = bookingDraft?.roomId;
   const [room, setRoom] = useState(null);
   
   const displayTimeSlot = selectedTimeSlot;
 
-  const [selectedEventType, setSelectedEventType] = useState('');
-  const [selectedCake, setSelectedCake] = useState(null); // { cakeId, size }
-  const [cakeCategory, setCakeCategory] = useState('standard');
-  const [selectedAddons, setSelectedAddons] = useState({}); 
+  const [selectedEventType, setSelectedEventType] = useState(bookingDraft?.selectedEventType || '');
+  const [selectedCake, setSelectedCake] = useState(bookingDraft?.selectedCake || null); // { cakeId, size }
+  const [cakeCategory, setCakeCategory] = useState(bookingDraft?.cakeCategory || 'standard');
+  const [selectedAddons, setSelectedAddons] = useState(bookingDraft?.selectedAddons || {});
 
   const [customerDetails, setCustomerDetails] = useState({
-    name: user?.name || '',
-    phone: user?.phone || '',
-    email: user?.email || '',
-    members: 1,
-    kids: 0,
-    specialRequest: ''
+    name: bookingDraft?.customerDetails?.name || user?.name || '',
+    phone: bookingDraft?.customerDetails?.phone || user?.phone || '',
+    email: bookingDraft?.customerDetails?.email || user?.email || '',
+    members: bookingDraft?.customerDetails?.members || 1,
+    kids: bookingDraft?.customerDetails?.kids || 0,
+    specialRequest: bookingDraft?.customerDetails?.specialRequest || '',
   });
 
   const { data: cakesData } = useCakes();
   const cakesList = cakesData?.data || [];
   const visibleCakes = cakesList.filter((cake) => (cake.category || 'standard') === cakeCategory && cake.isActive !== false);
 
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [createdBooking, setCreatedBooking] = useState(null);
+  const [termsAccepted, setTermsAccepted] = useState(Boolean(bookingDraft?.termsAccepted));
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(Boolean(bookingDraft?.isPaymentModalOpen));
+  const [createdBooking, setCreatedBooking] = useState(bookingDraft?.createdBooking || null);
   const [slotHoldId, setSlotHoldId] = useState('');
   const bookingSubmissionInProgress = useRef(false);
   
   useEffect(() => {
-    if (!roomId || !selectedDate || !selectedTimeSlot) {
-      // If accessed without date/slot, redirect to theater details to force selection
-      navigate(`/theaters/${theaterId}`);
+    if (
+      !theaterId ||
+      !roomId ||
+      !selectedDate ||
+      !selectedTimeSlot ||
+      (routeTheaterId && routeTheaterId !== theaterId)
+    ) {
+      navigate('/theaters', { replace: true });
       return;
     }
 
@@ -146,7 +154,49 @@ export function BookingPage() {
       }
     };
     fetchData();
-  }, [theaterId, roomId, selectedDate, selectedTimeSlot, selectedTimeSlotId, duration, navigate]);
+  }, [theaterId, routeTheaterId, roomId, selectedDate, selectedTimeSlot, selectedTimeSlotId, duration, navigate]);
+
+  useEffect(() => {
+    if (!theaterId || !roomId || !selectedDate || !selectedTimeSlot) return;
+
+    writeBookingDraft({
+      ...bookingDraft,
+      theaterId,
+      roomId,
+      date: selectedDate,
+      duration,
+      timeSlot: selectedTimeSlot,
+      timeSlotId: selectedTimeSlotId,
+      currentStep,
+      customerDetails,
+      selectedEventType,
+      selectedCake,
+      cakeCategory,
+      selectedAddons,
+      termsAccepted,
+      isProcessingPanelActive,
+      isPaymentModalOpen,
+      createdBooking,
+    });
+  }, [
+    bookingDraft,
+    theaterId,
+    roomId,
+    selectedDate,
+    duration,
+    selectedTimeSlot,
+    selectedTimeSlotId,
+    currentStep,
+    customerDetails,
+    selectedEventType,
+    selectedCake,
+    cakeCategory,
+    selectedAddons,
+    termsAccepted,
+    isProcessingPanelActive,
+    isPaymentModalOpen,
+    createdBooking,
+  ]);
 
   const handleAddonToggle = (addonId) => {
     setSelectedAddons(prev => {
@@ -1051,6 +1101,7 @@ export function BookingPage() {
           setIsPaymentModalOpen(false);
           closePaymentModal();
           clearActiveBooking();
+          clearBookingDraft();
           navigate(`/booking/success/${id || createdBooking?._id}`);
         }}
       />

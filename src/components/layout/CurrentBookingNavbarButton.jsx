@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Clock, Ticket, AlertCircle } from 'lucide-react';
 import { useActiveBookingHold } from '../../hooks/useActiveBookingHold';
 import { PaymentModal } from '../booking/PaymentModal';
+import { clearBookingDraft } from '../../utils/bookingDraft';
 
 /**
  * CurrentBookingNavbarButton
@@ -72,6 +73,7 @@ export function CurrentBookingNavbarButton() {
         onPaymentSuccess={(id) => {
           closePaymentModal();
           clearActiveBooking();
+          clearBookingDraft();
           navigate(`/booking/success/${id || activeBooking?._id}`);
         }}
       />

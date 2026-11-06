@@ -9,7 +9,9 @@ import { ErrorState } from '../components/common/ErrorState';
 import { SEO } from '../components/common/SEO';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import { readBookingQuery } from '../utils/bookingFlow';
+import { clearBookingDraft, writeBookingDraft } from '../utils/bookingDraft';
 import { getRoomPriceForDuration, getKolkataTodayString, isSlotInPast } from '../utils/dateUtils';
+import { useAuthStore } from '../store/authStore';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
 
@@ -378,6 +380,7 @@ export function TheaterDetailsPage() {
   const { theaterId } = useParams();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const clearGuestDetails = useAuthStore((state) => state.clearGuestDetails);
 
   const bookingQuery = readBookingQuery(searchParams);
   const preselectedDate = location.state?.selectedDate || bookingQuery.date || '';
@@ -585,7 +588,17 @@ export function TheaterDetailsPage() {
 
   const bookRoom = (room, slot, duration) => {
     const tId = theaterId || (room.theater?._id ? room.theater._id : room.theater);
-    window.location.assign(`/book/${tId}?roomId=${room._id}&date=${date}&duration=${duration}&slot=${encodeURIComponent(slot.originalTime || slot.time || `${slot.startTime} - ${slot.endTime}`)}${slot.id || slot._id ? `&slotId=${slot.id || slot._id}` : ''}`);
+    clearBookingDraft();
+    clearGuestDetails();
+    writeBookingDraft({
+      theaterId: tId,
+      roomId: room._id,
+      date,
+      duration,
+      timeSlot: slot.originalTime || slot.time || `${slot.startTime} - ${slot.endTime}`,
+      timeSlotId: slot.id || slot._id || '',
+    });
+    window.location.assign('/book');
   };
 
   const sortedRooms = useMemo(() => {

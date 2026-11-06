@@ -72,6 +72,10 @@ const router = createBrowserRouter([
         element: <TheaterDetailsPage />,
       },
       {
+        path: 'book',
+        element: <BookingPage />,
+      },
+      {
         path: 'book/:theaterId',
         element: <BookingPage />,
       },

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 export const useAuthStore = create(
   persist(
@@ -11,6 +11,7 @@ export const useAuthStore = create(
     {
       name: 'guest-storage',
       partialize: (state) => ({ user: state.user }),
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
