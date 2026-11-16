@@ -12,6 +12,7 @@ import { readBookingQuery } from '../utils/bookingFlow';
 import { clearBookingDraft, writeBookingDraft } from '../utils/bookingDraft';
 import { getRoomPriceForDuration, getKolkataTodayString, isSlotInPast } from '../utils/dateUtils';
 import { useAuthStore } from '../store/authStore';
+import { STATIC_THEATER, STATIC_ROOMS_DETAILED } from '../data/staticRoomsData';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
 
@@ -353,10 +354,17 @@ function RoomCard({ room, theater, date, availability, selected, selectedSlot, o
               )}
             </div>
           </div>
+        ) : currentPrice > 0 ? (
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] font-medium text-[#75685f]">Duration: {selectedDuration} Hour{selectedDuration > 1 ? 's' : ''}</span>
+              <span className="text-[22px] font-extrabold text-[#17171c]">₹{currentPrice}</span>
+            </div>
+          </div>
         ) : (
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] font-medium italic text-[#85756b]">Price shown after selecting a time slot</span>
+              <span className="text-[12px] font-medium italic text-[#85756b]">Price shown after selecting a duration</span>
             </div>
           </div>
         )}
@@ -387,9 +395,22 @@ export function TheaterDetailsPage() {
   const preselectedRoomId = searchParams.get('roomId') || null;
   const hasPreselectedBooking = Boolean(preselectedDate);
 
+  const matchedPreselectedRoom = useMemo(() => {
+    if (!preselectedRoomId) return null;
+    return STATIC_ROOMS_DETAILED.find(
+      (r) =>
+        r._id === preselectedRoomId ||
+        r.slug === preselectedRoomId ||
+        r.name?.toLowerCase() === preselectedRoomId.toLowerCase() ||
+        r.name?.toLowerCase().replace(/\s+/g, '-') === preselectedRoomId.toLowerCase()
+    );
+  }, [preselectedRoomId]);
+
+  const effectivePreselectedRoomId = matchedPreselectedRoom ? matchedPreselectedRoom._id : preselectedRoomId;
+
   const [theater, setTheater] = useState(null);
   const [rooms, setRooms] = useState([]);
-  const [selectedRoomId, setSelectedRoomId] = useState(preselectedRoomId);
+  const [selectedRoomId, setSelectedRoomId] = useState(effectivePreselectedRoomId);
   const [date, setDate] = useState(preselectedDate);
   const [roomAvailability, setRoomAvailability] = useState({});
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -507,45 +528,70 @@ export function TheaterDetailsPage() {
     };
   }, [date, rooms]);
 
-  const fetchTheatersAndRooms = () => {
-    setLoading(true);
-    setError(null);
-    setLoadingProgress(0);
-    setIsAnimationFinished(false);
+  const fetchTheatersAndRooms = async () => {
+    try {
+      const activeTheaterId = theaterId || STATIC_THEATER._id;
+      // Fetch theater details from backend or fallback to STATIC_THEATER
+      try {
+        const theaterRes = await theaterService.getTheaterById(activeTheaterId);
+        if (theaterRes?.success && theaterRes.data) {
+          setTheater(theaterRes.data);
+        } else {
+          setTheater(STATIC_THEATER);
+        }
+      } catch {
+        setTheater(STATIC_THEATER);
+      }
 
-    if (theaterId) {
-      Promise.all([theaterService.getTheaterById(theaterId), roomService.getRooms(theaterId)])
-        .then(([theaterResponse, roomsResponse]) => {
-          setTheater(theaterResponse.data);
-          setRooms(roomsResponse.data || []);
-          setSelectedRoomId(preselectedRoomId || null);
-          setSelectedTimeSlot(null);
-        })
-        .catch(setError)
-        .finally(() => setLoading(false));
-    } else {
-      theaterService.getTheaters()
-        .then(async (theatersResponse) => {
-          const theaters = theatersResponse.data || (Array.isArray(theatersResponse) ? theatersResponse : []);
-          const firstTheater = theaters[0];
-          setTheater(firstTheater || { name: 'Our Rooms', description: 'Book exclusive private theater rooms for birthday parties, anniversaries, and special events.' });
-          try {
-            const roomsResponse = await roomService.getAllRooms();
-            setRooms(roomsResponse.data || []);
-          } catch (roomsErr) {
-            setError(roomsErr);
+      // Fetch dynamic rooms from API
+      let apiRooms = [];
+      try {
+        const roomsRes = await roomService.getRooms(activeTheaterId);
+        if (roomsRes?.success && Array.isArray(roomsRes.data)) {
+          apiRooms = roomsRes.data;
+        } else if (Array.isArray(roomsRes)) {
+          apiRooms = roomsRes;
+        }
+      } catch (err) {
+        console.warn('Could not fetch dynamic rooms from API, will use static rooms:', err);
+      }
+
+      // Merge: Keep static content/media/styling for the 3 main rooms (Velvet, Sigma, The Paradise),
+      // updating dynamic slots or fields if available from API, AND dynamically append any new rooms added by admin!
+      const staticRoomMap = new Map(
+        STATIC_ROOMS_DETAILED.map((r) => [r._id.toString(), { ...r }])
+      );
+
+      const dynamicNewRooms = [];
+      apiRooms.forEach((apiRoom) => {
+        if (!apiRoom.isActive && apiRoom.isActive !== undefined) return;
+        const apiId = (apiRoom._id || apiRoom.id || '').toString();
+        if (staticRoomMap.has(apiId)) {
+          // If the static room exists in API, sync its dynamic slots or prices if updated
+          const staticEntry = staticRoomMap.get(apiId);
+          if (Array.isArray(apiRoom.slots) && apiRoom.slots.length > 0) {
+            staticEntry.slots = apiRoom.slots;
           }
-        })
-        .catch(async () => {
-          try {
-            const roomsResponse = await roomService.getAllRooms();
-            setTheater({ name: 'Our Rooms', description: 'Book exclusive private theater rooms for birthday parties, anniversaries, and special events.' });
-            setRooms(roomsResponse.data || []);
-          } catch (err) {
-            setError(err);
-          }
-        })
-        .finally(() => setLoading(false));
+          if (apiRoom.price1Hour) staticEntry.price1Hour = apiRoom.price1Hour;
+          if (apiRoom.price2Hours) staticEntry.price2Hours = apiRoom.price2Hours;
+          if (apiRoom.price3Hours) staticEntry.price3Hours = apiRoom.price3Hours;
+        } else {
+          // New room added in admin panel! Include it dynamically
+          dynamicNewRooms.push(apiRoom);
+        }
+      });
+
+      const combinedRooms = [...STATIC_ROOMS_DETAILED.map((r) => staticRoomMap.get(r._id.toString())), ...dynamicNewRooms];
+      setRooms(combinedRooms);
+      setSelectedRoomId(effectivePreselectedRoomId || null);
+      setSelectedTimeSlot(null);
+    } catch (err) {
+      console.error('Failed to load rooms:', err);
+      setTheater(STATIC_THEATER);
+      setRooms(STATIC_ROOMS_DETAILED);
+    } finally {
+      setLoading(false);
+      setIsAnimationFinished(true);
     }
   };
 
@@ -587,7 +633,7 @@ export function TheaterDetailsPage() {
   };
 
   const bookRoom = (room, slot, duration) => {
-    const tId = theaterId || (room.theater?._id ? room.theater._id : room.theater);
+    const tId = theaterId || room.theater?._id || room.theater || STATIC_THEATER._id;
     clearBookingDraft();
     clearGuestDetails();
     writeBookingDraft({
@@ -604,7 +650,16 @@ export function TheaterDetailsPage() {
   const sortedRooms = useMemo(() => {
     let filteredRooms = [...rooms];
     if (preselectedRoomId) {
-      filteredRooms = filteredRooms.filter(r => r._id === preselectedRoomId);
+      const matchRoom = filteredRooms.find(
+        (r) =>
+          r._id === preselectedRoomId ||
+          r.slug === preselectedRoomId ||
+          r.name?.toLowerCase() === preselectedRoomId.toLowerCase() ||
+          r.name?.toLowerCase().replace(/\s+/g, '-') === preselectedRoomId.toLowerCase()
+      );
+      if (matchRoom) {
+        filteredRooms = [matchRoom];
+      }
     }
     return filteredRooms.sort((first, second) => {
       const getPrice = (r) => getRoomPriceForDuration(r, 2); // Default to 2 hours for sorting

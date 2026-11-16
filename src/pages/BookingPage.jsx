@@ -342,6 +342,7 @@ export function BookingPage() {
       if (!bookingRes.success || !bookingRes.data?._id) {
         throw new Error(bookingRes.message || 'The booking could not be created. Please try again.');
       }
+      window.sessionStorage.removeItem(holdStorageKey);
       const bookingRecord = bookingRes.data;
       setCreatedBooking(bookingRecord);
       setActiveBooking({

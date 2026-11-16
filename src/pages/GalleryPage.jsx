@@ -19,8 +19,8 @@ export function GalleryPage() {
   const categories = ['All', ...new Set(galleryItems.map(item => item.category))];
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const filteredItems = activeCategory === 'All' 
-    ? galleryItems 
+  const filteredItems = activeCategory === 'All'
+    ? galleryItems
     : galleryItems.filter(item => item.category === activeCategory);
 
   return (
@@ -49,10 +49,10 @@ export function GalleryPage() {
 
       {/* Right Cursive Logo Overlap */}
       <div className="absolute top-32 right-12 pointer-events-none z-10 hidden xl:block">
-         <div className="font-[cursive] text-[36px] text-[#c2a290] leading-[1.1] transform -rotate-12 opacity-80 pr-8 flex flex-col items-end">
-           <span>Capture</span>
-           <span>The Moment</span>
-         </div>
+        <div className="font-[cursive] text-[36px] text-[#c2a290] leading-[1.1] transform -rotate-12 opacity-80 pr-8 flex flex-col items-end">
+          <span>Capture</span>
+          <span>The Moment</span>
+        </div>
       </div>
 
       <div className="w-full mx-auto px-6 sm:px-12 lg:px-20 xl:px-24 2xl:px-32 relative z-10 max-w-[1440px]">
@@ -65,15 +65,15 @@ export function GalleryPage() {
             </span>
             <div className="h-[1px] w-12 bg-[#c2a290]"></div>
           </div>
-          
+
           <h1 className="text-[40px] md:text-[56px] font-heading text-[#1a1c21] font-extrabold leading-[1.1] mb-4">
             RIO PARTY HOUSE – <span className="text-[#a54c13]">Gallery</span>
           </h1>
-          
+
           <h2 className="text-[18px] md:text-[22px] font-heading font-bold text-[#1a1c21] mb-3">
             A glimpse into our beautiful celebrations.
           </h2>
-          
+
           <p className="text-[14px] md:text-[15px] font-medium text-[#6b5c52] max-w-2xl leading-[1.6]">
             Take a look at some of the beautiful moments captured at our venues. Browse through our carefully curated categories.
           </p>
@@ -85,11 +85,10 @@ export function GalleryPage() {
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`px-6 py-2.5 rounded-full text-[13px] font-bold transition-colors border shadow-sm ${
-                  activeCategory === category 
-                    ? 'bg-[#8c480f] text-white border-[#8c480f]' 
-                    : 'bg-white text-[#6b5c52] border-[#eaddd0] hover:bg-[#f5e6d6] hover:text-[#8c5211]'
-                }`}
+                className={`px-6 py-2.5 rounded-full text-[13px] font-bold transition-colors border shadow-sm ${activeCategory === category
+                  ? 'bg-[#8c480f] text-white border-[#8c480f]'
+                  : 'bg-white text-[#6b5c52] border-[#eaddd0] hover:bg-[#f5e6d6] hover:text-[#8c5211]'
+                  }`}
               >
                 {category}
               </button>
@@ -100,7 +99,7 @@ export function GalleryPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-               <div key={i} className="aspect-square bg-gray-200 rounded-[24px] animate-pulse border-4 border-white shadow-lg"></div>
+              <div key={i} className="aspect-square bg-gray-200 rounded-[24px] animate-pulse border-4 border-white shadow-lg"></div>
             ))}
           </div>
         ) : (
@@ -117,13 +116,13 @@ export function GalleryPage() {
                   className="relative rounded-[24px] overflow-hidden cursor-pointer group shadow-[0_15px_35px_rgba(0,0,0,0.1)] border-4 border-white bg-[#f4e7da] break-inside-avoid"
                   onClick={() => setPreviewImage(getImageUrl(item.image))}
                 >
-                  <img 
-                    src={getImageUrl(item.image)} 
-                    alt={item.title || 'Gallery Image'} 
+                  <img
+                    src={getImageUrl(item.image)}
+                    alt={item.title || 'Gallery Image'}
                     onError={handleImageError}
                     className="w-full h-auto object-cover object-center group-hover:scale-110 transition-transform duration-700 block"
                   />
-                  
+
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
                     <div className="p-6 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                       {item.title && <p className="text-white font-bold text-lg truncate mb-1">{item.title}</p>}
@@ -136,20 +135,20 @@ export function GalleryPage() {
                 </motion.div>
               ))}
             </AnimatePresence>
-            
+
             {filteredItems.length === 0 && (
-               <div className="col-span-full text-center py-20 text-[#6b5c52] font-medium text-lg bg-white rounded-[32px] shadow-sm border border-[#f0e6dd]">
-                 No gallery items found for this category.
-               </div>
+              <div className="col-span-full text-center py-20 text-[#6b5c52] font-medium text-lg bg-white rounded-[32px] shadow-sm border border-[#f0e6dd]">
+                No gallery items found for this category.
+              </div>
             )}
           </motion.div>
         )}
       </div>
 
-      <ImagePreviewModal 
-        isOpen={!!previewImage} 
-        imageUrl={previewImage} 
-        onClose={() => setPreviewImage(null)} 
+      <ImagePreviewModal
+        isOpen={!!previewImage}
+        imageUrl={previewImage}
+        onClose={() => setPreviewImage(null)}
       />
     </div>
   );
